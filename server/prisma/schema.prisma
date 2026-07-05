@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//
+// ENUMS
+//
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  BILLING
+  CLEANING
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+//
+// DOMAIN 1 : ACCESS & EMPLOYEES
+//
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  users User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  username  String   @unique
+  email     String   @unique
+  password  String
+  roleId    Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@index([roleId])
+}
+
+//
+// DOMAIN 2 : MENU & INVENTORY
+//
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  menuItems MenuItem[]
+}
+
+model MenuItem {
+  id          Int      @id @default(autoincrement())
+  categoryId  Int
+  name        String   @unique
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category   Category    @relation(fields: [categoryId], references: [id])
+  inventory  Inventory?
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+}
+
+model Inventory {
+  id           Int      @id @default(autoincrement())
+  menuItemId   Int      @unique
+  dailyLimit   Int
+  remainingQty Int
+  isAvailable  Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+//
+// DOMAIN 3 : RESTAURANT OPERATIONS
+//
+
+model RestaurantTable {
+  id          Int         @id @default(autoincrement())
+  tableNumber Int         @unique
+  capacity    Int
+  status      TableStatus @default(AVAILABLE)
+  qrCodeToken String      @unique
+  createdAt   DateTime    @default(now())
+
+  sessions DiningSession[]
+}
+
+model DiningSession {
+  id          Int           @id @default(autoincrement())
+  tableId     Int
+  sessionCode String        @unique
+  guestCount  Int?
+  startTime   DateTime      @default(now())
+  endTime     DateTime?
+  status      SessionStatus @default(ACTIVE)
+  totalAmount Decimal       @default(0.00) @db.Decimal(10, 2)
+
+  table    RestaurantTable @relation(fields: [tableId], references: [id])
+  orders   Order[]
+  payments Payment[]
+
+  @@index([tableId])
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  diningSessionId Int
+  orderNumber     String      @unique
+  status          OrderStatus @default(PENDING)
+  notes           String?
+  orderedAt       DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  diningSession DiningSession @relation(fields: [diningSessionId], references: [id])
+  orderItems    OrderItem[]
+
+  @@index([diningSessionId])
+}
+
+model OrderItem {
+  id         Int     @id @default(autoincrement())
+  orderId    Int
+  menuItemId Int
+  quantity   Int
+  price      Decimal @db.Decimal(10, 2)
+  subtotal   Decimal @db.Decimal(10, 2)
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@index([orderId])
+  @@index([menuItemId])
+}
+
+model Payment {
+  id              Int           @id @default(autoincrement())
+  diningSessionId Int
+  amount          Decimal       @db.Decimal(10, 2)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(PENDING)
+  paidAt          DateTime      @default(now())
+
+  diningSession DiningSession @relation(fields: [diningSessionId], references: [id])
+
+  @@index([diningSessionId])
+}
