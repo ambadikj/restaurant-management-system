@@ -1,0 +1,19 @@
+{
+  "name": "restaurant-management-system",
+  "version": "1.0.0",
+  "description": "This is a Real-Time Restaurant Management & Point of Sale (POS) System designed to digitize and automate restaurant operations. It eliminates paper order slips by enabling customers to place orders via table-specific QR codes. Orders are instantly routed to a real-time Kitchen Display System, while inventory is tracked automatically to prevent overselling.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
