@@ -121,7 +121,7 @@ model RestaurantTable {
   tableNumber Int         @unique
   capacity    Int
   status      TableStatus @default(AVAILABLE)
-  // qrCodeToken String      @unique
+  qrCodeToken String      @unique @default(uuid())
   createdAt   DateTime    @default(now())
 
   sessions DiningSession[]

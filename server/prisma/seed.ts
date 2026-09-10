@@ -21,9 +21,7 @@ async function seedAdmin() {
   console.log("👤 Seeding admin user...");
 
   const adminRole = await prisma.role.findUnique({
-    where: {
-      name: "Admin",
-    },
+    where: { name: "Admin" },
   });
 
   if (!adminRole) {
@@ -33,9 +31,7 @@ async function seedAdmin() {
   const hashedPassword = await bcrypt.hash("admin123", 10);
 
   await prisma.user.upsert({
-    where: {
-      username: "admin",
-    },
+    where: { username: "admin" },
     update: {},
     create: {
       fullName: "Administrator",
@@ -51,7 +47,7 @@ async function seedAdmin() {
 }
 
 async function main() {
-  console.log("🚀 Starting database seeding...\n");
+  console.log("🚀 Starting database seeding (Roles & Admin)...\n");
 
   await seedRoles();
   await seedAdmin();

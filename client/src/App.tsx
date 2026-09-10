@@ -5,29 +5,47 @@ import {
   Navigate,
 } from "react-router-dom";
 import Login from "./pages/Login";
-import AdminDashboard from "./pages/AdminDashboard";
-import Employees from "./pages/Employees";
+import MenuInventory from "./pages/admin/MenuInventory";
+import Employees from "./pages/admin/Employees";
+import TablesQR from "./pages/admin/TablesQR";
+import Reports from "./pages/admin/Reports";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminLayout from "./components/AdminLayout";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
+    <TooltipProvider delayDuration={0}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* Protected Routes for Admins */}
-        <Route
-          path="/admin"
-          element={<ProtectedRoute allowedRoles={["Admin"]} />}
-        >
-          {/* Index route: /admin */}
-          <Route index element={<AdminDashboard />} />
-          {/* Employee route: /admin/employees */}
-          <Route path="employees" element={<Employees />} />
-        </Route>
-      </Routes>
-    </Router>
+          {/* Protected Admin Routes wrapped in Sidebar Layout */}
+          <Route
+            path="/admin"
+            element={<ProtectedRoute allowedRoles={["Admin"]} />}
+          >
+            <Route element={<AdminLayout />}>
+              {/* Default Admin Route redirects to Menu & Inventory */}
+              <Route index element={<Navigate to="/admin/menu" replace />} />
+
+              {/* 1. Menu & Auto-86 */}
+              <Route path="menu" element={<MenuInventory />} />
+
+              {/* 3. Staff & RBAC */}
+              <Route path="employees" element={<Employees />} />
+
+              {/* 4. QR Endpoints & Hardware */}
+              <Route path="tables" element={<TablesQR />} />
+
+              {/* 5. EOD & Reviews */}
+              <Route path="reports" element={<Reports />} />
+            </Route>
+          </Route>
+        </Routes>
+      </Router>
+    </TooltipProvider>
   );
 }
 

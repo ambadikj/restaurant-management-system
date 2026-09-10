@@ -99,3 +99,56 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ message: 'Error updating user status' });
   }
 };
+
+export const updateUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = Number(req.params.id);
+    const { fullName, email, roleId, password } = req.body;
+
+    const dataToUpdate: any = {};
+    if (fullName) dataToUpdate.fullName = fullName;
+    if (email) dataToUpdate.email = email;
+    if (roleId) dataToUpdate.roleId = Number(roleId);
+    if (password) {
+      dataToUpdate.password = await bcrypt.hash(password, 10);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: dataToUpdate,
+      select: {
+        id: true,
+        fullName: true,
+        username: true,
+        email: true,
+        isActive: true,
+        role: { select: { name: true } },
+      },
+    });
+
+    res.json({ message: 'User updated successfully', user: updated });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: 'Error updating user' });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = Number(req.params.id);
+
+    if (userId === (req as any).user.id) {
+      res.status(400).json({ message: 'You cannot delete your own account' });
+      return;
+    }
+
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: 'Error deleting user' });
+  }
+};
