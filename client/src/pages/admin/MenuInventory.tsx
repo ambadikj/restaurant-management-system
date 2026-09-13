@@ -13,6 +13,8 @@ import {
   Flame,
   Minus,
   Plus,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 
 interface Category {
@@ -278,73 +280,146 @@ export default function MenuInventory() {
         </div>
       )}
 
-      {/* Header Bar - Apple Music Style Hero */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-white/[0.08] pb-6">
-        <div>
-          <div className="flex items-center gap-2 text-[11px] font-bold text-[#FA2D48] tracking-widest uppercase mb-1">
-            <Flame className="h-3.5 w-3.5 fill-[#FA2D48]" />
-            <span>Catalog & Kitchen Limits</span>
+      {/* Header Bar - Apple Music Editorial Hero */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
+        {/* Apple Music Signature Ambient Bloom Halos */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            {/* Apple Music Editorial Eyebrow Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] border border-white/[0.1] px-3 py-1 text-[11px] font-semibold text-neutral-300 backdrop-blur-md">
+              <Flame className="h-3 w-3 text-[#FA2D48] fill-[#FA2D48]" />
+              <span className="tracking-widest uppercase text-[10px] font-bold text-white/90">
+                Catalog & Kitchen Limits
+              </span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
+              Menu & Auto-86 Inventory
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-400 max-w-xl font-normal leading-relaxed">
+              Configure live price tags, dish artwork, batch limits, and real-time out-of-stock triggers.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
-            Menu & Auto-86 Inventory
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-neutral-400">
-            Configure live price tags, dish artwork, batch limits, and real-time out-of-stock triggers.
-          </p>
-        </div>
 
-        {/* Action Pills */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            onClick={() => setIsCategoryModalOpen(true)}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 hover:text-white border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
-          >
-            <FolderPlus className="h-4 w-4 text-neutral-400" />
-            <span>Categories ({categories.length})</span>
-          </button>
+          {/* Action Pills */}
+          <div className="relative z-10 flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => setIsCategoryModalOpen(true)}
+              className="flex items-center gap-2 rounded-full px-4.5 py-2.5 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95"
+            >
+              <FolderPlus className="h-4 w-4 text-neutral-400" />
+              <span>Categories ({categories.length})</span>
+            </button>
 
-          <button
-            onClick={() => setIsAddMenuModalOpen(true)}
-            className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB5C74] hover:from-[#E0263F] hover:to-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>Add Dish</span>
-          </button>
+            <button
+              onClick={() => setIsAddMenuModalOpen(true)}
+              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 hover:scale-[1.02]"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>Add Dish</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Stat Summary Row (Apple Music Cards) */}
+      {/* Stat Summary Row (Apple Music Acrylic Cards) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4 backdrop-blur-xl">
-          <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-            Total Dishes
+        {/* Card 1: Total Dishes */}
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-white/[0.07] via-white/[0.03] to-[#161619]/90 border border-white/[0.09] hover:border-white/[0.2] p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-white/5 blur-2xl group-hover:bg-white/10 transition-all" />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+              Total Dishes
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.08] text-neutral-300">
+              <UtensilsCrossed className="h-3.5 w-3.5" />
+            </div>
           </div>
-          <div className="mt-1 text-2xl font-bold text-white font-mono">{totalDishes}</div>
-          <div className="mt-0.5 text-[10px] text-neutral-400">Master Catalog</div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-white tracking-tight font-sans">
+              {totalDishes}
+            </span>
+            <span className="text-[11px] text-neutral-400 font-medium">Items</span>
+          </div>
+          <div className="mt-2 text-[11px] text-neutral-400 flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-neutral-400"></span>
+            <span>Master Catalog</span>
+          </div>
         </div>
 
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4 backdrop-blur-xl">
-          <div className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
-            Active on Menu
+        {/* Card 2: Active on Menu */}
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-emerald-500/[0.08] via-white/[0.03] to-[#161619]/90 border border-emerald-500/20 hover:border-emerald-500/40 p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl group-hover:bg-emerald-500/20 transition-all" />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+              Active on Menu
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+              <Sparkles className="h-3.5 w-3.5" />
+            </div>
           </div>
-          <div className="mt-1 text-2xl font-bold text-emerald-400 font-mono">{activeDishes}</div>
-          <div className="mt-0.5 text-[10px] text-neutral-400">Orderable Now</div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-emerald-400 tracking-tight font-sans">
+              {activeDishes}
+            </span>
+            <span className="text-[11px] text-emerald-400/80 font-medium">Live</span>
+          </div>
+          <div className="mt-2 text-[11px] text-emerald-400/90 flex items-center gap-1.5">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            </span>
+            <span>Orderable Now</span>
+          </div>
         </div>
 
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4 backdrop-blur-xl">
-          <div className="text-[11px] font-semibold text-[#FA2D48] uppercase tracking-wider">
-            86'd (Depleted)
+        {/* Card 3: 86'd Depleted */}
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#FA2D48]/[0.08] via-white/[0.03] to-[#161619]/90 border border-[#FA2D48]/20 hover:border-[#FA2D48]/40 p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-[#FA2D48]/10 blur-2xl group-hover:bg-[#FA2D48]/20 transition-all" />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-[#FA2D48] uppercase tracking-wider">
+              86'd (Depleted)
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FA2D48]/15 border border-[#FA2D48]/30 text-[#FA2D48]">
+              <Flame className="h-3.5 w-3.5 fill-[#FA2D48]" />
+            </div>
           </div>
-          <div className="mt-1 text-2xl font-bold text-[#FA2D48] font-mono">{depletedDishes}</div>
-          <div className="mt-0.5 text-[10px] text-neutral-400">Auto Sold-Out</div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-[#FA2D48] tracking-tight font-sans">
+              {depletedDishes}
+            </span>
+            <span className="text-[11px] text-[#FA2D48]/80 font-medium">Sold Out</span>
+          </div>
+          <div className="mt-2 text-[11px] text-[#FA2D48]/90 flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#FA2D48]"></span>
+            <span>Auto Sold-Out Trigger</span>
+          </div>
         </div>
 
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4 backdrop-blur-xl">
-          <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-            Categories
+        {/* Card 4: Categories */}
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-white/[0.07] via-white/[0.03] to-[#161619]/90 border border-white/[0.09] hover:border-white/[0.2] p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-violet-500/10 blur-2xl group-hover:bg-violet-500/20 transition-all" />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+              Categories
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.08] text-neutral-300">
+              <Layers className="h-3.5 w-3.5" />
+            </div>
           </div>
-          <div className="mt-1 text-2xl font-bold text-white font-mono">{categories.length}</div>
-          <div className="mt-0.5 text-[10px] text-neutral-400">Kitchen Sections</div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-white tracking-tight font-sans">
+              {categories.length}
+            </span>
+            <span className="text-[11px] text-neutral-400 font-medium">Sections</span>
+          </div>
+          <div className="mt-2 text-[11px] text-neutral-400 flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-neutral-400"></span>
+            <span>Kitchen Sections</span>
+          </div>
         </div>
       </div>
 

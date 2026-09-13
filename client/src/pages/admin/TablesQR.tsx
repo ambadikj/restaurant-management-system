@@ -302,105 +302,128 @@ export default function TablesQR() {
         </div>
       )}
 
-      {/* Header Bar - Apple Music Style Hero */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-white/[0.08] pb-6">
-        <div>
-          <div className="flex items-center gap-2 text-[11px] font-bold text-[#FA2D48] tracking-widest uppercase mb-1">
-            <Layers className="h-3.5 w-3.5" />
-            <span>Floor Plan & QR Endpoints</span>
+      {/* Header Bar - Apple Music Editorial Hero */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
+        {/* Ambient Bloom Halos */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] border border-white/[0.1] px-3 py-1 text-[11px] font-semibold text-neutral-300 backdrop-blur-md">
+              <Layers className="h-3 w-3 text-[#FA2D48]" />
+              <span className="tracking-widest uppercase text-[10px] font-bold text-white/90">
+                Floor Plan & QR Endpoints
+              </span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
+              Floor Plan & QR Stations
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-400 max-w-xl font-normal leading-relaxed">
+              Real-time dining room floor plan, live occupancy station cards, and contactless QR standees.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
-            Floor Plan & QR Stations
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-neutral-400">
-            Real-time dining room floor plan, live occupancy station cards, and contactless QR standees.
-          </p>
-        </div>
 
-        {/* Action Pills */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            onClick={handleShowTakeawayQR}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 hover:text-white border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
-            title="Generate Takeaway Standee"
-          >
-            <ShoppingBag className="h-4 w-4 text-[#FA2D48]" />
-            <span>Takeaway QR</span>
-          </button>
+          {/* Action Pills */}
+          <div className="relative z-10 flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={handleShowTakeawayQR}
+              className="flex items-center gap-2 rounded-full px-4.5 py-2.5 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95"
+              title="Generate Takeaway Standee"
+            >
+              <ShoppingBag className="h-4 w-4 text-[#FA2D48]" />
+              <span>Takeaway QR</span>
+            </button>
 
-          <button
-            onClick={handleBatchPrint}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 hover:text-white border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
-          >
-            <Printer className="h-4 w-4 text-neutral-400" />
-            <span>Batch Print</span>
-          </button>
+            <button
+              onClick={handleBatchPrint}
+              className="flex items-center gap-2 rounded-full px-4.5 py-2.5 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95"
+            >
+              <Printer className="h-4 w-4 text-neutral-400" />
+              <span>Batch Print</span>
+            </button>
 
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB5C74] hover:from-[#E0263F] hover:to-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>Add Table</span>
-          </button>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 hover:scale-[1.02]"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>Add Table</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Live Floor KPIs (Apple Music Cards) */}
+      {/* Live Floor KPIs (Apple Music Acrylic Cards) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {/* Metric 1: Capacity */}
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-white/[0.07] via-white/[0.03] to-[#161619]/90 border border-white/[0.09] hover:border-white/[0.2] p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-white/5 blur-2xl group-hover:bg-white/10 transition-all" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
               Floor Capacity
             </span>
-            <Users className="h-4 w-4 text-[#FA2D48]" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.08] text-neutral-300">
+              <Users className="h-3.5 w-3.5 text-[#FA2D48]" />
+            </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono tracking-tight text-white">
+            <span className="text-3xl font-extrabold text-white tracking-tight font-sans">
               {totalCapacity}
             </span>
-            <span className="text-xs text-neutral-400">Total Seats</span>
+            <span className="text-[11px] text-neutral-400 font-medium">Seats</span>
           </div>
-          <div className="mt-1 text-[10px] text-neutral-400 font-medium">
-            Across {tables.length} floor tables
+          <div className="mt-2 text-[11px] text-neutral-400 flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-neutral-400"></span>
+            <span>Across {tables.length} floor tables</span>
           </div>
         </div>
 
         {/* Metric 2: Available */}
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-emerald-500/[0.08] via-white/[0.03] to-[#161619]/90 border border-emerald-500/20 hover:border-emerald-500/40 p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl group-hover:bg-emerald-500/20 transition-all" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
+            <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
               Available
             </span>
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono tracking-tight text-emerald-400">
+            <span className="text-3xl font-extrabold text-emerald-400 tracking-tight font-sans">
               {availableCount}
             </span>
-            <span className="text-xs text-neutral-400">Vacant Tables</span>
+            <span className="text-[11px] text-emerald-400/80 font-medium">Vacant</span>
           </div>
-          <div className="mt-1 text-[10px] text-emerald-400 font-semibold">
-            Ready for instant guests
+          <div className="mt-2 text-[11px] text-emerald-400/90 flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+            <span>Ready for instant guests</span>
           </div>
         </div>
 
         {/* Metric 3: Occupied & Rate */}
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-sky-500/[0.08] via-white/[0.03] to-[#161619]/90 border border-sky-500/20 hover:border-sky-500/40 p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-sky-500/10 blur-2xl group-hover:bg-sky-500/20 transition-all" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+            <span className="text-[11px] font-semibold text-sky-400 uppercase tracking-wider">
               Occupancy Rate
             </span>
-            <Timer className="h-4 w-4 text-sky-400" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400">
+              <Timer className="h-3.5 w-3.5" />
+            </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono tracking-tight text-white">
+            <span className="text-3xl font-extrabold text-sky-400 tracking-tight font-sans">
               {occupancyRate}%
             </span>
-            <span className="text-xs text-neutral-400 font-mono">({occupiedCount} Active)</span>
+            <span className="text-[11px] text-sky-400/80 font-mono">({occupiedCount} active)</span>
           </div>
-          <div className="mt-2 w-full bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
+          <div className="mt-2.5 w-full bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-sky-400 h-1.5 rounded-full transition-all duration-500"
               style={{ width: `${occupancyRate}%` }}
@@ -409,22 +432,28 @@ export default function TablesQR() {
         </div>
 
         {/* Metric 4: Turnover Queue */}
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-purple-500/[0.08] via-white/[0.03] to-[#161619]/90 border border-purple-500/20 hover:border-purple-500/40 p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-purple-500/10 blur-2xl group-hover:bg-purple-500/20 transition-all" />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+            <span className="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">
               Turnover Queue
             </span>
-            <RefreshCw className="h-4 w-4 text-purple-400" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-400">
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            </div>
           </div>
           <div className="mt-2 flex items-baseline gap-3">
-            <span className="text-base font-semibold text-amber-400 font-mono">
-              {billingCount} Billing
+            <span className="text-2xl font-bold text-amber-400 font-mono">
+              {billingCount} <span className="text-[11px] font-sans font-medium text-amber-400/80">Bill</span>
             </span>
-            <span className="text-base font-semibold text-purple-400 font-mono">
-              {cleaningCount} Clean
+            <span className="text-2xl font-bold text-purple-400 font-mono">
+              {cleaningCount} <span className="text-[11px] font-sans font-medium text-purple-400/80">Clean</span>
             </span>
           </div>
-          <div className="mt-1 text-[10px] text-neutral-400">Fast reset monitoring</div>
+          <div className="mt-2 text-[11px] text-neutral-400 flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-purple-400"></span>
+            <span>Turnover in progress</span>
+          </div>
         </div>
       </div>
 
