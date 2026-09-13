@@ -18,7 +18,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 
 const navSections = [
@@ -202,8 +201,6 @@ export function AppSidebar() {
           </button>
         </div>
       </SidebarFooter>
-
-      <SidebarRail className="hover:after:bg-[#FA2D48]" />
     </Sidebar>
   );
 }
