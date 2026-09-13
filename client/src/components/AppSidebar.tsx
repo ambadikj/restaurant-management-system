@@ -6,7 +6,6 @@ import {
   Receipt,
   LogOut,
   Sparkles,
-  Search,
 } from "lucide-react";
 import {
   Sidebar,
@@ -112,18 +111,6 @@ export function AppSidebar() {
               Restaurant Console
             </span>
           </div>
-        </div>
-
-        {/* Quick Search Bar in Sidebar (Apple Music Web style) */}
-        <div className="mt-3 relative group-data-[collapsible=icon]:hidden">
-          <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-neutral-400" />
-          <input
-            type="text"
-            placeholder="Quick search..."
-            readOnly
-            onClick={() => navigate("/admin/menu")}
-            className="w-full h-8 pl-8 pr-3 text-xs rounded-lg bg-white/[0.05] hover:bg-white/[0.08] text-neutral-200 placeholder:text-neutral-500 border border-white/[0.06] cursor-pointer transition-colors focus:outline-none"
-          />
         </div>
       </SidebarHeader>
 

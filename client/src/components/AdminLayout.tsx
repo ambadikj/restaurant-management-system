@@ -1,11 +1,11 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { ChevronLeft, ChevronRight, Store } from "lucide-react";
+import { Store } from "lucide-react";
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/admin": {
@@ -32,7 +32,6 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
 
 export default function AdminLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
   const currentPath = location.pathname;
   const pageInfo = PAGE_TITLES[currentPath] || {
     title: "Operations Console",
@@ -56,26 +55,6 @@ export default function AdminLayout() {
           <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-white/[0.07] bg-[#121214]/80 px-4 md:px-6 backdrop-blur-2xl transition-all">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-neutral-400 hover:text-white hover:bg-white/[0.08] rounded-lg h-8 w-8" />
-
-              {/* History Navigation Controls (< and >) */}
-              <div className="hidden sm:flex items-center gap-1">
-                <button
-                  onClick={() => navigate(-1)}
-                  title="Go Back"
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-all active:scale-95"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => navigate(1)}
-                  title="Go Forward"
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-all active:scale-95"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="h-4 w-[1px] bg-white/[0.08] hidden sm:block mx-1" />
 
               {/* Page Title */}
               <div className="flex flex-col">
