@@ -183,7 +183,15 @@ export default function CustomerMenu() {
                         remainingQty: data.remainingQty,
                         isAvailable: data.isAvailable,
                       }
-                    : null,
+                    : {
+                        id: 0,
+                        menuItemId: data.menuItemId,
+                        dailyLimit: data.remainingQty,
+                        remainingQty: data.remainingQty,
+                        isAvailable: data.isAvailable,
+                        autoResetTime: "00:00",
+                        lastResetDate: new Date().toISOString(),
+                      },
                 };
               }
               return dish;
@@ -191,7 +199,7 @@ export default function CustomerMenu() {
           }))
         );
 
-        // Adjust cart if item ran out of stock
+        // Adjust cart if item ran out of stock or stock was reduced
         setCart((prevCart) =>
           prevCart
             .filter((ci) => {
@@ -202,15 +210,45 @@ export default function CustomerMenu() {
               return true;
             })
             .map((ci) => {
-              if (ci.item.id === data.menuItemId && ci.quantity > data.remainingQty) {
-                toast.error(`Quantity for "${ci.item.name}" reduced to available stock (${data.remainingQty}).`);
-                return { ...ci, quantity: data.remainingQty };
+              if (ci.item.id === data.menuItemId) {
+                const updatedDish = {
+                  ...ci.item,
+                  isAvailable: data.isAvailable,
+                  inventory: ci.item.inventory
+                    ? {
+                        ...ci.item.inventory,
+                        remainingQty: data.remainingQty,
+                        isAvailable: data.isAvailable,
+                      }
+                    : {
+                        id: 0,
+                        menuItemId: data.menuItemId,
+                        dailyLimit: data.remainingQty,
+                        remainingQty: data.remainingQty,
+                        isAvailable: data.isAvailable,
+                        autoResetTime: "00:00",
+                        lastResetDate: new Date().toISOString(),
+                      },
+                };
+                if (ci.quantity > data.remainingQty) {
+                  toast.error(`Quantity for "${ci.item.name}" reduced to available stock (${data.remainingQty}).`);
+                  return { ...ci, item: updatedDish, quantity: data.remainingQty };
+                }
+                return { ...ci, item: updatedDish };
               }
               return ci;
             })
         );
       }
     );
+
+    // Real-time: Bulk inventory reset / menu item update
+    socket.on("menu:bulk_reset", () => {
+      loadMenuAndTable();
+    });
+    socket.on("menu:item_updated", () => {
+      loadMenuAndTable();
+    });
 
     // Real-time: Staff acknowledged service call
     socket.on("service:acknowledged", (data: { message: string }) => {
@@ -226,6 +264,8 @@ export default function CustomerMenu() {
       socket.off("order:placed");
       socket.off("order:status_update");
       socket.off("inventory:stock_update");
+      socket.off("menu:bulk_reset");
+      socket.off("menu:item_updated");
       socket.off("service:acknowledged");
     };
   }, [tableIdentifier]);

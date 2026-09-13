@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosInstance";
+import { socket } from "../../lib/socket";
 import {
   UserPlus,
   Search,
@@ -60,6 +61,33 @@ export default function Employees() {
 
   useEffect(() => {
     fetchData(true);
+
+    const handleEmployeeCreated = (newUser: User) => {
+      setUsers((prev) => {
+        if (prev.some((u) => u.id === newUser.id)) return prev;
+        return [...prev, newUser];
+      });
+    };
+
+    const handleEmployeeUpdated = (updatedUser: User) => {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
+      );
+    };
+
+    const handleEmployeeDeleted = ({ id }: { id: number }) => {
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    };
+
+    socket.on("employee:created", handleEmployeeCreated);
+    socket.on("employee:updated", handleEmployeeUpdated);
+    socket.on("employee:deleted", handleEmployeeDeleted);
+
+    return () => {
+      socket.off("employee:created", handleEmployeeCreated);
+      socket.off("employee:updated", handleEmployeeUpdated);
+      socket.off("employee:deleted", handleEmployeeDeleted);
+    };
   }, []);
 
   const fetchData = async (showLoadingState = false) => {

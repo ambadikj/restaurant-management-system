@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../prisma/client";
-import { emitToTable, emitToStaff, emitStockUpdate } from "../socket";
+import { emitToTable, emitToStaff, emitStockUpdate, emitTableUpdate } from "../socket";
 
 /**
  * GET /api/customer/menu
@@ -170,6 +170,12 @@ export const placeOrder = async (req: Request, res: Response): Promise<void> => 
           where: { id: targetTable.id },
           data: { status: "OCCUPIED" },
         });
+        emitTableUpdate({
+          id: targetTable.id,
+          tableNumber: targetTable.tableNumber,
+          status: "OCCUPIED",
+          capacity: targetTable.capacity,
+        });
       }
     }
 
@@ -269,7 +275,18 @@ export const placeOrder = async (req: Request, res: Response): Promise<void> => 
         },
         include: {
           orderItems: {
-            include: { menuItem: true },
+            include: {
+              menuItem: {
+                include: { category: { select: { name: true } } },
+              },
+            },
+          },
+          diningSession: {
+            include: {
+              table: {
+                select: { tableNumber: true, capacity: true },
+              },
+            },
           },
         },
       });
@@ -392,6 +409,12 @@ export const requestService = async (req: Request, res: Response): Promise<void>
         await prisma.restaurantTable.update({
           where: { id: table.id },
           data: { status: "BILLING" },
+        });
+        emitTableUpdate({
+          id: table.id,
+          tableNumber: table.tableNumber,
+          status: "BILLING",
+          capacity: table.capacity,
         });
       }
     }

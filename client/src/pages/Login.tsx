@@ -33,8 +33,13 @@ export default function Login() {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
-      // 2. Redirect to the admin dashboard
-      navigate("/admin");
+      // 2. Redirect based on user role
+      const userRole = response.data.user?.role;
+      if (userRole === "Kitchen") {
+        navigate("/kitchen");
+      } else {
+        navigate("/admin");
+      }
     } catch (err: unknown) {
       // Type-safe error handling
       if (axios.isAxiosError(err)) {

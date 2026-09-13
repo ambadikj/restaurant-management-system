@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosInstance";
+import { socket } from "../../lib/socket";
 import {
   UtensilsCrossed,
   PlusCircle,
@@ -15,6 +16,7 @@ import {
   Plus,
   Sparkles,
   Layers,
+  RotateCcw,
 } from "lucide-react";
 
 interface Category {
@@ -73,6 +75,73 @@ export default function MenuInventory() {
 
   useEffect(() => {
     fetchData(true);
+
+    const handleStockUpdate = (data: { menuItemId: number; remainingQty: number; isAvailable: boolean }) => {
+      setItems((prev) =>
+        prev.map((item) => {
+          if (item.id === data.menuItemId) {
+            return {
+              ...item,
+              isAvailable: data.isAvailable,
+              inventory: item.inventory
+                ? { ...item.inventory, remainingQty: data.remainingQty }
+                : { remainingQty: data.remainingQty, dailyLimit: data.remainingQty },
+            };
+          }
+          return item;
+        })
+      );
+    };
+
+    const handleItemUpdated = (updatedItem: any) => {
+      setItems((prev) =>
+        prev.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem } : item))
+      );
+    };
+
+    const handleItemCreated = (newItem: any) => {
+      setItems((prev) => {
+        if (prev.some((i) => i.id === newItem.id)) return prev;
+        return [...prev, newItem];
+      });
+    };
+
+    const handleItemDeleted = ({ id }: { id: number }) => {
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    };
+
+    const handleCategoryCreated = (newCat: any) => {
+      setCategories((prev) => {
+        if (prev.some((c) => c.id === newCat.id)) return prev;
+        return [...prev, newCat];
+      });
+    };
+
+    const handleCategoryDeleted = ({ id }: { id: number }) => {
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+    };
+
+    const handleBulkReset = (resetItems: any[]) => {
+      setItems(resetItems);
+    };
+
+    socket.on("inventory:stock_update", handleStockUpdate);
+    socket.on("menu:item_updated", handleItemUpdated);
+    socket.on("menu:item_created", handleItemCreated);
+    socket.on("menu:item_deleted", handleItemDeleted);
+    socket.on("category:created", handleCategoryCreated);
+    socket.on("category:deleted", handleCategoryDeleted);
+    socket.on("menu:bulk_reset", handleBulkReset);
+
+    return () => {
+      socket.off("inventory:stock_update", handleStockUpdate);
+      socket.off("menu:item_updated", handleItemUpdated);
+      socket.off("menu:item_created", handleItemCreated);
+      socket.off("menu:item_deleted", handleItemDeleted);
+      socket.off("category:created", handleCategoryCreated);
+      socket.off("category:deleted", handleCategoryDeleted);
+      socket.off("menu:bulk_reset", handleBulkReset);
+    };
   }, []);
 
   const fetchData = async (showLoadingState = false) => {
@@ -214,19 +283,26 @@ export default function MenuInventory() {
 
   const handleQuickLimitUpdate = async (itemId: number, newQty: number) => {
     if (newQty < 0) return;
+    const isNowAvailable = newQty > 0;
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === itemId
+          ? {
+              ...it,
+              isAvailable: isNowAvailable,
+              inventory: it.inventory
+                ? { ...it.inventory, remainingQty: newQty }
+                : { remainingQty: newQty, dailyLimit: newQty },
+            }
+          : it
+      )
+    );
     try {
       await axiosInstance.patch(`/menu/items/${itemId}/inventory`, {
         remainingQty: newQty,
       });
-      // Optimistic update
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === itemId && it.inventory
-            ? { ...it, inventory: { ...it.inventory, remainingQty: newQty } }
-            : it
-        )
-      );
-      showNotification("Stock limit updated!");
+      showNotification(isNowAvailable ? `Stock limit updated (${newQty})` : "Item marked Out of Stock (86'd)");
     } catch (err) {
       alert("Error updating inventory quantity");
       fetchData(false);
@@ -234,20 +310,52 @@ export default function MenuInventory() {
   };
 
   const handleToggleState = async (itemId: number) => {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const willBeAvailable = !item.isAvailable;
+    const newQty = willBeAvailable
+      ? (item.inventory?.dailyLimit && item.inventory.dailyLimit > 0 ? item.inventory.dailyLimit : 20)
+      : 0;
+
     // Optimistic toggle
     setItems((prev) =>
-      prev.map((it) => (it.id === itemId ? { ...it, isAvailable: !it.isAvailable } : it))
+      prev.map((it) =>
+        it.id === itemId
+          ? {
+              ...it,
+              isAvailable: willBeAvailable,
+              inventory: it.inventory
+                ? { ...it.inventory, remainingQty: newQty }
+                : { remainingQty: newQty, dailyLimit: newQty },
+            }
+          : it
+      )
     );
     try {
       await axiosInstance.patch(`/menu/items/${itemId}/status`);
-      showNotification("Item availability updated!");
+      showNotification(willBeAvailable ? `"${item.name}" restocked (${newQty} portions)!` : `"${item.name}" 86'd (Unavailable)`);
       fetchData(false);
     } catch (err) {
       // Revert optimistic update on error
       setItems((prev) =>
-        prev.map((it) => (it.id === itemId ? { ...it, isAvailable: !it.isAvailable } : it))
+        prev.map((it) => (it.id === itemId ? { ...it, isAvailable: item.isAvailable } : it))
       );
       alert("Error toggling item availability");
+    }
+  };
+
+  const handleResetAllInventory = async () => {
+    if (!confirm("Reset all dishes to their daily batch limits and mark all active on menu?")) return;
+    try {
+      const res = await axiosInstance.post("/menu/inventory/reset-all");
+      if (res.data.items) {
+        setItems(res.data.items);
+      }
+      showNotification("All inventory batches reset to daily limits!");
+    } catch (err) {
+      alert("Error resetting daily inventory");
+      fetchData(false);
     }
   };
 
@@ -306,6 +414,15 @@ export default function MenuInventory() {
 
           {/* Action Pills */}
           <div className="relative z-10 flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={handleResetAllInventory}
+              title="Restock all dishes back to their maximum daily limits"
+              className="flex items-center gap-2 rounded-full px-4.5 py-2.5 text-xs font-semibold bg-white/[0.08] hover:bg-emerald-500/20 text-neutral-200 hover:text-emerald-300 border border-white/[0.12] hover:border-emerald-500/30 backdrop-blur-xl shadow-sm transition-all active:scale-95"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Reset Daily Batches</span>
+            </button>
+
             <button
               onClick={() => setIsCategoryModalOpen(true)}
               className="flex items-center gap-2 rounded-full px-4.5 py-2.5 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95"

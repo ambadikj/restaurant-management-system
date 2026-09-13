@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../prisma/client';
+import { emitEmployeeUpdate } from '../socket';
 
 // Get all roles (Needed for the frontend dropdown when adding a user)
 export const getRoles = async (req: Request, res: Response): Promise<void> => {
@@ -61,8 +62,10 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         roleId: Number(roleId),
         isActive: true,
       },
-      select: { id: true, username: true, role: { select: { name: true } } }
+      select: { id: true, fullName: true, username: true, email: true, isActive: true, role: { select: { name: true } } }
     });
+
+    emitEmployeeUpdate("employee:created", newUser);
 
     res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (error) {
@@ -91,8 +94,17 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { isActive: !user.isActive },
-      select: { id: true, username: true, isActive: true }
+      select: {
+        id: true,
+        fullName: true,
+        username: true,
+        email: true,
+        isActive: true,
+        role: { select: { name: true } }
+      }
     });
+
+    emitEmployeeUpdate("employee:updated", updatedUser);
 
     res.status(200).json({ message: 'User status updated', user: updatedUser });
   } catch (error) {
@@ -126,6 +138,8 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       },
     });
 
+    emitEmployeeUpdate("employee:updated", updated);
+
     res.json({ message: 'User updated successfully', user: updated });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -145,6 +159,8 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     await prisma.user.delete({
       where: { id: userId },
     });
+
+    emitEmployeeUpdate("employee:deleted", { id: userId });
 
     res.json({ message: 'User deleted successfully' });
   } catch (error) {

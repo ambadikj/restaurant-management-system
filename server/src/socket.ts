@@ -69,3 +69,31 @@ export const emitStockUpdate = (menuItemId: number, remainingQty: number, isAvai
     io.emit("inventory:stock_update", { menuItemId, remainingQty, isAvailable });
   }
 };
+
+export const emitTableUpdate = (table: any) => {
+  if (io) {
+    io.emit("table:update", table);
+    io.to("staff:all").emit("table:update", table);
+  }
+};
+
+export const emitTableDelete = (tableId: number) => {
+  if (io) {
+    io.emit("table:deleted", { id: tableId });
+    io.to("staff:all").emit("table:deleted", { id: tableId });
+  }
+};
+
+export const emitMenuUpdate = (event: string, data: any) => {
+  if (io) {
+    io.emit(event, data);
+    io.to("staff:all").emit(event, data);
+  }
+};
+
+export const emitEmployeeUpdate = (event: string, data: any) => {
+  if (io) {
+    io.emit(event, data);
+    io.to("staff:all").emit(event, data);
+  }
+};

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import crypto from 'crypto';
 import prisma from '../prisma/client';
 import QRCode from 'qrcode';
+import { emitTableUpdate, emitTableDelete } from '../socket';
 
 export const getTables = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -46,6 +47,8 @@ export const createTable = async (req: Request, res: Response): Promise<void> =>
       },
     });
 
+    emitTableUpdate(newTable);
+
     res.status(201).json(newTable);
   } catch (error) {
     console.error("Error creating table:", error);
@@ -63,6 +66,8 @@ export const updateTableStatus = async (req: Request, res: Response): Promise<vo
       data: { status },
     });
 
+    emitTableUpdate(updated);
+
     res.json(updated);
   } catch (error) {
     console.error("Error updating table status:", error);
@@ -74,6 +79,9 @@ export const deleteTable = async (req: Request, res: Response): Promise<void> =>
   try {
     const id = Number(req.params.id);
     await prisma.restaurantTable.delete({ where: { id } });
+
+    emitTableDelete(id);
+
     res.json({ message: 'Table deleted successfully' });
   } catch (error) {
     res.status(400).json({ message: 'Cannot delete table with existing order history' });

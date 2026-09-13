@@ -9,6 +9,7 @@ import {
   deleteMenuItem,
   updateInventory,
   toggleItemStatus,
+  resetDailyInventory,
 } from '../controllers/menu.controller';
 import { authenticateJWT, authorizeRoles } from '../middleware/auth.middleware';
 import { upload } from '../middleware/upload.middleware';
@@ -31,5 +32,6 @@ router.patch('/items/:id', upload.single('image'), updateMenuItem);
 router.delete('/items/:id', deleteMenuItem);
 router.patch('/items/:id/inventory', updateInventory);
 router.patch('/items/:id/status', toggleItemStatus);
+router.post('/inventory/reset-all', resetDailyInventory);
 
 export default router;

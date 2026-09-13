@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosInstance";
 import axios from "axios";
+import { socket } from "../../lib/socket";
 import {
   QrCode,
   Printer,
@@ -50,6 +51,52 @@ export default function TablesQR() {
 
   useEffect(() => {
     fetchTables();
+
+    const handleTableUpdate = (updatedTable: RestaurantTable) => {
+      setTables((prev) => {
+        const exists = prev.some((t) => t.id === updatedTable.id);
+        if (exists) {
+          return prev.map((t) => (t.id === updatedTable.id ? { ...t, ...updatedTable } : t));
+        }
+        return [...prev, updatedTable].sort((a, b) => a.tableNumber - b.tableNumber);
+      });
+    };
+
+    const handleTableDelete = ({ id }: { id: number }) => {
+      setTables((prev) => prev.filter((t) => t.id !== id));
+    };
+
+    const handleNewOrder = (data: { tableNumber: number | string }) => {
+      const num = typeof data.tableNumber === "string" ? parseInt(data.tableNumber) : data.tableNumber;
+      if (!isNaN(num)) {
+        setTables((prev) =>
+          prev.map((t) => (t.tableNumber === num ? { ...t, status: "OCCUPIED" } : t))
+        );
+      }
+    };
+
+    const handleServiceAlert = (data: { tableNumber: number | string; type: string }) => {
+      if (data.type === "REQUEST_BILL") {
+        const num = typeof data.tableNumber === "string" ? parseInt(data.tableNumber) : data.tableNumber;
+        if (!isNaN(num)) {
+          setTables((prev) =>
+            prev.map((t) => (t.tableNumber === num ? { ...t, status: "BILLING" } : t))
+          );
+        }
+      }
+    };
+
+    socket.on("table:update", handleTableUpdate);
+    socket.on("table:deleted", handleTableDelete);
+    socket.on("order:new", handleNewOrder);
+    socket.on("service:alert", handleServiceAlert);
+
+    return () => {
+      socket.off("table:update", handleTableUpdate);
+      socket.off("table:deleted", handleTableDelete);
+      socket.off("order:new", handleNewOrder);
+      socket.off("service:alert", handleServiceAlert);
+    };
   }, []);
 
   const fetchTables = async () => {
