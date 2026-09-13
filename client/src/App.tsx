@@ -5,6 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import Login from "./pages/Login";
+import CustomerMenu from "./pages/customer/CustomerMenu";
 import MenuInventory from "./pages/admin/MenuInventory";
 import Employees from "./pages/admin/Employees";
 import TablesQR from "./pages/admin/TablesQR";
@@ -20,6 +21,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
+
+          {/* Public Customer Contactless Menu & Ordering (QR Landing) */}
+          <Route path="/menu" element={<CustomerMenu />} />
+          <Route path="/customer" element={<Navigate to="/menu" replace />} />
 
           {/* Protected Admin Routes wrapped in Sidebar Layout */}
           <Route

@@ -5,7 +5,8 @@ import path from "path";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import menuRoutes from "./routes/menu.routes";
-import tableRoutes from "./routes/table.routes"; // <-- ADDED THIS
+import tableRoutes from "./routes/table.routes";
+import customerRoutes from "./routes/customer.routes";
 
 const app = express();
 
@@ -19,7 +20,8 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/menu", menuRoutes);
-app.use("/api/tables", tableRoutes); // <-- ADDED THIS
+app.use("/api/tables", tableRoutes);
+app.use("/api/customer", customerRoutes);
 
 app.get("/", (req, res) => {
   res.json({
