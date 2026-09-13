@@ -87,6 +87,12 @@ export function AppSidebar() {
     <Sidebar
       collapsible="icon"
       className="border-r border-white/[0.08] bg-[#161619]/95 text-neutral-200 backdrop-blur-2xl transition-all duration-300"
+      style={
+        {
+          "--sidebar-accent": "rgba(255, 255, 255, 0.08)",
+          "--sidebar-accent-foreground": "#ffffff",
+        } as React.CSSProperties
+      }
     >
       {/* Brand Header - Apple Music Monogram Style */}
       <SidebarHeader className="p-4 border-b border-white/[0.06] group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:border-none">
@@ -136,24 +142,24 @@ export function AppSidebar() {
                         tooltip={item.title}
                         className={`group relative flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium transition-all duration-200 ${
                           isActive
-                            ? "bg-gradient-to-r from-[#FA2D48] to-[#FF4B68] text-white shadow-md shadow-[#FA2D48]/25 font-semibold"
-                            : "text-neutral-300 hover:bg-white/[0.06] hover:text-white"
+                            ? "bg-gradient-to-r from-[#FA2D48] to-[#FF4B68] !text-white shadow-md shadow-[#FA2D48]/25 font-semibold"
+                            : "!text-neutral-300 hover:bg-white/[0.08] hover:!text-white"
                         }`}
                       >
-                        <NavLink to={item.url} className="flex items-center w-full">
+                        <NavLink to={item.url} className="flex items-center w-full !text-neutral-300 group-hover:!text-white">
                           <item.icon
                             className={`h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
                               isActive ? "text-white" : "text-[#FA2D48]/80 group-hover:text-[#FA2D48]"
                             }`}
                           />
-                          <span className="ml-2.5 truncate">{item.title}</span>
+                          <span className="ml-2.5 truncate group-hover:!text-white">{item.title}</span>
 
                           {item.badge && (
                             <span
                               className={`ml-auto text-[9px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wider group-data-[collapsible=icon]:hidden ${
                                 isActive
                                   ? "bg-white/20 text-white"
-                                  : "bg-white/[0.08] text-neutral-400"
+                                  : "bg-white/[0.08] text-neutral-400 group-hover:!text-white"
                               }`}
                             >
                               {item.badge}

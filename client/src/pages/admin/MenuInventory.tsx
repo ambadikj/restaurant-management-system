@@ -297,7 +297,7 @@ export default function MenuInventory() {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 hover:text-white border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
           >
             <FolderPlus className="h-4 w-4 text-neutral-400" />
             <span>Categories ({categories.length})</span>
@@ -357,7 +357,7 @@ export default function MenuInventory() {
             className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
               activeCategoryFilter === "ALL"
                 ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-                : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+                : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
             }`}
           >
             <span>All Dishes</span>
@@ -380,7 +380,7 @@ export default function MenuInventory() {
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   isSelected
                     ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-                    : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+                    : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
                 <span>{cat.name}</span>
