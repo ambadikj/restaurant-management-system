@@ -10,10 +10,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   X,
+  Flame,
+  Minus,
+  Plus,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface Category {
   id: number;
@@ -260,72 +260,116 @@ export default function MenuInventory() {
     return matchesCat && matchesSearch;
   });
 
+  const totalDishes = items.length;
+  const activeDishes = items.filter(
+    (i) => i.isAvailable && (!i.inventory || i.inventory.remainingQty > 0)
+  ).length;
+  const depletedDishes = items.filter(
+    (i) => !i.isAvailable || (i.inventory && i.inventory.remainingQty === 0)
+  ).length;
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Toast Notification */}
+    <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
+      {/* Toast Notification - Apple Music Glass Toast */}
       {successMsg && (
-        <div className="fixed top-16 right-6 z-50 flex items-center gap-2 rounded-lg bg-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 px-4 py-2.5 text-xs font-medium text-white shadow-xl animate-in fade-in slide-in-from-top-2 border border-neutral-800">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />
+        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-[#FA2D48]/10 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="h-4 w-4 text-[#FA2D48]" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Bar - Apple Music Style Hero */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-white/[0.08] pb-6">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 sm:text-2xl">
-            Menu & Catalog
+          <div className="flex items-center gap-2 text-[11px] font-bold text-[#FA2D48] tracking-widest uppercase mb-1">
+            <Flame className="h-3.5 w-3.5 fill-[#FA2D48]" />
+            <span>Catalog & Kitchen Limits</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
+            Menu & Auto-86 Inventory
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
-            Manage dishes, pricing, inventory batch limits, and categories.
+          <p className="mt-1 text-xs sm:text-sm text-neutral-400">
+            Configure live price tags, dish artwork, batch limits, and real-time out-of-stock triggers.
           </p>
         </div>
 
+        {/* Action Pills */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="h-9 gap-1.5 text-xs font-medium border-neutral-200 dark:border-neutral-800"
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
           >
-            <FolderPlus className="h-3.5 w-3.5 text-neutral-500" />
-            Categories ({categories.length})
-          </Button>
+            <FolderPlus className="h-4 w-4 text-neutral-400" />
+            <span>Categories ({categories.length})</span>
+          </button>
 
-          <Button
-            size="sm"
+          <button
             onClick={() => setIsAddMenuModalOpen(true)}
-            className="h-9 gap-1.5 text-xs font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 shadow-xs"
+            className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB5C74] hover:from-[#E0263F] hover:to-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95"
           >
-            <PlusCircle className="h-3.5 w-3.5" />
-            Add menu item
-          </Button>
+            <PlusCircle className="h-4 w-4" />
+            <span>Add Dish</span>
+          </button>
         </div>
       </div>
 
-      {/* Filter Tabs & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Category Segmented Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-neutral-100/90 rounded-lg dark:bg-neutral-800/70 border border-neutral-200/60 dark:border-neutral-800">
+      {/* Stat Summary Row (Apple Music Cards) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4 backdrop-blur-xl">
+          <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+            Total Dishes
+          </div>
+          <div className="mt-1 text-2xl font-bold text-white font-mono">{totalDishes}</div>
+          <div className="mt-0.5 text-[10px] text-neutral-400">Master Catalog</div>
+        </div>
+
+        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4 backdrop-blur-xl">
+          <div className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+            Active on Menu
+          </div>
+          <div className="mt-1 text-2xl font-bold text-emerald-400 font-mono">{activeDishes}</div>
+          <div className="mt-0.5 text-[10px] text-neutral-400">Orderable Now</div>
+        </div>
+
+        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4 backdrop-blur-xl">
+          <div className="text-[11px] font-semibold text-[#FA2D48] uppercase tracking-wider">
+            86'd (Depleted)
+          </div>
+          <div className="mt-1 text-2xl font-bold text-[#FA2D48] font-mono">{depletedDishes}</div>
+          <div className="mt-0.5 text-[10px] text-neutral-400">Auto Sold-Out</div>
+        </div>
+
+        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4 backdrop-blur-xl">
+          <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+            Categories
+          </div>
+          <div className="mt-1 text-2xl font-bold text-white font-mono">{categories.length}</div>
+          <div className="mt-0.5 text-[10px] text-neutral-400">Kitchen Sections</div>
+        </div>
+      </div>
+
+      {/* Filter Tabs & Search Bar - Apple Music Pill Row */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+        {/* Apple Music Pill Capsule Carousel */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setActiveCategoryFilter("ALL")}
-            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
               activeCategoryFilter === "ALL"
-                ? "bg-white text-neutral-900 shadow-xs dark:bg-neutral-900 dark:text-neutral-100"
-                : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200"
+                ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
             }`}
           >
-            <span>All</span>
+            <span>All Dishes</span>
             <span
-              className={`text-[10px] font-mono ${
-                activeCategoryFilter === "ALL"
-                  ? "text-neutral-500 dark:text-neutral-400"
-                  : "text-neutral-400 dark:text-neutral-500"
+              className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                activeCategoryFilter === "ALL" ? "bg-white/20 text-white" : "bg-white/[0.08] text-neutral-400"
               }`}
             >
               {items.length}
             </span>
           </button>
+
           {categories.map((cat) => {
             const count = items.filter((i) => i.categoryId === cat.id).length;
             const isSelected = activeCategoryFilter === cat.id;
@@ -333,18 +377,16 @@ export default function MenuInventory() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategoryFilter(cat.id)}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   isSelected
-                    ? "bg-white text-neutral-900 shadow-xs dark:bg-neutral-900 dark:text-neutral-100"
-                    : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200"
+                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                    : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                 }`}
               >
                 <span>{cat.name}</span>
                 <span
-                  className={`text-[10px] font-mono ${
-                    isSelected
-                      ? "text-neutral-500 dark:text-neutral-400"
-                      : "text-neutral-400 dark:text-neutral-500"
+                  className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                    isSelected ? "bg-white/20 text-white" : "bg-white/[0.08] text-neutral-400"
                   }`}
                 >
                   {count}
@@ -354,28 +396,38 @@ export default function MenuInventory() {
           })}
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-neutral-400" />
-          <Input
+        {/* Search Bar - Apple Music Pill Style */}
+        <div className="relative w-full lg:w-72">
+          <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-neutral-400" />
+          <input
             type="text"
-            placeholder="Filter by name, ingredients, tags..."
+            placeholder="Search dishes, ingredients..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 pl-8 text-xs bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800 focus-visible:ring-neutral-400"
+            className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] transition-all focus:outline-none"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-2.5 text-neutral-400 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ================= VIEW: CARD GRID VIEW ================= */}
+      {/* ================= VIEW: APPLE MUSIC ALBUM-CARD GRID ================= */}
       {loading ? (
-        <div className="py-16 text-center text-xs text-neutral-400">Loading menu catalog...</div>
+        <div className="py-24 text-center text-xs text-neutral-500 font-mono">
+          Loading restaurant menu catalog...
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {filteredItems.length === 0 ? (
-            <Card className="col-span-full p-12 text-center text-neutral-400 text-xs">
-              No menu items found matching category or filter.
-            </Card>
+            <div className="col-span-full rounded-2xl border border-white/[0.08] bg-[#1c1c1f]/60 p-12 text-center text-neutral-400 text-xs backdrop-blur-xl">
+              No menu items found matching the selected category or search filter.
+            </div>
           ) : (
             filteredItems.map((item) => {
               const isDepleted =
@@ -387,109 +439,117 @@ export default function MenuInventory() {
               return (
                 <div
                   key={item.id}
-                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-white shadow-xs dark:bg-neutral-900 transition-colors ${
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#1c1c1f]/80 hover:bg-[#232328] border transition-all duration-300 backdrop-blur-xl hover:shadow-2xl hover:shadow-[#FA2D48]/5 ${
                     isDepleted
-                      ? "border-red-200 dark:border-red-950"
-                      : "border-neutral-200/80 hover:border-neutral-300 dark:border-neutral-800"
+                      ? "border-red-500/30 opacity-80"
+                      : "border-white/[0.08] hover:border-white/[0.2]"
                   }`}
                 >
-                  {/* Card Image Banner */}
-                  <div className="relative h-40 w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                  {/* Apple Music Album Tile Artwork */}
+                  <div className="relative aspect-4/3 w-full overflow-hidden bg-neutral-900">
                     {item.imageUrl && !item.imageUrl.includes("default-food.png") ? (
                       <img
                         src={`http://localhost:5000/${item.imageUrl}`}
                         alt={item.name}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-neutral-400">
-                        <UtensilsCrossed className="h-8 w-8 opacity-40" />
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-900 text-neutral-500">
+                        <UtensilsCrossed className="h-10 w-10 opacity-30" />
                       </div>
                     )}
 
+                    {/* Gradient Overlay Vignette */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+
                     {/* Category Pill Tag */}
-                    <span className="absolute top-2.5 left-2.5 rounded-lg bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
+                    <span className="absolute top-3 left-3 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-neutral-200 uppercase tracking-wider border border-white/[0.1]">
                       {item.category.name}
                     </span>
 
-                    {/* Price Pill */}
-                    <span className="absolute bottom-2.5 right-2.5 rounded-lg bg-white/90 backdrop-blur-md px-2.5 py-1 text-xs font-mono font-black text-neutral-900 shadow-md dark:bg-neutral-900/90 dark:text-neutral-100">
+                    {/* Price Pill Tag */}
+                    <span className="absolute bottom-3 right-3 rounded-full bg-black/70 backdrop-blur-md px-3 py-1 text-xs font-mono font-extrabold text-white border border-white/[0.15] shadow-lg">
                       ${Number(item.price).toFixed(2)}
                     </span>
                   </div>
 
+                  {/* Details Container */}
                   <div className="p-4 flex flex-col justify-between flex-1">
                     <div>
                       {/* Name & Availability Pill */}
                       <div className="flex items-start justify-between gap-2">
                         <h3
-                          className={`font-bold text-sm tracking-tight ${
-                            isDepleted
-                              ? "text-neutral-500 line-through"
-                              : "text-neutral-900 dark:text-neutral-100"
+                          className={`font-bold text-sm tracking-tight line-clamp-1 ${
+                            isDepleted ? "text-neutral-400 line-through" : "text-white"
                           }`}
                         >
                           {item.name}
                         </h3>
 
                         {isDepleted ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-950 dark:text-red-400 border border-red-200 dark:border-red-800 shrink-0">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-bold text-red-400 border border-red-500/30 shrink-0">
                             86'd
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30 shrink-0">
                             Active
                           </span>
                         )}
                       </div>
 
                       {/* Description */}
-                      <p className="mt-1 text-xs text-neutral-500 line-clamp-2 dark:text-neutral-400">
+                      <p className="mt-1 text-xs text-neutral-400 line-clamp-2 leading-relaxed">
                         {item.description || "No description provided."}
                       </p>
                     </div>
 
-                    {/* Live Inventory Stepper */}
-                    <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                    {/* Live Auto-86 Inventory Stepper & Progress */}
+                    <div className="mt-4 pt-3 border-t border-white/[0.06]">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] font-medium text-neutral-500">Daily Stock</span>
-                        <div className="flex items-center gap-1">
+                        <span className="text-[11px] font-medium text-neutral-400">
+                          Daily Stock
+                        </span>
+                        <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handleQuickLimitUpdate(item.id, remQty - 1)}
-                            className="h-5 w-5 rounded bg-neutral-100 flex items-center justify-center text-xs font-bold text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                            title="Decrease Remaining"
+                            className="h-5 w-5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] flex items-center justify-center text-neutral-300 hover:text-white transition-colors"
+                            title="Decrease Limit"
                           >
-                            -
+                            <Minus className="h-3 w-3" />
                           </button>
                           <span
                             className={`font-mono font-bold text-xs px-1 ${
                               remQty === 0
-                                ? "text-red-600"
+                                ? "text-[#FA2D48]"
                                 : remQty <= 5
-                                ? "text-amber-600"
-                                : "text-neutral-800 dark:text-neutral-200"
+                                ? "text-amber-400"
+                                : "text-neutral-200"
                             }`}
                           >
                             {remQty} / {dailyLimit}
                           </span>
                           <button
                             onClick={() => handleQuickLimitUpdate(item.id, remQty + 1)}
-                            className="h-5 w-5 rounded bg-neutral-100 flex items-center justify-center text-xs font-bold text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                            title="Increase Remaining"
+                            className="h-5 w-5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] flex items-center justify-center text-neutral-300 hover:text-white transition-colors"
+                            title="Increase Limit"
                           >
-                            +
+                            <Plus className="h-3 w-3" />
                           </button>
                         </div>
                       </div>
 
-                      {/* Bar */}
-                      <div className="w-full bg-neutral-100 h-1.5 rounded-full overflow-hidden dark:bg-neutral-800">
+                      {/* Apple Style Stock Meter */}
+                      <div className="w-full bg-white/[0.06] h-1.5 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
-                            remQty === 0 ? "bg-red-500" : remQty <= 5 ? "bg-amber-500" : "bg-emerald-500"
+                            remQty === 0
+                              ? "bg-[#FA2D48]"
+                              : remQty <= 5
+                              ? "bg-amber-400"
+                              : "bg-emerald-500"
                           }`}
                           style={{ width: `${pct}%` }}
                         />
@@ -497,39 +557,33 @@ export default function MenuInventory() {
                     </div>
 
                     {/* Action Bar */}
-                    <div className="mt-3.5 pt-2.5 border-t border-neutral-100 flex items-center justify-between gap-2 dark:border-neutral-800">
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                    <div className="mt-3.5 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
+                      <button
                         onClick={() => handleToggleState(item.id)}
-                        className={`h-7 px-2 text-xs font-semibold ${
+                        className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200 ${
                           item.isAvailable
-                            ? "text-neutral-600 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
-                            : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                            ? "bg-white/[0.06] hover:bg-[#FA2D48]/20 text-neutral-300 hover:text-[#FA2D48] border border-white/[0.08]"
+                            : "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30"
                         }`}
                       >
                         {item.isAvailable ? "Force 86" : "Restock"}
-                      </Button>
+                      </button>
 
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                      <div className="flex items-center gap-1.5">
+                        <button
                           onClick={() => openEditModal(item)}
-                          className="h-7 w-7 text-neutral-500 hover:text-blue-600"
-                          title="Edit Item"
+                          className="h-7 w-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+                          title="Edit Dish"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                        </button>
+                        <button
                           onClick={() => setDeleteConfirmItem(item)}
-                          className="h-7 w-7 text-neutral-500 hover:text-red-600"
-                          title="Delete Item"
+                          className="h-7 w-7 rounded-full bg-white/[0.06] hover:bg-red-500/20 flex items-center justify-center text-neutral-400 hover:text-red-400 transition-colors"
+                          title="Delete Dish"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -542,40 +596,40 @@ export default function MenuInventory() {
 
       {/* ================= MODAL: ADD MENU ITEM ================= */}
       {isAddMenuModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-lg rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3 dark:border-neutral-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.12] bg-[#1a1a1d]/95 p-6 shadow-2xl text-white backdrop-blur-3xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
               <div>
-                <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                  Add new menu item
-                </h3>
-                <p className="text-xs text-neutral-500">Create a dish with pricing, descriptions & inventory</p>
+                <h3 className="text-lg font-bold text-white tracking-tight">Add New Dish</h3>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  Set pricing, description, category, and Auto-86 depletion limits
+                </p>
               </div>
               <button
                 onClick={() => setIsAddMenuModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+                className="rounded-full p-1.5 text-neutral-400 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddMenuItem} className="mt-4 space-y-3.5">
+            <form onSubmit={handleAddMenuItem} className="mt-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Item name *
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                  Item Name *
                 </label>
-                <Input
+                <input
                   type="text"
                   required
                   placeholder="e.g. Truffle Tagliatelle"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="text-xs h-9"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                   Description *
                 </label>
                 <textarea
@@ -584,20 +638,20 @@ export default function MenuInventory() {
                   placeholder="Handcrafted pasta ribbons tossed in black truffle cream sauce with shaved parmesan."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-md border border-neutral-200 bg-transparent px-3 py-2 text-xs text-neutral-900 placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 dark:border-neutral-800 dark:text-neutral-100"
+                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                     Category *
                   </label>
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     required
-                    className="w-full h-9 rounded-md border border-neutral-200 bg-white px-3 text-xs text-neutral-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -608,10 +662,10 @@ export default function MenuInventory() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                     Price ($) *
                   </label>
-                  <Input
+                  <input
                     type="number"
                     step="0.01"
                     min="0"
@@ -619,57 +673,54 @@ export default function MenuInventory() {
                     placeholder="24.50"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="text-xs h-9 font-mono"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                     Daily Batch Limit *
                   </label>
-                  <Input
+                  <input
                     type="number"
                     min="1"
                     required
                     placeholder="50"
                     value={dailyLimit}
                     onChange={(e) => setDailyLimit(e.target.value)}
-                    className="text-xs h-9 font-mono"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                     Dish Photo (Optional)
                   </label>
-                  <Input
+                  <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)}
-                    className="text-xs h-9 file:mr-2 file:rounded file:border-0 file:bg-neutral-100 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-neutral-700 dark:file:bg-neutral-800 dark:file:text-neutral-300"
+                    className="w-full h-10 text-xs text-neutral-400 file:mr-2 file:rounded-lg file:border-0 file:bg-white/[0.08] file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-white cursor-pointer"
                   />
                 </div>
               </div>
 
-              <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                <Button
+              <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={() => setIsAddMenuModalOpen(false)}
-                  className="h-8 text-xs font-medium"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 transition-colors"
                 >
                   Cancel
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
-                  size="sm"
-                  className="h-8 text-xs font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                  className="rounded-full px-6 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] to-[#FF4565] text-white shadow-lg shadow-[#FA2D48]/30 hover:opacity-95 transition-all"
                 >
-                  Add item
-                </Button>
+                  Create Dish
+                </button>
               </div>
             </form>
           </div>
@@ -678,39 +729,39 @@ export default function MenuInventory() {
 
       {/* ================= MODAL: EDIT MENU ITEM ================= */}
       {isEditMenuModalOpen && editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-lg rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3 dark:border-neutral-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.12] bg-[#1a1a1d]/95 p-6 shadow-2xl text-white backdrop-blur-3xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
               <div>
-                <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                  Edit menu item
-                </h3>
-                <p className="text-xs text-neutral-500">Update item details, description, price, and stock limits</p>
+                <h3 className="text-lg font-bold text-white tracking-tight">Edit Menu Item</h3>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  Update dish details, price, and current stock count
+                </p>
               </div>
               <button
                 onClick={() => setIsEditMenuModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+                className="rounded-full p-1.5 text-neutral-400 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateMenuItem} className="mt-4 space-y-3.5">
+            <form onSubmit={handleUpdateMenuItem} className="mt-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Item name *
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                  Item Name *
                 </label>
-                <Input
+                <input
                   type="text"
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="text-xs h-9"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                   Description *
                 </label>
                 <textarea
@@ -718,20 +769,20 @@ export default function MenuInventory() {
                   rows={2}
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full rounded-md border border-neutral-200 bg-transparent px-3 py-2 text-xs text-neutral-900 placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 dark:border-neutral-800 dark:text-neutral-100"
+                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                     Category *
                   </label>
                   <select
                     value={editCategoryId}
                     onChange={(e) => setEditCategoryId(e.target.value)}
                     required
-                    className="w-full h-9 rounded-md border border-neutral-200 bg-white px-3 text-xs text-neutral-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -742,80 +793,77 @@ export default function MenuInventory() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                     Price ($) *
                   </label>
-                  <Input
+                  <input
                     type="number"
                     step="0.01"
                     min="0"
                     required
                     value={editPrice}
                     onChange={(e) => setEditPrice(e.target.value)}
-                    className="text-xs h-9 font-mono"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                    Daily Batch Limit
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                    Daily Limit
                   </label>
-                  <Input
+                  <input
                     type="number"
                     min="1"
                     required
                     value={editDailyLimit}
                     onChange={(e) => setEditDailyLimit(e.target.value)}
-                    className="text-xs h-9 font-mono"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                     Current Remaining Stock
                   </label>
-                  <Input
+                  <input
                     type="number"
                     min="0"
                     required
                     value={editRemainingQty}
                     onChange={(e) => setEditRemainingQty(e.target.value)}
-                    className="text-xs h-9 font-mono"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                   Replace Dish Photo (Optional)
                 </label>
-                <Input
+                <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => setEditImage(e.target.files ? e.target.files[0] : null)}
-                  className="text-xs h-9 file:mr-2 file:rounded file:border-0 file:bg-neutral-100 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-neutral-700 dark:file:bg-neutral-800 dark:file:text-neutral-300"
+                  className="w-full h-10 text-xs text-neutral-400 file:mr-2 file:rounded-lg file:border-0 file:bg-white/[0.08] file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-white cursor-pointer"
                 />
               </div>
 
-              <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                <Button
+              <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={() => setIsEditMenuModalOpen(false)}
-                  className="h-8 text-xs font-medium"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 transition-colors"
                 >
                   Cancel
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
-                  size="sm"
-                  className="h-8 text-xs font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                  className="rounded-full px-6 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] to-[#FF4565] text-white shadow-lg shadow-[#FA2D48]/30 hover:opacity-95 transition-all"
                 >
-                  Save changes
-                </Button>
+                  Save Changes
+                </button>
               </div>
             </form>
           </div>
@@ -824,84 +872,82 @@ export default function MenuInventory() {
 
       {/* ================= MODAL: CATEGORY MANAGER ================= */}
       {isCategoryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-md rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3 dark:border-neutral-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-md rounded-3xl border border-white/[0.12] bg-[#1a1a1d]/95 p-6 shadow-2xl text-white backdrop-blur-3xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
               <div>
-                <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                  Menu categories
-                </h3>
-                <p className="text-xs text-neutral-500">Organize food and beverage groupings</p>
+                <h3 className="text-lg font-bold text-white tracking-tight">Categories</h3>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  Organize food, beverage, and kitchen sections
+                </p>
               </div>
               <button
                 onClick={() => setIsCategoryModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+                className="rounded-full p-1.5 text-neutral-400 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* List existing categories */}
-            <div className="mt-4 max-h-48 overflow-y-auto divide-y divide-neutral-100 rounded-lg border border-neutral-200 dark:border-neutral-800 dark:divide-neutral-800">
+            <div className="mt-4 max-h-52 overflow-y-auto divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08] bg-white/[0.02]">
               {categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className="flex items-center justify-between p-3 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                  className="flex items-center justify-between p-3.5 text-xs hover:bg-white/[0.04] transition-colors"
                 >
                   <div>
-                    <div className="font-semibold text-neutral-900 dark:text-neutral-100">{cat.name}</div>
+                    <div className="font-semibold text-white">{cat.name}</div>
                     {cat.description && (
-                      <div className="text-[11px] text-neutral-500">{cat.description}</div>
+                      <div className="text-[11px] text-neutral-400 mt-0.5">{cat.description}</div>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <button
                     onClick={() => handleDeleteCategory(cat.id)}
-                    className="h-7 w-7 text-neutral-400 hover:text-red-600 dark:hover:text-red-400"
+                    className="h-7 w-7 rounded-full bg-white/[0.06] hover:bg-red-500/20 flex items-center justify-center text-neutral-400 hover:text-red-400 transition-colors"
+                    title="Delete Category"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  </button>
                 </div>
               ))}
             </div>
 
             {/* Add Category Form */}
-            <form onSubmit={handleAddCategory} className="mt-4 space-y-3 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+            <form onSubmit={handleAddCategory} className="mt-4 space-y-3.5 border-t border-white/[0.08] pt-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  New category name
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                  New Category Name
                 </label>
-                <Input
+                <input
                   type="text"
                   required
-                  placeholder="e.g. Starters, Desserts"
+                  placeholder="e.g. Starters, Signature Desserts"
                   value={catName}
                   onChange={(e) => setCatName(e.target.value)}
-                  className="text-xs h-9"
+                  className="w-full h-9 px-3 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Description <span className="text-neutral-400 font-normal">(optional)</span>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                  Description <span className="text-neutral-500 font-normal">(optional)</span>
                 </label>
-                <Input
+                <input
                   type="text"
                   placeholder="Appetizers, sides, and finger foods"
                   value={catDesc}
                   onChange={(e) => setCatDesc(e.target.value)}
-                  className="text-xs h-9"
+                  className="w-full h-9 px-3 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-1">
-                <Button
+              <div className="pt-2">
+                <button
                   type="submit"
-                  size="sm"
-                  className="w-full h-8 text-xs font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                  className="w-full h-9 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FA2D48] to-[#FF4565] text-white shadow-lg shadow-[#FA2D48]/25 hover:opacity-95 transition-all"
                 >
-                  Create category
-                </Button>
+                  Create Category
+                </button>
               </div>
             </form>
           </div>
@@ -910,41 +956,37 @@ export default function MenuInventory() {
 
       {/* ================= MODAL: DELETE CONFIRMATION ================= */}
       {deleteConfirmItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-sm rounded-3xl border border-white/[0.12] bg-[#1a1a1d]/95 p-6 shadow-2xl text-white backdrop-blur-3xl animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600 dark:bg-red-950/50">
-                <AlertTriangle className="h-4 w-4" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-[#FA2D48] border border-red-500/30">
+                <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                  Delete menu item
-                </h3>
-                <p className="text-xs text-neutral-500">This action cannot be undone.</p>
+                <h3 className="text-sm font-bold text-white">Delete Dish</h3>
+                <p className="text-xs text-neutral-400">This action cannot be undone.</p>
               </div>
             </div>
 
-            <p className="mt-3 text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
-              Are you sure you want to permanently delete <strong>"{deleteConfirmItem.name}"</strong>?
+            <p className="mt-4 text-xs text-neutral-300 leading-relaxed">
+              Are you sure you want to permanently delete{" "}
+              <strong className="text-white">"{deleteConfirmItem.name}"</strong> from the restaurant
+              catalog?
             </p>
 
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              <button
                 onClick={() => setDeleteConfirmItem(null)}
-                className="h-8 text-xs font-medium"
+                className="rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 transition-colors"
               >
                 Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
+              </button>
+              <button
                 onClick={handleDeleteMenuItem}
-                className="h-8 text-xs font-medium"
+                className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30 hover:opacity-95 transition-all"
               >
-                Delete item
-              </Button>
+                Delete Dish
+              </button>
             </div>
           </div>
         </div>

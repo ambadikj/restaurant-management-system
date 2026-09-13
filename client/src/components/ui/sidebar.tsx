@@ -186,8 +186,7 @@ function Sidebar({
         <SheetContent
           data-sidebar="sidebar"
           data-slot="sidebar"
-          data-mobile="true"
-          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          className="w-(--sidebar-width) bg-[#161619] border-r border-white/[0.08] p-0 text-neutral-200 [&>button]:hidden backdrop-blur-2xl"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,

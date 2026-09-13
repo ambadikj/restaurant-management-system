@@ -13,8 +13,6 @@ import {
   ChefHat,
   ReceiptText,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface Role {
   id: number;
@@ -101,7 +99,7 @@ export default function Employees() {
       setEmail("");
       setPassword("");
       setIsAddModalOpen(false);
-      showNotification(`Staff member "${fullName}" created`);
+      showNotification(`Staff member "${fullName}" created successfully!`);
       fetchData(false);
     } catch (err: any) {
       alert(err.response?.data?.message || "Error creating user");
@@ -132,7 +130,7 @@ export default function Employees() {
 
       setIsEditModalOpen(false);
       setEditingUser(null);
-      showNotification(`"${editFullName}" updated successfully`);
+      showNotification(`"${editFullName}" updated successfully!`);
       fetchData(false);
     } catch (err: any) {
       alert(err.response?.data?.message || "Error updating user");
@@ -143,7 +141,7 @@ export default function Employees() {
     if (!deleteConfirmUser) return;
     try {
       await axiosInstance.delete(`/users/${deleteConfirmUser.id}`);
-      showNotification(`"${deleteConfirmUser.fullName}" removed`);
+      showNotification(`"${deleteConfirmUser.fullName}" removed.`);
       setDeleteConfirmUser(null);
       fetchData(false);
     } catch (err: any) {
@@ -152,16 +150,14 @@ export default function Employees() {
   };
 
   const toggleStatus = async (id: number) => {
-    // Optimistically toggle status locally so the UI updates instantly without layout shifts
     setUsers((prev) =>
       prev.map((u) => (u.id === id ? { ...u, isActive: !u.isActive } : u))
     );
     try {
       await axiosInstance.patch(`/users/${id}/status`);
-      showNotification("Staff status updated");
+      showNotification("Staff status updated!");
       fetchData(false);
     } catch (err: any) {
-      // Revert optimistic update if API fails
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, isActive: !u.isActive } : u))
       );
@@ -185,64 +181,113 @@ export default function Employees() {
     return matchesSearch && matchesRole;
   });
 
+  const totalUsers = users.length;
+  const activeUsers = users.filter((u) => u.isActive).length;
+  const adminCount = users.filter((u) => u.role.name.toUpperCase() === "ADMIN").length;
+  const cashierCount = users.filter((u) => u.role.name.toUpperCase() === "CASHIER").length;
+  const kitchenCount = users.filter((u) => u.role.name.toUpperCase() === "KITCHEN").length;
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       {/* Toast Notification */}
       {successMsg && (
-        <div className="fixed top-16 right-6 z-50 flex items-center gap-2 rounded-lg bg-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 px-4 py-2.5 text-xs font-medium text-white shadow-xl animate-in fade-in slide-in-from-top-2 border border-neutral-800">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />
+        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-[#FA2D48]/10 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="h-4 w-4 text-[#FA2D48]" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Bar - Apple Music Style Hero */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-white/[0.08] pb-6">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 sm:text-2xl">
-            Staff & Permissions
+          <div className="flex items-center gap-2 text-[11px] font-bold text-[#FA2D48] tracking-widest uppercase mb-1">
+            <Shield className="h-3.5 w-3.5" />
+            <span>Staff Directory & Access Control</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
+            Staff & RBAC Management
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
-            Manage your restaurant team accounts, access roles, and permissions.
+          <p className="mt-1 text-xs sm:text-sm text-neutral-400">
+            Manage authorized staff members, role designations (Admin, POS Cashier, Kitchen), and access credentials.
           </p>
         </div>
 
-        <Button
-          size="sm"
+        {/* Add Member Button */}
+        <button
           onClick={() => setIsAddModalOpen(true)}
-          className="h-9 gap-1.5 text-xs font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 shadow-xs self-start sm:self-auto"
+          className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB5C74] hover:from-[#E0263F] hover:to-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 self-start md:self-auto"
         >
-          <UserPlus className="h-3.5 w-3.5" />
-          Add member
-        </Button>
+          <UserPlus className="h-4 w-4" />
+          <span>Add Member</span>
+        </button>
       </div>
 
-      {/* Filter Tabs & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Segmented Role Tabs */}
-        <div className="inline-flex h-9 items-center rounded-lg bg-neutral-100/90 p-1 text-xs dark:bg-neutral-800/70 border border-neutral-200/60 dark:border-neutral-800">
+      {/* Staff Stats Row (Apple Music Cards) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
+          <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+            Total Staff
+          </div>
+          <div className="mt-1 text-2xl font-bold text-white font-mono">{totalUsers}</div>
+          <div className="mt-0.5 text-[10px] text-neutral-400">Registered Accounts</div>
+        </div>
+
+        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
+          <div className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+            Active Accounts
+          </div>
+          <div className="mt-1 text-2xl font-bold text-emerald-400 font-mono">{activeUsers}</div>
+          <div className="mt-0.5 text-[10px] text-neutral-400">Can Login Now</div>
+        </div>
+
+        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
+          <div className="text-[11px] font-semibold text-[#FA2D48] uppercase tracking-wider">
+            Admins & Super
+          </div>
+          <div className="mt-1 text-2xl font-bold text-[#FA2D48] font-mono">{adminCount}</div>
+          <div className="mt-0.5 text-[10px] text-neutral-400">Full Privileges</div>
+        </div>
+
+        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
+          <div className="text-[11px] font-semibold text-sky-400 uppercase tracking-wider">
+            Front & Kitchen
+          </div>
+          <div className="mt-1 text-2xl font-bold text-sky-400 font-mono">
+            {cashierCount + kitchenCount}
+          </div>
+          <div className="mt-0.5 text-[10px] text-neutral-400">
+            {cashierCount} Cashier • {kitchenCount} Chef
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Tabs & Search Bar - Apple Music Pill Row */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        {/* Role Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {(["ALL", "ADMIN", "CASHIER", "KITCHEN"] as const).map((r) => {
-            const label = r === "ALL" ? "All" : r === "ADMIN" ? "Admins" : r === "CASHIER" ? "Cashiers" : "Kitchen";
+            const label =
+              r === "ALL" ? "All Staff" : r === "ADMIN" ? "Admins" : r === "CASHIER" ? "Cashiers" : "Kitchen";
             const count =
               r === "ALL"
                 ? users.length
                 : users.filter((u) => u.role.name.toUpperCase() === r).length;
             const isSelected = selectedRoleFilter === r;
+
             return (
               <button
                 key={r}
                 onClick={() => setSelectedRoleFilter(r)}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   isSelected
-                    ? "bg-white text-neutral-900 shadow-xs dark:bg-neutral-900 dark:text-neutral-100"
-                    : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200"
+                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                    : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                 }`}
               >
                 <span>{label}</span>
                 <span
-                  className={`text-[10px] font-mono ${
-                    isSelected
-                      ? "text-neutral-500 dark:text-neutral-400"
-                      : "text-neutral-400 dark:text-neutral-500"
+                  className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                    isSelected ? "bg-white/20 text-white" : "bg-white/[0.08] text-neutral-400"
                   }`}
                 >
                   {count}
@@ -252,23 +297,31 @@ export default function Employees() {
           })}
         </div>
 
-        {/* Search Input */}
+        {/* Search Bar - Apple Music Pill */}
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-neutral-400" />
-          <Input
+          <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-neutral-400" />
+          <input
             type="text"
-            placeholder="Filter by name, @username, email..."
+            placeholder="Search staff, username, email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 pl-8 text-xs bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800 focus-visible:ring-neutral-400"
+            className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] transition-all focus:outline-none"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-2.5 text-neutral-400 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ================= STAFF DIRECTORY LIST TABLE ================= */}
-      <div className="rounded-xl border border-neutral-200/80 bg-white dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden shadow-xs">
+      {/* ================= STAFF TRACKLIST DIRECTORY ================= */}
+      <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 backdrop-blur-xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed text-left text-sm border-collapse min-w-[650px]">
+          <table className="w-full table-fixed text-left text-sm border-collapse min-w-[700px]">
             <colgroup>
               <col className="w-[32%]" />
               <col className="w-[18%]" />
@@ -276,25 +329,25 @@ export default function Employees() {
               <col className="w-[12%]" />
               <col className="w-[12%]" />
             </colgroup>
-            <thead className="border-b border-neutral-200/80 bg-neutral-50/60 text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950/40 dark:text-neutral-400">
+            <thead className="border-b border-white/[0.07] bg-white/[0.02] text-[10px] font-bold uppercase tracking-widest text-neutral-400">
               <tr>
-                <th className="py-3 pl-5 pr-4">Member</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="py-3 pl-4 pr-5 text-right">Actions</th>
+                <th className="py-3.5 pl-6 pr-4">Team Member</th>
+                <th className="px-4 py-3.5">Assigned Role</th>
+                <th className="px-4 py-3.5">Email Contact</th>
+                <th className="px-4 py-3.5">Auth Status</th>
+                <th className="py-3.5 pl-4 pr-6 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+            <tbody className="divide-y divide-white/[0.05]">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-14 text-center text-xs text-neutral-400">
-                    Loading team members...
+                  <td colSpan={5} className="py-20 text-center text-xs text-neutral-500 font-mono">
+                    Loading team accounts...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-14 text-center text-xs text-neutral-400">
+                  <td colSpan={5} className="py-20 text-center text-xs text-neutral-400">
                     No team members found matching your search.
                   </td>
                 </tr>
@@ -305,14 +358,15 @@ export default function Employees() {
                   return (
                     <tr
                       key={user.id}
-                      className={`group transition-colors hover:bg-neutral-50/70 dark:hover:bg-neutral-800/40 ${
-                        !user.isActive ? "bg-neutral-50/20 opacity-60" : ""
+                      className={`group hover:bg-white/[0.04] transition-colors ${
+                        !user.isActive ? "opacity-60 bg-white/[0.01]" : ""
                       }`}
                     >
                       {/* Member Info */}
-                      <td className="py-3.5 pl-5 pr-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-semibold text-xs flex items-center justify-center border border-neutral-200/70 dark:border-neutral-700/80 shrink-0">
+                      <td className="py-4 pl-6 pr-4">
+                        <div className="flex items-center gap-3.5">
+                          {/* Avatar Medallion */}
+                          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-[#FA2D48] to-[#FF4565] text-white font-bold text-xs flex items-center justify-center shadow-md shadow-[#FA2D48]/20 shrink-0">
                             {user.fullName
                               .split(" ")
                               .map((n) => n[0])
@@ -321,10 +375,10 @@ export default function Employees() {
                               .toUpperCase()}
                           </div>
                           <div className="truncate">
-                            <div className="font-medium text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 truncate">
+                            <div className="font-semibold text-xs sm:text-sm text-white truncate">
                               {user.fullName}
                             </div>
-                            <div className="text-[11px] text-neutral-400 dark:text-neutral-500 truncate font-mono">
+                            <div className="text-[11px] text-neutral-400 truncate font-mono mt-0.5">
                               @{user.username}
                             </div>
                           </div>
@@ -332,67 +386,67 @@ export default function Employees() {
                       </td>
 
                       {/* Role */}
-                      <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-800/60 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                          {roleName === "admin" && <Shield className="h-3 w-3 text-neutral-500 shrink-0" />}
-                          {roleName === "cashier" && <ReceiptText className="h-3 w-3 text-neutral-500 shrink-0" />}
-                          {roleName === "kitchen" && <ChefHat className="h-3 w-3 text-neutral-500 shrink-0" />}
+                      <td className="px-4 py-4">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-xs font-semibold text-neutral-200">
+                          {roleName === "admin" && (
+                            <Shield className="h-3 w-3 text-[#FA2D48] shrink-0" />
+                          )}
+                          {roleName === "cashier" && (
+                            <ReceiptText className="h-3 w-3 text-sky-400 shrink-0" />
+                          )}
+                          {roleName === "kitchen" && (
+                            <ChefHat className="h-3 w-3 text-amber-400 shrink-0" />
+                          )}
                           <span className="truncate">{user.role.name}</span>
                         </span>
                       </td>
 
                       {/* Email */}
-                      <td className="px-4 py-3.5 text-xs text-neutral-600 dark:text-neutral-300">
+                      <td className="px-4 py-4 text-xs text-neutral-300">
                         <span className="flex items-center gap-1.5 truncate">
-                          <Mail className="h-3 w-3 text-neutral-400 shrink-0" />
+                          <Mail className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
                           <span className="truncate">{user.email}</span>
                         </span>
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-3.5 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         {user.isActive ? (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/30">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-400 dark:text-neutral-500">
-                            <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.05] px-2.5 py-0.5 text-xs font-semibold text-neutral-400 border border-white/[0.1]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-neutral-500" />
                             Suspended
                           </span>
                         )}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3.5 pl-4 pr-5 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                      <td className="py-4 pl-4 pr-6 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
                             onClick={() => toggleStatus(user.id)}
-                            className="h-7 w-16 px-0 text-center text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                            className="rounded-full px-2.5 py-1 text-[11px] font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-colors"
                           >
                             {user.isActive ? "Suspend" : "Activate"}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                          </button>
+                          <button
                             onClick={() => openEditModal(user)}
-                            className="h-7 w-7 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
-                            title="Edit"
+                            className="h-7 w-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+                            title="Edit Member"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                          </button>
+                          <button
                             onClick={() => setDeleteConfirmUser(user)}
-                            className="h-7 w-7 text-neutral-400 hover:text-red-600 dark:hover:text-red-400"
-                            title="Delete"
+                            className="h-7 w-7 rounded-full bg-white/[0.06] hover:bg-red-500/20 flex items-center justify-center text-neutral-400 hover:text-red-400 transition-colors"
+                            title="Delete Member"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -404,74 +458,74 @@ export default function Employees() {
         </div>
 
         {/* Table Footer Bar */}
-        <div className="border-t border-neutral-100 bg-neutral-50/50 px-5 py-2.5 text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950/30 flex items-center justify-between">
+        <div className="border-t border-white/[0.07] bg-white/[0.01] px-6 py-3 text-xs text-neutral-400 flex items-center justify-between">
           <span>
             Showing {filteredUsers.length} of {users.length} members
           </span>
-          <span className="text-[11px] text-neutral-400">
-            Role-Based Access Control (RBAC)
+          <span className="text-[11px] text-neutral-500">
+            Apple Music Style RBAC Directory
           </span>
         </div>
       </div>
 
       {/* ================= MODAL: ADD STAFF ================= */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-md rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3 dark:border-neutral-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-md rounded-3xl border border-white/[0.12] bg-[#1a1a1d]/95 p-6 shadow-2xl text-white backdrop-blur-3xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-4">
               <div>
-                <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                  Add team member
-                </h3>
-                <p className="text-xs text-neutral-500">Create login credentials and set their access role</p>
+                <h3 className="text-lg font-bold text-white tracking-tight">Add Team Member</h3>
+                <p className="text-xs text-neutral-400">
+                  Create staff login credentials and assign system permissions
+                </p>
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+                className="rounded-full p-1.5 text-neutral-400 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateUser} className="mt-4 space-y-3.5">
+            <form onSubmit={handleCreateUser} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Full name
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                  Full Name *
                 </label>
-                <Input
+                <input
                   type="text"
                   required
                   placeholder="e.g. Aaliya Khalid"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="text-xs h-9"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                    Username
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                    Username *
                   </label>
-                  <Input
+                  <input
                     type="text"
                     required
                     placeholder="aaliya_k"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="text-xs h-9 font-mono"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                    Role
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                    Role *
                   </label>
                   <select
                     value={roleId}
                     onChange={(e) => setRoleId(e.target.value)}
                     required
-                    className="w-full h-9 rounded-md border border-neutral-200 bg-white px-3 text-xs text-neutral-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                   >
                     {roles.map((r) => (
                       <option key={r.id} value={r.id}>
@@ -483,50 +537,47 @@ export default function Employees() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Email
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                  Email Address *
                 </label>
-                <Input
+                <input
                   type="email"
                   required
                   placeholder="aaliya@restaurant.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="text-xs h-9"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Temporary password
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                  Temporary Password *
                 </label>
-                <Input
+                <input
                   type="password"
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="text-xs h-9 font-mono"
+                  className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
-              <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                <Button
+              <div className="flex justify-end gap-2.5 pt-4 border-t border-white/[0.08]">
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="h-8 text-xs font-medium"
+                  className="rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 transition-colors"
                 >
                   Cancel
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
-                  size="sm"
-                  className="h-8 text-xs font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] to-[#FF4565] text-white shadow-lg shadow-[#FA2D48]/30 hover:opacity-95 transition-all"
                 >
-                  Add member
-                </Button>
+                  Create Member
+                </button>
               </div>
             </form>
           </div>
@@ -535,46 +586,46 @@ export default function Employees() {
 
       {/* ================= MODAL: EDIT STAFF ================= */}
       {isEditModalOpen && editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-md rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3 dark:border-neutral-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-md rounded-3xl border border-white/[0.12] bg-[#1a1a1d]/95 p-6 shadow-2xl text-white backdrop-blur-3xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-4">
               <div>
-                <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                  Edit member
-                </h3>
-                <p className="text-xs text-neutral-500">Updating details for @{editingUser.username}</p>
+                <h3 className="text-lg font-bold text-white tracking-tight">Edit Member</h3>
+                <p className="text-xs text-neutral-400">
+                  Update details and permissions for @{editingUser.username}
+                </p>
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+                className="rounded-full p-1.5 text-neutral-400 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateUser} className="mt-4 space-y-3.5">
+            <form onSubmit={handleUpdateUser} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Full name
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                  Full Name
                 </label>
-                <Input
+                <input
                   type="text"
                   required
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
-                  className="text-xs h-9"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                   Role
                 </label>
                 <select
                   value={editRoleId}
                   onChange={(e) => setEditRoleId(e.target.value)}
                   required
-                  className="w-full h-9 rounded-md border border-neutral-200 bg-white px-3 text-xs text-neutral-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                  className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 >
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -585,48 +636,45 @@ export default function Employees() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                   Email
                 </label>
-                <Input
+                <input
                   type="email"
                   required
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="text-xs h-9"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Reset password <span className="text-neutral-400 font-normal">(optional)</span>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                  Reset Password <span className="text-neutral-500 font-normal">(optional)</span>
                 </label>
-                <Input
+                <input
                   type="password"
                   placeholder="Leave blank to keep unchanged"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
-                  className="text-xs h-9 font-mono"
+                  className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
                 />
               </div>
 
-              <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                <Button
+              <div className="flex justify-end gap-2.5 pt-4 border-t border-white/[0.08]">
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="h-8 text-xs font-medium"
+                  className="rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 transition-colors"
                 >
                   Cancel
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
-                  size="sm"
-                  className="h-8 text-xs font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] to-[#FF4565] text-white shadow-lg shadow-[#FA2D48]/30 hover:opacity-95 transition-all"
                 >
-                  Save changes
-                </Button>
+                  Save Changes
+                </button>
               </div>
             </form>
           </div>
@@ -635,41 +683,36 @@ export default function Employees() {
 
       {/* ================= MODAL: DELETE USER CONFIRMATION ================= */}
       {deleteConfirmUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-sm rounded-3xl border border-white/[0.12] bg-[#1a1a1d]/95 p-6 shadow-2xl text-white backdrop-blur-3xl animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600 dark:bg-red-950/50">
-                <AlertTriangle className="h-4 w-4" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-[#FA2D48] border border-red-500/30">
+                <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                  Delete member
-                </h3>
-                <p className="text-xs text-neutral-500">This action cannot be undone.</p>
+                <h3 className="text-sm font-bold text-white">Delete Member</h3>
+                <p className="text-xs text-neutral-400">Revoke access immediately</p>
               </div>
             </div>
 
-            <p className="mt-3 text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
-              Are you sure you want to remove <strong>{deleteConfirmUser.fullName}</strong> (@{deleteConfirmUser.username})? Their dashboard access will be immediately revoked.
+            <p className="mt-4 text-xs text-neutral-300 leading-relaxed">
+              Are you sure you want to remove{" "}
+              <strong className="text-white">{deleteConfirmUser.fullName}</strong> (@{deleteConfirmUser.username})? Their dashboard access will be immediately revoked.
             </p>
 
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              <button
                 onClick={() => setDeleteConfirmUser(null)}
-                className="h-8 text-xs font-medium"
+                className="rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 transition-colors"
               >
                 Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
+              </button>
+              <button
                 onClick={handleDeleteUser}
-                className="h-8 text-xs font-medium"
+                className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30 hover:opacity-95 transition-all"
               >
-                Delete member
-              </Button>
+                Delete Member
+              </button>
             </div>
           </div>
         </div>
