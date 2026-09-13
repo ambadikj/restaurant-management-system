@@ -16,6 +16,7 @@ import {
   RefreshCw,
   ExternalLink,
   Layers,
+  Eye,
 } from "lucide-react";
 
 interface RestaurantTable {
@@ -23,182 +24,6 @@ interface RestaurantTable {
   tableNumber: number;
   capacity: number;
   status: "AVAILABLE" | "OCCUPIED" | "BILLING" | "CLEANING";
-}
-
-function TableVisualPod({
-  table,
-  onShowQR,
-}: {
-  table: RestaurantTable;
-  onShowQR: () => void;
-}) {
-  const isAvail = table.status === "AVAILABLE";
-  const isOccupied = table.status === "OCCUPIED";
-  const isBilling = table.status === "BILLING";
-  const isCleaning = table.status === "CLEANING";
-  const seats = table.capacity;
-
-  const chairBase = isOccupied
-    ? "bg-gradient-to-b from-sky-400 to-blue-600 border-sky-300 shadow-md shadow-blue-500/25"
-    : isBilling
-    ? "bg-gradient-to-b from-amber-400 to-orange-500 border-amber-300 shadow-md shadow-amber-500/25"
-    : isCleaning
-    ? "bg-gradient-to-b from-purple-400 to-violet-600 border-purple-300 shadow-md shadow-purple-500/25"
-    : "bg-gradient-to-b from-emerald-400 to-teal-600 border-emerald-300 shadow-md shadow-emerald-500/20";
-
-  return (
-    <div className="relative my-3 flex items-center justify-center p-3 select-none">
-      {/* 2-Seat Circular Bistro */}
-      {seats <= 2 ? (
-        <div className="relative flex items-center justify-center">
-          {/* Left Cushioned Chair */}
-          <div
-            className={`absolute -left-4.5 h-8 w-3 rounded-l-xl border transition-all duration-300 ${chairBase}`}
-          >
-            <div className="h-full w-1 border-r border-white/20" />
-          </div>
-
-          {/* Bistro Table Top - Apple Acoustic Glass Style */}
-          <div
-            onClick={onShowQR}
-            className={`group/pod relative flex h-28 w-28 cursor-pointer flex-col items-center justify-center rounded-full border-2 transition-all duration-300 shadow-lg ${
-              isAvail
-                ? "bg-[#18231c] border-emerald-500/60 text-emerald-100 shadow-emerald-500/10 hover:border-emerald-400"
-                : isOccupied
-                ? "bg-[#16212e] border-sky-500/60 text-sky-100 shadow-sky-500/10 hover:border-sky-400"
-                : isBilling
-                ? "bg-[#271f16] border-amber-500/60 text-amber-100 shadow-amber-500/10 hover:border-amber-400"
-                : "bg-[#221829] border-purple-500/60 text-purple-100 shadow-purple-500/10 hover:border-purple-400"
-            }`}
-            title="Click to view QR Standee"
-          >
-            {/* Center QR Medallion */}
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.08] backdrop-blur-md border border-white/10 shadow-xs group-hover/pod:scale-110 transition-transform">
-              <QrCode className="h-4 w-4 text-white" />
-            </div>
-
-            <div className="mt-1.5 flex flex-col items-center leading-tight">
-              <span className="font-mono text-xs font-black tracking-tight text-white">
-                T • {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
-              </span>
-              <span className="text-[9px] font-semibold text-neutral-400">Bistro (2P)</span>
-            </div>
-          </div>
-
-          {/* Right Cushioned Chair */}
-          <div
-            className={`absolute -right-4.5 h-8 w-3 rounded-r-xl border transition-all duration-300 ${chairBase}`}
-          >
-            <div className="h-full w-1 border-l border-white/20 ml-auto" />
-          </div>
-        </div>
-      ) : seats <= 4 ? (
-        /* 4-Seat Square Booth */
-        <div className="relative flex items-center justify-center">
-          {/* Top Chairs */}
-          <div className="absolute -top-4 flex gap-5">
-            <div className={`h-3 w-8 rounded-t-xl border transition-all duration-300 ${chairBase}`}>
-              <div className="w-full h-1 border-b border-white/20" />
-            </div>
-            <div className={`h-3 w-8 rounded-t-xl border transition-all duration-300 ${chairBase}`}>
-              <div className="w-full h-1 border-b border-white/20" />
-            </div>
-          </div>
-
-          {/* Table Top */}
-          <div
-            onClick={onShowQR}
-            className={`group/pod relative flex h-28 w-36 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 transition-all duration-300 shadow-lg ${
-              isAvail
-                ? "bg-[#18231c] border-emerald-500/60 text-emerald-100 shadow-emerald-500/10 hover:border-emerald-400"
-                : isOccupied
-                ? "bg-[#16212e] border-sky-500/60 text-sky-100 shadow-sky-500/10 hover:border-sky-400"
-                : isBilling
-                ? "bg-[#271f16] border-amber-500/60 text-amber-100 shadow-amber-500/10 hover:border-amber-400"
-                : "bg-[#221829] border-purple-500/60 text-purple-100 shadow-purple-500/10 hover:border-purple-400"
-            }`}
-            title="Click to view QR Standee"
-          >
-            {/* Center QR Medallion */}
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.08] backdrop-blur-md border border-white/10 shadow-xs group-hover/pod:scale-110 transition-transform">
-              <QrCode className="h-4 w-4 text-white" />
-            </div>
-
-            <div className="mt-1.5 flex flex-col items-center leading-tight">
-              <span className="font-mono text-xs font-black tracking-tight text-white">
-                TABLE {table.tableNumber}
-              </span>
-              <span className="text-[9px] font-semibold text-neutral-400">Booth (4P)</span>
-            </div>
-          </div>
-
-          {/* Bottom Chairs */}
-          <div className="absolute -bottom-4 flex gap-5">
-            <div className={`h-3 w-8 rounded-b-xl border transition-all duration-300 ${chairBase}`}>
-              <div className="w-full h-1 border-t border-white/20 mt-auto" />
-            </div>
-            <div className={`h-3 w-8 rounded-b-xl border transition-all duration-300 ${chairBase}`}>
-              <div className="w-full h-1 border-t border-white/20 mt-auto" />
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* 6+ Seat Grand Banquet */
-        <div className="relative flex items-center justify-center">
-          {/* Top Chairs */}
-          <div className="absolute -top-4 flex gap-3">
-            {Array.from({ length: Math.ceil(seats / 2) }).map((_, i) => (
-              <div
-                key={`t-${i}`}
-                className={`h-3 w-7 rounded-t-xl border transition-all duration-300 ${chairBase}`}
-              >
-                <div className="w-full h-1 border-b border-white/20" />
-              </div>
-            ))}
-          </div>
-
-          {/* Banquet Table Top */}
-          <div
-            onClick={onShowQR}
-            className={`group/pod relative flex h-28 w-48 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 transition-all duration-300 shadow-lg ${
-              isAvail
-                ? "bg-[#18231c] border-emerald-500/60 text-emerald-100 shadow-emerald-500/10 hover:border-emerald-400"
-                : isOccupied
-                ? "bg-[#16212e] border-sky-500/60 text-sky-100 shadow-sky-500/10 hover:border-sky-400"
-                : isBilling
-                ? "bg-[#271f16] border-amber-500/60 text-amber-100 shadow-amber-500/10 hover:border-amber-400"
-                : "bg-[#221829] border-purple-500/60 text-purple-100 shadow-purple-500/10 hover:border-purple-400"
-            }`}
-            title="Click to view QR Standee"
-          >
-            {/* Center QR Medallion */}
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.08] backdrop-blur-md border border-white/10 shadow-xs group-hover/pod:scale-110 transition-transform">
-              <QrCode className="h-4 w-4 text-white" />
-            </div>
-
-            <div className="mt-1.5 flex flex-col items-center leading-tight">
-              <span className="font-mono text-xs font-black tracking-tight text-white">
-                TABLE {table.tableNumber}
-              </span>
-              <span className="text-[9px] font-semibold text-neutral-400">Banquet ({seats}P)</span>
-            </div>
-          </div>
-
-          {/* Bottom Chairs */}
-          <div className="absolute -bottom-4 flex gap-3">
-            {Array.from({ length: Math.floor(seats / 2) }).map((_, i) => (
-              <div
-                key={`b-${i}`}
-                className={`h-3 w-7 rounded-b-xl border transition-all duration-300 ${chairBase}`}
-              >
-                <div className="w-full h-1 border-t border-white/20 mt-auto" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default function TablesQR() {
@@ -485,10 +310,10 @@ export default function TablesQR() {
             <span>Floor Plan & QR Endpoints</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
-            Acoustic Floor Management
+            Floor Plan & QR Stations
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-neutral-400">
-            Real-time dine-in floor map, seating capacity, table occupancy tracking, and contactless QR standees.
+            Real-time dining room floor plan, live occupancy station cards, and contactless QR standees.
           </p>
         </div>
 
@@ -496,7 +321,7 @@ export default function TablesQR() {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleShowTakeawayQR}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 hover:text-white border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
             title="Generate Takeaway Standee"
           >
             <ShoppingBag className="h-4 w-4 text-[#FA2D48]" />
@@ -505,7 +330,7 @@ export default function TablesQR() {
 
           <button
             onClick={handleBatchPrint}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 hover:text-white border border-white/[0.1] backdrop-blur-md transition-all active:scale-95"
           >
             <Printer className="h-4 w-4 text-neutral-400" />
             <span>Batch Print</span>
@@ -554,7 +379,7 @@ export default function TablesQR() {
             <span className="text-2xl font-bold font-mono tracking-tight text-emerald-400">
               {availableCount}
             </span>
-            <span className="text-xs text-neutral-400">Vacant Pods</span>
+            <span className="text-xs text-neutral-400">Vacant Tables</span>
           </div>
           <div className="mt-1 text-[10px] text-emerald-400 font-semibold">
             Ready for instant guests
@@ -610,7 +435,7 @@ export default function TablesQR() {
           className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
             statusFilter === "ALL"
               ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
           }`}
         >
           <span>All Tables</span>
@@ -624,7 +449,7 @@ export default function TablesQR() {
           className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
             statusFilter === "AVAILABLE"
               ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
           }`}
         >
           <span>Available</span>
@@ -638,7 +463,7 @@ export default function TablesQR() {
           className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
             statusFilter === "OCCUPIED"
               ? "bg-sky-600 text-white shadow-md shadow-sky-600/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
           }`}
         >
           <span>Occupied</span>
@@ -652,7 +477,7 @@ export default function TablesQR() {
           className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
             statusFilter === "BILLING"
               ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
           }`}
         >
           <span>Billing</span>
@@ -666,7 +491,7 @@ export default function TablesQR() {
           className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
             statusFilter === "CLEANING"
               ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
           }`}
         >
           <span>Cleaning</span>
@@ -676,10 +501,10 @@ export default function TablesQR() {
         </button>
       </div>
 
-      {/* ================= VISUAL FLOOR GRID ================= */}
+      {/* ================= APPLE MUSIC STATION / ALBUM CARD GRID ================= */}
       {loading ? (
         <div className="py-24 text-center text-xs text-neutral-500 font-mono">
-          Loading floor map and acoustic table pods...
+          Loading floor plan stations...
         </div>
       ) : filteredTables.length === 0 ? (
         <div className="rounded-2xl border border-white/[0.08] bg-[#1c1c1f]/60 p-12 text-center text-neutral-400 text-xs backdrop-blur-xl">
@@ -693,73 +518,78 @@ export default function TablesQR() {
             const isBilling = table.status === "BILLING";
             const isCleaning = table.status === "CLEANING";
 
+            const tableTypeName =
+              table.capacity <= 2
+                ? "Bistro Station"
+                : table.capacity <= 4
+                ? "Booth Station"
+                : "Banquet Station";
+
             return (
               <div
                 key={table.id}
-                className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#1c1c1f]/80 hover:bg-[#232328] border transition-all duration-300 backdrop-blur-xl hover:shadow-2xl hover:shadow-[#FA2D48]/5 ${
-                  isAvail
-                    ? "border-emerald-500/20 hover:border-emerald-500/50"
-                    : isOccupied
-                    ? "border-sky-500/20 hover:border-sky-500/50"
-                    : isBilling
-                    ? "border-amber-500/20 hover:border-amber-500/50"
-                    : "border-purple-500/20 hover:border-purple-500/50"
-                }`}
+                className="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-[#1c1c1f]/80 hover:bg-[#232328] border border-white/[0.08] hover:border-white/[0.2] transition-all duration-300 backdrop-blur-xl hover:shadow-2xl hover:shadow-[#FA2D48]/5"
               >
-                {/* Status Rim Light */}
+                {/* Apple Music Media Tile Artwork Header */}
                 <div
-                  className={`h-1 w-full ${
+                  onClick={() => handleShowTableQR(table)}
+                  className={`relative aspect-4/3 w-full cursor-pointer overflow-hidden p-4 flex flex-col justify-between transition-colors ${
                     isAvail
-                      ? "bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500"
+                      ? "bg-gradient-to-br from-[#18261e] via-[#141b17] to-[#121214]"
                       : isOccupied
-                      ? "bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500"
+                      ? "bg-gradient-to-br from-[#162333] via-[#131922] to-[#121214]"
                       : isBilling
-                      ? "bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500"
-                      : "bg-gradient-to-r from-purple-500 via-pink-500 to-violet-500"
+                      ? "bg-gradient-to-br from-[#2a1f14] via-[#1d1712] to-[#121214]"
+                      : "bg-gradient-to-br from-[#26162d] via-[#1c1220] to-[#121214]"
                   }`}
-                />
+                >
+                  {/* Subtle Ambient Radial Glow */}
+                  <div
+                    className={`pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full blur-3xl opacity-40 transition-opacity group-hover:opacity-70 ${
+                      isAvail
+                        ? "bg-emerald-500"
+                        : isOccupied
+                        ? "bg-sky-500"
+                        : isBilling
+                        ? "bg-amber-500"
+                        : "bg-purple-500"
+                    }`}
+                  />
 
-                <div className="p-4 flex flex-col justify-between flex-1">
-                  {/* Top Bar: Table Identifier & Live Status Pill */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-7 px-2.5 items-center justify-center rounded-lg bg-white/[0.08] text-white font-mono font-black text-xs tracking-tight border border-white/10 shadow-xs">
-                        T-{table.tableNumber}
-                      </span>
-                      <div className="flex items-center gap-1 rounded-md bg-white/[0.04] px-2 py-1 text-[11px] font-semibold text-neutral-400 border border-white/[0.06]">
-                        <Users className="h-3 w-3 text-neutral-500" />
-                        <span>{table.capacity} Seats</span>
-                      </div>
-                    </div>
+                  {/* Top Artwork Bar: Table Number Pill & Live Status Pill */}
+                  <div className="relative z-10 flex items-center justify-between">
+                    <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-xs font-mono font-black text-white border border-white/[0.12] shadow-sm">
+                      TABLE {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
+                    </span>
 
-                    {/* Live Status Badge */}
+                    {/* Live Status Indicator */}
                     <div>
                       {isAvail && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400 border border-emerald-500/30">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30 backdrop-blur-md">
                           <span className="relative flex h-2 w-2">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                           </span>
                           Ready
                         </span>
                       )}
                       {isOccupied && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 px-2.5 py-0.5 text-[11px] font-bold text-sky-400 border border-sky-500/30">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/20 px-2.5 py-0.5 text-[10px] font-bold text-sky-400 border border-sky-500/30 backdrop-blur-md">
                           <span className="relative flex h-2 w-2">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75"></span>
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-500"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
                           </span>
                           Occupied
                         </span>
                       )}
                       {isBilling && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-bold text-amber-400 border border-amber-500/30">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-bold text-amber-400 border border-amber-500/30 backdrop-blur-md">
                           <Sparkles className="h-3 w-3 text-amber-400" />
                           Bill Due
                         </span>
                       )}
                       {isCleaning && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/15 px-2.5 py-0.5 text-[11px] font-bold text-purple-400 border border-purple-500/30">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 px-2.5 py-0.5 text-[10px] font-bold text-purple-400 border border-purple-500/30 backdrop-blur-md">
                           <RefreshCw className="h-3 w-3 text-purple-400 animate-spin" />
                           Cleaning
                         </span>
@@ -767,23 +597,63 @@ export default function TablesQR() {
                     </div>
                   </div>
 
-                  {/* Acoustic Floor Table Pod */}
-                  <TableVisualPod table={table} onShowQR={() => handleShowTableQR(table)} />
+                  {/* Center Artwork: High-Contrast Frosted QR Medallion */}
+                  <div className="relative z-10 flex flex-col items-center justify-center my-auto">
+                    <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] shadow-xl group-hover:scale-105 group-hover:border-white/[0.3] transition-all duration-300">
+                      <QrCode className="h-10 w-10 text-white" />
+                      {/* Hover Overlay Icon */}
+                      <div className="absolute inset-0 rounded-2xl bg-[#FA2D48]/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                        <Eye className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                  </div>
 
-                  {/* 1-Tap Status Selector Pill */}
-                  <div className="mt-1 mb-3">
+                  {/* Bottom Artwork Bar: Capacity Tag */}
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-semibold text-neutral-300 border border-white/[0.1]">
+                      <Users className="h-3 w-3 text-neutral-400" />
+                      <span>{table.capacity} Guests</span>
+                    </div>
+
+                    <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                      {tableTypeName}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Content & Apple Segmented Controls */}
+                <div className="p-4 flex flex-col justify-between flex-1 space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-extrabold text-white tracking-tight">
+                        Table {table.tableNumber}
+                      </h3>
+                      <span className="text-[11px] font-mono text-neutral-400">
+                        Endpoint #{table.id}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-neutral-400">
+                      {isAvail && "Ready for guest seating & contactless ordering"}
+                      {isOccupied && "Active dining session currently in progress"}
+                      {isBilling && "Guest has requested bill & settlement"}
+                      {isCleaning && "Table reset & sanitation in turnover"}
+                    </p>
+                  </div>
+
+                  {/* Apple iOS Style Unified Segmented Controller */}
+                  <div>
                     <div className="text-[10px] uppercase font-bold text-neutral-400 mb-1.5 px-0.5 tracking-wider flex items-center justify-between">
-                      <span>Quick Status</span>
+                      <span>Table State</span>
                       <span className="text-neutral-500 font-normal">1-tap update</span>
                     </div>
-                    <div className="grid grid-cols-4 gap-1 p-1 bg-white/[0.04] rounded-xl border border-white/[0.06]">
+                    <div className="grid grid-cols-4 gap-1 p-1 bg-white/[0.04] rounded-full border border-white/[0.07]">
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(table.id, "AVAILABLE")}
-                        className={`py-1 text-[10px] font-bold rounded-lg transition-all ${
+                        className={`py-1 text-[10px] font-bold rounded-full transition-all ${
                           isAvail
-                            ? "bg-emerald-600 text-white shadow-xs"
-                            : "text-neutral-400 hover:text-emerald-400 hover:bg-emerald-500/10"
+                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                            : "text-neutral-400 hover:text-white"
                         }`}
                       >
                         Avail
@@ -791,10 +661,10 @@ export default function TablesQR() {
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(table.id, "OCCUPIED")}
-                        className={`py-1 text-[10px] font-bold rounded-lg transition-all ${
+                        className={`py-1 text-[10px] font-bold rounded-full transition-all ${
                           isOccupied
-                            ? "bg-sky-600 text-white shadow-xs"
-                            : "text-neutral-400 hover:text-sky-400 hover:bg-sky-500/10"
+                            ? "bg-sky-600 text-white shadow-md shadow-sky-600/30"
+                            : "text-neutral-400 hover:text-white"
                         }`}
                       >
                         Occ
@@ -802,10 +672,10 @@ export default function TablesQR() {
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(table.id, "BILLING")}
-                        className={`py-1 text-[10px] font-bold rounded-lg transition-all ${
+                        className={`py-1 text-[10px] font-bold rounded-full transition-all ${
                           isBilling
-                            ? "bg-amber-600 text-white shadow-xs"
-                            : "text-neutral-400 hover:text-amber-400 hover:bg-amber-500/10"
+                            ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
+                            : "text-neutral-400 hover:text-white"
                         }`}
                       >
                         Bill
@@ -813,10 +683,10 @@ export default function TablesQR() {
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(table.id, "CLEANING")}
-                        className={`py-1 text-[10px] font-bold rounded-lg transition-all ${
+                        className={`py-1 text-[10px] font-bold rounded-full transition-all ${
                           isCleaning
-                            ? "bg-purple-600 text-white shadow-xs"
-                            : "text-neutral-400 hover:text-purple-400 hover:bg-purple-500/10"
+                            ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                            : "text-neutral-400 hover:text-white"
                         }`}
                       >
                         Clean
@@ -828,9 +698,9 @@ export default function TablesQR() {
                   <div className="flex items-center gap-2 border-t border-white/[0.06] pt-3">
                     <button
                       onClick={() => handleShowTableQR(table)}
-                      className="flex-1 h-8 rounded-full bg-white/[0.06] hover:bg-[#FA2D48]/20 text-neutral-300 hover:text-[#FA2D48] text-xs font-semibold flex items-center justify-center gap-1.5 border border-white/[0.08] transition-all"
+                      className="flex-1 h-8.5 rounded-full bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB5C74] hover:from-[#E0263F] hover:to-[#FA2D48] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-[#FA2D48]/25 transition-all active:scale-95"
                     >
-                      <QrCode className="h-3.5 w-3.5 text-[#FA2D48]" />
+                      <QrCode className="h-3.5 w-3.5" />
                       <span>Standee QR</span>
                     </button>
 
@@ -838,15 +708,15 @@ export default function TablesQR() {
                       href={`/menu?table=${table.tableNumber}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
-                      title="Open Customer Menu in New Tab"
+                      className="h-8.5 w-8.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-neutral-300 hover:text-white border border-white/[0.08] transition-colors"
+                      title="Open Live Digital Menu"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
 
                     <button
                       onClick={() => setDeleteConfirmTable(table)}
-                      className="h-8 w-8 rounded-full bg-white/[0.06] hover:bg-red-500/20 flex items-center justify-center text-neutral-400 hover:text-red-400 transition-colors"
+                      className="h-8.5 w-8.5 rounded-full bg-white/[0.06] hover:bg-red-500/20 flex items-center justify-center text-neutral-400 hover:text-red-400 border border-white/[0.08] transition-colors"
                       title="Delete Table"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -902,7 +772,7 @@ export default function TablesQR() {
                       className={`py-2 text-xs font-bold rounded-xl border transition-all ${
                         capacity === seats.toString()
                           ? "bg-[#FA2D48] text-white border-[#FA2D48] shadow-md shadow-[#FA2D48]/30"
-                          : "bg-white/[0.05] text-neutral-300 border-white/[0.08] hover:bg-white/[0.1]"
+                          : "bg-white/[0.05] text-neutral-300 border-white/[0.08] hover:bg-white/[0.1] hover:text-white"
                       }`}
                     >
                       {seats} Seats
@@ -926,7 +796,7 @@ export default function TablesQR() {
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 transition-colors"
+                  className="rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
@@ -988,7 +858,7 @@ export default function TablesQR() {
             <div className="flex items-center gap-2.5">
               <button
                 onClick={() => setSelectedQR(null)}
-                className="flex-1 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-neutral-300 transition-colors"
+                className="flex-1 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-neutral-300 hover:text-white transition-colors"
               >
                 Close
               </button>
@@ -1027,7 +897,7 @@ export default function TablesQR() {
             <div className="mt-6 flex items-center justify-end gap-2.5">
               <button
                 onClick={() => setDeleteConfirmTable(null)}
-                className="rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 transition-colors"
+                className="rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-colors"
               >
                 Cancel
               </button>
