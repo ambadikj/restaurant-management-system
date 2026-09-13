@@ -511,7 +511,7 @@ export default function TablesQR() {
           No dining tables found matching the selected status filter.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
           {filteredTables.map((table) => {
             const isAvail = table.status === "AVAILABLE";
             const isOccupied = table.status === "OCCUPIED";
@@ -520,206 +520,183 @@ export default function TablesQR() {
 
             const tableTypeName =
               table.capacity <= 2
-                ? "Bistro Station"
+                ? "Bistro"
                 : table.capacity <= 4
-                ? "Booth Station"
-                : "Banquet Station";
+                ? "Booth"
+                : "Banquet";
+
+            const liveMenuUrl = `http://localhost:5173/menu?table=${table.tableNumber}`;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(liveMenuUrl)}`;
 
             return (
               <div
                 key={table.id}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-[#1c1c1f]/80 hover:bg-[#232328] border border-white/[0.08] hover:border-white/[0.2] transition-all duration-300 backdrop-blur-xl hover:shadow-2xl hover:shadow-[#FA2D48]/5"
+                className="group relative flex flex-col transition-all duration-200"
               >
-                {/* Apple Music Media Tile Artwork Header */}
-                <div
-                  onClick={() => handleShowTableQR(table)}
-                  className={`relative aspect-4/3 w-full cursor-pointer overflow-hidden p-4 flex flex-col justify-between transition-colors ${
-                    isAvail
-                      ? "bg-gradient-to-br from-[#18261e] via-[#141b17] to-[#121214]"
-                      : isOccupied
-                      ? "bg-gradient-to-br from-[#162333] via-[#131922] to-[#121214]"
-                      : isBilling
-                      ? "bg-gradient-to-br from-[#2a1f14] via-[#1d1712] to-[#121214]"
-                      : "bg-gradient-to-br from-[#26162d] via-[#1c1220] to-[#121214]"
-                  }`}
-                >
-                  {/* Subtle Ambient Radial Glow */}
+                {/* Apple Music Square Artwork Tile */}
+                <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#161618] border border-white/[0.08] group-hover:border-white/[0.2] transition-all duration-300 shadow-md group-hover:shadow-2xl">
+                  {/* Subtle Ambient Radial Glow Based on Status */}
                   <div
-                    className={`pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full blur-3xl opacity-40 transition-opacity group-hover:opacity-70 ${
+                    className={`pointer-events-none absolute inset-0 opacity-20 group-hover:opacity-35 transition-opacity duration-300 ${
                       isAvail
-                        ? "bg-emerald-500"
+                        ? "bg-radial from-emerald-500/50 via-emerald-950/20 to-transparent"
                         : isOccupied
-                        ? "bg-sky-500"
+                        ? "bg-radial from-sky-500/50 via-sky-950/20 to-transparent"
                         : isBilling
-                        ? "bg-amber-500"
-                        : "bg-purple-500"
+                        ? "bg-radial from-amber-500/50 via-amber-950/20 to-transparent"
+                        : "bg-radial from-purple-500/50 via-purple-950/20 to-transparent"
                     }`}
                   />
 
-                  {/* Top Artwork Bar: Table Number Pill & Live Status Pill */}
-                  <div className="relative z-10 flex items-center justify-between">
-                    <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-xs font-mono font-black text-white border border-white/[0.12] shadow-sm">
-                      TABLE {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
+                  {/* Real Scannable QR Code Artwork Centered */}
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <div className="relative p-2.5 rounded-xl bg-white shadow-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                      <img
+                        src={qrImageUrl}
+                        alt={`Table ${table.tableNumber} QR Code`}
+                        className="w-20 h-20 sm:w-24 sm:h-24 object-contain block"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Top Artwork Bar: Table Number Badge & Status Dot */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none z-10">
+                    <span className="rounded-full bg-black/70 backdrop-blur-md px-2 py-0.5 text-[10px] font-mono font-black text-white border border-white/[0.12] shadow-sm">
+                      {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
                     </span>
 
-                    {/* Live Status Indicator */}
+                    {/* Live Status Pill */}
                     <div>
                       {isAvail && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30 backdrop-blur-md">
-                          <span className="relative flex h-2 w-2">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/25 backdrop-blur-md px-2 py-0.5 text-[9px] font-bold text-emerald-400 border border-emerald-500/30">
+                          <span className="relative flex h-1.5 w-1.5">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                           </span>
                           Ready
                         </span>
                       )}
                       {isOccupied && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/20 px-2.5 py-0.5 text-[10px] font-bold text-sky-400 border border-sky-500/30 backdrop-blur-md">
-                          <span className="relative flex h-2 w-2">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/25 backdrop-blur-md px-2 py-0.5 text-[9px] font-bold text-sky-400 border border-sky-500/30">
+                          <span className="relative flex h-1.5 w-1.5">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500"></span>
                           </span>
-                          Occupied
+                          Occ
                         </span>
                       )}
                       {isBilling && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-bold text-amber-400 border border-amber-500/30 backdrop-blur-md">
-                          <Sparkles className="h-3 w-3 text-amber-400" />
-                          Bill Due
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/25 backdrop-blur-md px-2 py-0.5 text-[9px] font-bold text-amber-400 border border-amber-500/30">
+                          <Sparkles className="h-2.5 w-2.5 text-amber-400" />
+                          Bill
                         </span>
                       )}
                       {isCleaning && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 px-2.5 py-0.5 text-[10px] font-bold text-purple-400 border border-purple-500/30 backdrop-blur-md">
-                          <RefreshCw className="h-3 w-3 text-purple-400 animate-spin" />
-                          Cleaning
+                        <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/25 backdrop-blur-md px-2 py-0.5 text-[9px] font-bold text-purple-400 border border-purple-500/30">
+                          <RefreshCw className="h-2.5 w-2.5 text-purple-400 animate-spin" />
+                          Clean
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Center Artwork: High-Contrast Frosted QR Medallion */}
-                  <div className="relative z-10 flex flex-col items-center justify-center my-auto">
-                    <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] shadow-xl group-hover:scale-105 group-hover:border-white/[0.3] transition-all duration-300">
-                      <QrCode className="h-10 w-10 text-white" />
-                      {/* Hover Overlay Icon */}
-                      <div className="absolute inset-0 rounded-2xl bg-[#FA2D48]/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                        <Eye className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  </div>
+                  {/* Hover Overlay: Apple Music Center Action Buttons */}
+                  <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2.5 z-20">
+                    <button
+                      onClick={() => handleShowTableQR(table)}
+                      className="h-11 w-11 rounded-full bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB5C74] hover:scale-110 active:scale-95 text-white flex items-center justify-center shadow-xl shadow-[#FA2D48]/40 transition-transform"
+                      title="View & Print Standee QR"
+                    >
+                      <QrCode className="h-5 w-5" />
+                    </button>
 
-                  {/* Bottom Artwork Bar: Capacity Tag */}
-                  <div className="relative z-10 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-semibold text-neutral-300 border border-white/[0.1]">
-                      <Users className="h-3 w-3 text-neutral-400" />
-                      <span>{table.capacity} Guests</span>
-                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={liveMenuUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="h-8 w-8 rounded-full bg-white/[0.12] hover:bg-white/[0.22] text-white flex items-center justify-center border border-white/[0.15] hover:scale-105 active:scale-95 transition-all"
+                        title="Open Live Menu"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
 
-                    <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
-                      {tableTypeName}
-                    </span>
+                      <button
+                        onClick={() => setDeleteConfirmTable(table)}
+                        className="h-8 w-8 rounded-full bg-white/[0.12] hover:bg-red-500/30 text-neutral-300 hover:text-red-400 flex items-center justify-center border border-white/[0.15] hover:scale-105 active:scale-95 transition-all"
+                        title="Delete Table"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Card Content & Apple Segmented Controls */}
-                <div className="p-4 flex flex-col justify-between flex-1 space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base font-extrabold text-white tracking-tight">
-                        Table {table.tableNumber}
-                      </h3>
-                      <span className="text-[11px] font-mono text-neutral-400">
-                        Endpoint #{table.id}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-xs text-neutral-400">
-                      {isAvail && "Ready for guest seating & contactless ordering"}
-                      {isOccupied && "Active dining session currently in progress"}
-                      {isBilling && "Guest has requested bill & settlement"}
-                      {isCleaning && "Table reset & sanitation in turnover"}
-                    </p>
+                {/* Below Artwork: Apple Music Album Typography */}
+                <div className="mt-2.5 px-0.5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white tracking-tight truncate group-hover:text-[#FA2D48] transition-colors">
+                      Table {table.tableNumber}
+                    </h3>
+                    <span className="text-[11px] text-neutral-400 font-medium">
+                      {table.capacity} Seats
+                    </span>
                   </div>
 
-                  {/* Apple iOS Style Unified Segmented Controller */}
-                  <div>
-                    <div className="text-[10px] uppercase font-bold text-neutral-400 mb-1.5 px-0.5 tracking-wider flex items-center justify-between">
-                      <span>Table State</span>
-                      <span className="text-neutral-500 font-normal">1-tap update</span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-1 p-1 bg-white/[0.04] rounded-full border border-white/[0.07]">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateStatus(table.id, "AVAILABLE")}
-                        className={`py-1 text-[10px] font-bold rounded-full transition-all ${
-                          isAvail
-                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
-                            : "text-neutral-400 hover:text-white"
-                        }`}
-                      >
-                        Avail
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateStatus(table.id, "OCCUPIED")}
-                        className={`py-1 text-[10px] font-bold rounded-full transition-all ${
-                          isOccupied
-                            ? "bg-sky-600 text-white shadow-md shadow-sky-600/30"
-                            : "text-neutral-400 hover:text-white"
-                        }`}
-                      >
-                        Occ
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateStatus(table.id, "BILLING")}
-                        className={`py-1 text-[10px] font-bold rounded-full transition-all ${
-                          isBilling
-                            ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
-                            : "text-neutral-400 hover:text-white"
-                        }`}
-                      >
-                        Bill
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateStatus(table.id, "CLEANING")}
-                        className={`py-1 text-[10px] font-bold rounded-full transition-all ${
-                          isCleaning
-                            ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                            : "text-neutral-400 hover:text-white"
-                        }`}
-                      >
-                        Clean
-                      </button>
-                    </div>
-                  </div>
+                  <p className="text-[11px] text-neutral-400 truncate mt-0.5">
+                    {tableTypeName} Station • #{table.id}
+                  </p>
 
-                  {/* Card Action Footer */}
-                  <div className="flex items-center gap-2 border-t border-white/[0.06] pt-3">
+                  {/* Micro iOS Segmented Status Controller */}
+                  <div className="mt-2 grid grid-cols-4 gap-0.5 p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.07]">
                     <button
-                      onClick={() => handleShowTableQR(table)}
-                      className="flex-1 h-8.5 rounded-full bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB5C74] hover:from-[#E0263F] hover:to-[#FA2D48] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-[#FA2D48]/25 transition-all active:scale-95"
+                      type="button"
+                      onClick={() => handleUpdateStatus(table.id, "AVAILABLE")}
+                      className={`py-0.5 text-[9px] font-bold rounded-md transition-all ${
+                        isAvail
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "text-neutral-400 hover:text-white"
+                      }`}
+                      title="Set Ready / Available"
                     >
-                      <QrCode className="h-3.5 w-3.5" />
-                      <span>Standee QR</span>
+                      Ready
                     </button>
-
-                    <a
-                      href={`/menu?table=${table.tableNumber}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="h-8.5 w-8.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-neutral-300 hover:text-white border border-white/[0.08] transition-colors"
-                      title="Open Live Digital Menu"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-
                     <button
-                      onClick={() => setDeleteConfirmTable(table)}
-                      className="h-8.5 w-8.5 rounded-full bg-white/[0.06] hover:bg-red-500/20 flex items-center justify-center text-neutral-400 hover:text-red-400 border border-white/[0.08] transition-colors"
-                      title="Delete Table"
+                      type="button"
+                      onClick={() => handleUpdateStatus(table.id, "OCCUPIED")}
+                      className={`py-0.5 text-[9px] font-bold rounded-md transition-all ${
+                        isOccupied
+                          ? "bg-sky-600 text-white shadow-sm"
+                          : "text-neutral-400 hover:text-white"
+                      }`}
+                      title="Set Occupied"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      Occ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(table.id, "BILLING")}
+                      className={`py-0.5 text-[9px] font-bold rounded-md transition-all ${
+                        isBilling
+                          ? "bg-amber-600 text-white shadow-sm"
+                          : "text-neutral-400 hover:text-white"
+                      }`}
+                      title="Set Billing"
+                    >
+                      Bill
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(table.id, "CLEANING")}
+                      className={`py-0.5 text-[9px] font-bold rounded-md transition-all ${
+                        isCleaning
+                          ? "bg-purple-600 text-white shadow-sm"
+                          : "text-neutral-400 hover:text-white"
+                      }`}
+                      title="Set Cleaning"
+                    >
+                      Clean
                     </button>
                   </div>
                 </div>
