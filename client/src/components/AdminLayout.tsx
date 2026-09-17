@@ -1,46 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import {
   SidebarProvider,
   SidebarInset,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import {
-  Store,
-  Bell,
   Utensils,
   Receipt,
   ChefHat,
   AlertTriangle,
   X,
-  Volume2,
-  VolumeX,
 } from "lucide-react";
 import { socket } from "@/lib/socket";
-
-const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
-  "/admin": {
-    title: "Menu & Inventory Limits",
-    subtitle: "Real-time menu catalog, pricing, and automated Auto-86 depletion stock rules",
-  },
-  "/admin/menu": {
-    title: "Menu & Inventory Limits",
-    subtitle: "Real-time menu catalog, pricing, and automated Auto-86 depletion stock rules",
-  },
-  "/admin/employees": {
-    title: "Staff Directory & RBAC",
-    subtitle: "Role-based access control, employee credentials, and active system authorizations",
-  },
-  "/admin/tables": {
-    title: "Floor Plan & QR Endpoints",
-    subtitle: "Acoustic dining table pods, live table occupancy tracking, and QR standee printing",
-  },
-  "/admin/reports": {
-    title: "End-of-Day (EOD) Analytics",
-    subtitle: "Categorized settlement breakdowns, tax reconciliation, and guest feedback",
-  },
-};
 
 interface AdminAlert {
   id: string;
@@ -51,16 +23,9 @@ interface AdminAlert {
 }
 
 export default function AdminLayout() {
-  const location = useLocation();
-  const currentPath = location.pathname;
-  const pageInfo = PAGE_TITLES[currentPath] || {
-    title: "Operations Console",
-    subtitle: "Serve_Sync Real-Time Restaurant Management",
-  };
-
-  const [isConnected, setIsConnected] = useState(socket.connected);
+  const [, setIsConnected] = useState(socket.connected);
   const [alerts, setAlerts] = useState<AdminAlert[]>([]);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled] = useState(true);
   const soundEnabledRef = useRef(soundEnabled);
   soundEnabledRef.current = soundEnabled;
 
@@ -192,71 +157,8 @@ export default function AdminLayout() {
 
         {/* Main Application Shell */}
         <SidebarInset className="relative flex flex-1 flex-col overflow-hidden bg-transparent">
-          {/* Header Bar - Apple Music Web Bar */}
-          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-white/[0.07] bg-[#121214]/80 px-4 md:px-6 backdrop-blur-2xl transition-all">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-neutral-400 hover:text-white hover:bg-white/[0.08] rounded-lg h-8 w-8" />
-
-              {/* Page Title */}
-              <div className="flex flex-col">
-                <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
-                  {pageInfo.title}
-                </span>
-                <span className="text-[10px] text-neutral-400 truncate hidden md:inline">
-                  {pageInfo.subtitle}
-                </span>
-              </div>
-            </div>
-
-            {/* Right Header Status Pills */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Audio Chime Toggle */}
-              <button
-                type="button"
-                onClick={() => setSoundEnabled((v) => !v)}
-                title={soundEnabled ? "Mute alert chimes" : "Unmute alert chimes"}
-                className={`p-1.5 rounded-full border transition-all ${
-                  soundEnabled
-                    ? "bg-white/[0.06] border-white/[0.1] text-neutral-200 hover:text-white"
-                    : "bg-white/[0.02] border-white/[0.05] text-neutral-500"
-                }`}
-              >
-                {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-              </button>
-
-              {/* Outlet / Store badge */}
-              <div className="hidden lg:flex items-center gap-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] px-3 py-1 text-[11px] text-neutral-300 font-medium">
-                <Store className="h-3 w-3 text-[#FA2D48]" />
-                <span>Serve_Sync Main Hub</span>
-              </div>
-
-              {/* Live Sync Pulse Capsule */}
-              <div
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium backdrop-blur-md transition-all ${
-                  isConnected
-                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                    : "bg-amber-500/10 border-amber-500/20 text-amber-400"
-                }`}
-              >
-                <span className="relative flex h-2 w-2">
-                  <span
-                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                      isConnected ? "bg-emerald-400" : "bg-amber-400"
-                    }`}
-                  />
-                  <span
-                    className={`relative inline-flex rounded-full h-2 w-2 ${
-                      isConnected ? "bg-emerald-500" : "bg-amber-500"
-                    }`}
-                  />
-                </span>
-                <span className="tracking-wide">{isConnected ? "LIVE SYNC" : "RECONNECTING"}</span>
-              </div>
-            </div>
-          </header>
-
           {/* Floating Live Real-Time Toast Notifications (Apple Music Glass) */}
-          <div className="fixed top-16 right-4 sm:right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+          <div className="fixed top-6 right-4 sm:right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
             {alerts.map((alert) => (
               <div
                 key={alert.id}
