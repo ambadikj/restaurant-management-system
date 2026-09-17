@@ -14,8 +14,6 @@ import {
   Flame,
   Minus,
   Plus,
-  Sparkles,
-  Layers,
   RotateCcw,
 } from "lucide-react";
 
@@ -369,14 +367,6 @@ export default function MenuInventory() {
       item.category.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCat && matchesSearch;
   });
-
-  const totalDishes = items.length;
-  const activeDishes = items.filter(
-    (i) => i.isAvailable && (!i.inventory || i.inventory.remainingQty > 0)
-  ).length;
-  const depletedDishes = items.filter(
-    (i) => !i.isAvailable || (i.inventory && i.inventory.remainingQty === 0)
-  ).length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">

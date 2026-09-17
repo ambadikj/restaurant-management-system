@@ -8,6 +8,7 @@ import menuRoutes from "./routes/menu.routes";
 import tableRoutes from "./routes/table.routes";
 import customerRoutes from "./routes/customer.routes";
 import kitchenRoutes from "./routes/kitchen.routes";
+import cashierRoutes from "./routes/cashier.routes";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/api/menu", menuRoutes);
 app.use("/api/tables", tableRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/kitchen", kitchenRoutes);
+app.use("/api/cashier", cashierRoutes);
 
 app.get("/", (req, res) => {
   res.json({

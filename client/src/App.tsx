@@ -11,6 +11,7 @@ import Employees from "./pages/admin/Employees";
 import TablesQR from "./pages/admin/TablesQR";
 import Reports from "./pages/admin/Reports";
 import KitchenDashboard from "./pages/kitchen/KitchenDashboard";
+import CashierDashboard from "./pages/cashier/CashierDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,6 +27,14 @@ function App() {
           {/* Public Customer Contactless Menu & Ordering (QR Landing) */}
           <Route path="/menu" element={<CustomerMenu />} />
           <Route path="/customer" element={<Navigate to="/menu" replace />} />
+
+          {/* Protected Cashier POS Module */}
+          <Route
+            path="/cashier"
+            element={<ProtectedRoute allowedRoles={["Cashier", "Admin"]} />}
+          >
+            <Route index element={<CashierDashboard />} />
+          </Route>
 
           {/* Protected Kitchen Display System (KDS) */}
           <Route

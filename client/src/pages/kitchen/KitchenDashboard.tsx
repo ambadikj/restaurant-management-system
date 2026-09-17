@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import axiosInstance from "../../api/axiosInstance";
 import { socket } from "../../lib/socket";
 import {
@@ -140,15 +140,6 @@ export default function KitchenDashboard() {
       // Audio not permitted yet
     }
   }, [soundEnabled]);
-
-  /* ── Fullscreen toggle ── */
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
-    } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
-    }
-  };
 
   /* ── Data Fetching ── */
   const fetchOrders = useCallback(async () => {

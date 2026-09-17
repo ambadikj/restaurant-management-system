@@ -91,6 +91,7 @@ export const deleteTable = async (req: Request, res: Response): Promise<void> =>
 export const generateQR = async (req: Request, res: Response): Promise<void> => {
   try {
     const rawParam = String(req.params.tableNumber);
+    const isTakeaway = rawParam.toLowerCase() === 'takeaway';
     const host = req.headers.host ? req.headers.host.split(':')[0] : 'localhost';
     const clientHost = host === 'localhost' || host === '127.0.0.1' ? (process.env.CLIENT_HOST || '192.168.100.253') : host;
     const customerUrl = isTakeaway

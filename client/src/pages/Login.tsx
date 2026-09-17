@@ -35,8 +35,10 @@ export default function Login() {
 
       // 2. Redirect based on user role
       const userRole = response.data.user?.role;
-      if (userRole === "Kitchen") {
+      if (String(userRole).toLowerCase() === "kitchen") {
         navigate("/kitchen");
+      } else if (String(userRole).toLowerCase() === "cashier") {
+        navigate("/cashier");
       } else {
         navigate("/admin");
       }

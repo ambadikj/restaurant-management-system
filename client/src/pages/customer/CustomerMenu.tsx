@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Clock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import SwipeableToaster from "@/components/SwipeableToaster";
@@ -121,6 +122,33 @@ export default function CustomerMenu() {
     setExpandedDishId((prev) => (prev === dishId ? null : dishId));
   };
 
+  // Table Access Gatekeeping State
+  const [isAccessGranted, setIsAccessGranted] = useState<boolean>(true);
+  const [isAccessDeclined, setIsAccessDeclined] = useState<boolean>(false);
+  const [sessionSettledInfo, setSessionSettledInfo] = useState<any | null>(null);
+
+  const checkAndRequestAccess = async (tblData: any) => {
+    if (isTakeawayParam || !tblData) {
+      setIsAccessGranted(true);
+      return;
+    }
+
+    if (tblData.status === "AVAILABLE" && !tblData.activeSession) {
+      setIsAccessGranted(false);
+      setIsAccessDeclined(false);
+      try {
+        await axios.post(
+          `http://${BACKEND_HOST}:5000/api/cashier/table/${tableIdentifier}/request-access`,
+          {}
+        );
+      } catch (err) {
+        console.error("Access request notice error:", err);
+      }
+    } else {
+      setIsAccessGranted(true);
+    }
+  };
+
   // Close expanded category dish card or carousel info overlay when clicking / tapping anywhere outside
   useEffect(() => {
     if (expandedDishId === null && activeInfoCardId === null) return;
@@ -161,7 +189,9 @@ export default function CustomerMenu() {
       ]);
 
       setCategories(menuRes.data || []);
-      setTableInfo(tableRes?.data || null);
+      const tblData = tableRes?.data || null;
+      setTableInfo(tblData);
+      checkAndRequestAccess(tblData);
       if (ordersRes?.data?.orders) {
         setSessionOrders(ordersRes.data.orders);
         setSessionTotal(Number(ordersRes.data.totalAmount || 0));
@@ -308,6 +338,33 @@ export default function CustomerMenu() {
       });
     });
 
+    // Real-time: Cashier approves table access
+    const handleAccessGranted = (data: any) => {
+      setIsAccessGranted(true);
+      setIsAccessDeclined(false);
+      toast.success(data?.message || "Table access authorized! Welcome to Serve_Sync.");
+      loadMenuAndTable();
+    };
+
+    // Real-time: Cashier declines table access
+    const handleAccessDeclined = (data: any) => {
+      setIsAccessGranted(false);
+      setIsAccessDeclined(true);
+      toast.error(data?.message || "Table access was declined by staff.");
+    };
+
+    // Real-time: Cashier settles bill
+    const handleSessionSettled = (data: any) => {
+      setSessionSettledInfo(data);
+      setCart([]);
+      toast.success("Bill settled! Thank you for dining with us.");
+      loadMenuAndTable();
+    };
+
+    socket.on("table:access_granted", handleAccessGranted);
+    socket.on("table:access_declined", handleAccessDeclined);
+    socket.on("session:settled", handleSessionSettled);
+
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
@@ -317,6 +374,9 @@ export default function CustomerMenu() {
       socket.off("menu:bulk_reset");
       socket.off("menu:item_updated");
       socket.off("service:acknowledged");
+      socket.off("table:access_granted", handleAccessGranted);
+      socket.off("table:access_declined", handleAccessDeclined);
+      socket.off("session:settled", handleSessionSettled);
     };
   }, [tableIdentifier]);
 
@@ -532,7 +592,8 @@ export default function CustomerMenu() {
               <span className="font-['Outfit'] font-black text-base tracking-tight text-white block leading-none">
                 Serve_Sync
               </span>
-              <span className="text-xs text-[#AAAAAA] font-medium mt-1 block leading-none">
+              <span className="text-xs text-[#AAAAAA] font-medium mt-1 flex items-center gap-1.5 leading-none">
+                <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-400" : "bg-neutral-500"}`} />
                 {isTakeawayParam
                   ? "Takeaway Counter"
                   : `Table #${!isNaN(Number(tableIdentifier)) && Number(tableIdentifier) < 10 ? `0${Number(tableIdentifier)}` : tableIdentifier}`}
@@ -588,8 +649,47 @@ export default function CustomerMenu() {
         )}
       </header>
 
-      {/* ================= MAIN CONTAINER ================= */}
-      <main className="w-full max-w-3xl mx-auto px-4 pt-3">
+      {/* ================= MAIN CONTAINER OR AUTHORIZATION GATEWAY ================= */}
+      {!isTakeawayParam && !isAccessGranted ? (
+        <div className="w-full max-w-md mx-auto px-6 py-16 text-center space-y-6 animate-in fade-in duration-300">
+          <div className="relative mx-auto w-24 h-24 rounded-3xl bg-[#141416] border border-white/10 flex items-center justify-center shadow-2xl">
+            <div className="absolute inset-0 rounded-3xl border border-amber-500/40 animate-ping opacity-60" />
+            <BrandCrest className="h-12 w-12 text-white" />
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-black uppercase tracking-wider">
+              <Clock className="h-3 w-3" />
+              <span>{isAccessDeclined ? "Authorization Declined" : "Authorization Pending"}</span>
+            </div>
+            <h1 className="font-['Outfit'] text-2xl font-black text-white">
+              {isAccessDeclined
+                ? "Table Access Declined"
+                : `Waiting for Table #${tableIdentifier} Access`}
+            </h1>
+            <p className="text-xs text-[#AAAAAA] leading-relaxed max-w-xs mx-auto">
+              {isAccessDeclined
+                ? "Access to this table was not approved by staff. Please speak with our restaurant cashier or host."
+                : "A scan notification has been sent to the cashier terminal. Please sit comfortably while staff authorizes your table session."}
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-col items-center gap-3">
+            <button
+              onClick={() => checkAndRequestAccess(tableInfo)}
+              className="px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs active:scale-95 shadow-lg flex items-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>Resend Authorization Request</span>
+            </button>
+            <span className="text-[11px] text-[#666666]">
+              Real-time synchronization active • Will auto-unlock when approved
+            </span>
+          </div>
+        </div>
+      ) : (
+        <>
+          <main className="w-full max-w-3xl mx-auto px-4 pt-3">
         {/* ================= TAB 1: MENU (HOME) ================= */}
         {activeTab === "menu" && (
           <div className="space-y-6 animate-in fade-in duration-200">
@@ -1483,6 +1583,8 @@ export default function CustomerMenu() {
           </button>
         </div>
       </nav>
+      </>
+      )}
 
       {/* ================= DISH DETAILS MODAL / BOTTOM SHEET ================= */}
       {selectedDishDetail && (
@@ -1633,6 +1735,30 @@ export default function CustomerMenu() {
                 );
               })()}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= BILL SETTLED NOTICE MODAL ================= */}
+      {sessionSettledInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-[#141417] border border-emerald-500/30 rounded-3xl p-6 shadow-2xl text-center space-y-4">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <CheckCircle2 className="h-7 w-7" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Bill Paid & Settled</span>
+              <h3 className="font-['Outfit'] text-xl font-black text-white">Thank You for Dining!</h3>
+              <p className="text-xs text-[#AAAAAA] leading-relaxed">
+                Your dining session has been completed and settled with the cashier. We look forward to serving you again soon!
+              </p>
+            </div>
+            <button
+              onClick={() => setSessionSettledInfo(null)}
+              className="w-full py-3 rounded-full bg-white text-black font-bold text-xs active:scale-95 shadow-lg cursor-pointer"
+            >
+              Close & Finish
+            </button>
           </div>
         </div>
       )}

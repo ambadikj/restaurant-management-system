@@ -1,0 +1,869 @@
+import { Request, Response } from "express";
+import prisma from "../prisma/client";
+import { emitToTable, emitToStaff, emitTableUpdate } from "../socket";
+import crypto from "crypto";
+
+// In-memory store for real-time QR scan access requests waiting for cashier approval
+interface AccessRequest {
+  tableNumber: number;
+  requestedAt: Date;
+  guestCount?: number;
+}
+
+const pendingAccessRequests: Map<number, AccessRequest> = new Map();
+
+/**
+ * GET /api/cashier/tables
+ * Retrieve all restaurant tables with live occupancy, active dining session,
+ * running totals, and pending QR scan access status
+ */
+export const getCashierTables = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tables = await prisma.restaurantTable.findMany({
+      orderBy: { tableNumber: "asc" },
+      include: {
+        sessions: {
+          where: { status: "ACTIVE" },
+          take: 1,
+          include: {
+            orders: {
+              include: {
+                orderItems: {
+                  include: { menuItem: true },
+                },
+              },
+              orderBy: { orderedAt: "asc" },
+            },
+            payments: true,
+          },
+        },
+      },
+    });
+
+    const enrichedTables = tables.map((tbl) => {
+      const activeSession = tbl.sessions[0] || null;
+      let totalAmount = 0;
+      let totalItems = 0;
+      let ordersCount = 0;
+
+      if (activeSession) {
+        ordersCount = activeSession.orders.length;
+        activeSession.orders.forEach((ord) => {
+          ord.orderItems.forEach((oi) => {
+            totalItems += oi.quantity;
+            totalAmount += Number(oi.subtotal);
+          });
+        });
+      }
+
+      const hasPendingAccess = pendingAccessRequests.has(tbl.tableNumber);
+
+      return {
+        id: tbl.id,
+        tableNumber: tbl.tableNumber,
+        capacity: tbl.capacity,
+        status: tbl.status,
+        qrCodeToken: tbl.qrCodeToken,
+        hasPendingAccess,
+        pendingAccessInfo: hasPendingAccess ? pendingAccessRequests.get(tbl.tableNumber) : null,
+        activeSession: activeSession
+          ? {
+              id: activeSession.id,
+              sessionCode: activeSession.sessionCode,
+              startTime: activeSession.startTime,
+              guestCount: activeSession.guestCount,
+              ordersCount,
+              totalItems,
+              totalAmount: Number(totalAmount.toFixed(2)),
+              orders: activeSession.orders,
+            }
+          : null,
+      };
+    });
+
+    res.json({
+      tables: enrichedTables,
+      pendingRequests: Array.from(pendingAccessRequests.values()),
+    });
+  } catch (error) {
+    console.error("Error fetching cashier tables:", error);
+    res.status(500).json({ message: "Failed to fetch tables floor data" });
+  }
+};
+
+/**
+ * PATCH /api/cashier/table/:tableNumber/status
+ * Cashier manually updates table status (AVAILABLE, OCCUPIED, BILLING, CLEANING)
+ */
+export const updateCashierTableStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tableNumber = Number(req.params.tableNumber);
+    const { status } = req.body;
+
+    if (!status || !["AVAILABLE", "OCCUPIED", "BILLING", "CLEANING"].includes(status)) {
+      res.status(400).json({ message: "Invalid table status" });
+      return;
+    }
+
+    const table = await prisma.restaurantTable.findUnique({
+      where: { tableNumber },
+    });
+
+    if (!table) {
+      res.status(404).json({ message: `Table #${tableNumber} not found` });
+      return;
+    }
+
+    const updated = await prisma.restaurantTable.update({
+      where: { id: table.id },
+      data: { status },
+    });
+
+    // Broadcast table update
+    emitTableUpdate(updated);
+
+    res.json({ success: true, table: updated });
+  } catch (error) {
+    console.error("Error updating table status:", error);
+    res.status(500).json({ message: "Failed to update table status" });
+  }
+};
+
+/**
+ * POST /api/cashier/table/:tableNumber/request-access
+ * Customer scans QR code and requests cashier authorization to access menu
+ */
+export const requestTableAccess = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tableNumber = Number(req.params.tableNumber);
+    const { guestCount } = req.body;
+
+    const table = await prisma.restaurantTable.findUnique({
+      where: { tableNumber },
+      include: {
+        sessions: {
+          where: { status: "ACTIVE" },
+        },
+      },
+    });
+
+    if (!table) {
+      res.status(404).json({ message: `Table #${tableNumber} not found` });
+      return;
+    }
+
+    // If table already has an active session, access is automatically granted!
+    if (table.sessions.length > 0 && table.status === "OCCUPIED") {
+      res.json({
+        authorized: true,
+        alreadyActive: true,
+        message: "Table session is already active",
+        session: table.sessions[0],
+      });
+      return;
+    }
+
+    // Record pending access request
+    const requestItem: AccessRequest = {
+      tableNumber,
+      requestedAt: new Date(),
+      guestCount: guestCount ? Number(guestCount) : undefined,
+    };
+    pendingAccessRequests.set(tableNumber, requestItem);
+
+    // Broadcast live access request alert to Cashier & Staff
+    emitToStaff("cashier:access_request", {
+      tableNumber,
+      requestedAt: requestItem.requestedAt,
+      guestCount: requestItem.guestCount,
+      capacity: table.capacity,
+    });
+
+    res.json({
+      authorized: false,
+      pendingApproval: true,
+      message: "Access request sent to cashier. Please wait a moment.",
+    });
+  } catch (error) {
+    console.error("Error requesting table access:", error);
+    res.status(500).json({ message: "Failed to request table access" });
+  }
+};
+
+/**
+ * POST /api/cashier/table/:tableNumber/approve-access
+ * Cashier approves customer's QR scan access request
+ */
+export const approveTableAccess = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tableNumber = Number(req.params.tableNumber);
+
+    const table = await prisma.restaurantTable.findUnique({
+      where: { tableNumber },
+      include: {
+        sessions: {
+          where: { status: "ACTIVE" },
+        },
+      },
+    });
+
+    if (!table) {
+      res.status(404).json({ message: `Table #${tableNumber} not found` });
+      return;
+    }
+
+    // Remove from pending map
+    pendingAccessRequests.delete(tableNumber);
+
+    // Check if session already exists, otherwise create one
+    let session = table.sessions[0];
+    if (!session) {
+      const sessionCode = `SESS-T${tableNumber}-${Date.now().toString().slice(-6)}`;
+      session = await prisma.diningSession.create({
+        data: {
+          tableId: table.id,
+          sessionCode,
+          status: "ACTIVE",
+          totalAmount: 0.0,
+        },
+      });
+    }
+
+    // Set table status to OCCUPIED
+    const updatedTable = await prisma.restaurantTable.update({
+      where: { id: table.id },
+      data: { status: "OCCUPIED" },
+    });
+
+    // Notify customer table room that access is granted!
+    emitToTable(tableNumber, "table:access_granted", {
+      tableNumber,
+      sessionCode: session.sessionCode,
+      message: "Access granted! Welcome to Serve_Sync.",
+    });
+
+    // Broadcast table update to floor
+    emitTableUpdate(updatedTable);
+    emitToStaff("cashier:access_handled", { tableNumber, action: "APPROVED" });
+
+    res.json({
+      success: true,
+      message: `Table #${tableNumber} access approved successfully`,
+      table: updatedTable,
+      session,
+    });
+  } catch (error) {
+    console.error("Error approving table access:", error);
+    res.status(500).json({ message: "Failed to approve table access" });
+  }
+};
+
+/**
+ * POST /api/cashier/table/:tableNumber/decline-access
+ * Cashier declines customer's QR scan access request
+ */
+export const declineTableAccess = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tableNumber = Number(req.params.tableNumber);
+
+    pendingAccessRequests.delete(tableNumber);
+
+    // Notify customer room
+    emitToTable(tableNumber, "table:access_declined", {
+      tableNumber,
+      message: "Access request was declined by staff. Please speak to a host.",
+    });
+
+    emitToStaff("cashier:access_handled", { tableNumber, action: "DECLINED" });
+
+    res.json({ success: true, message: `Access request for Table #${tableNumber} declined.` });
+  } catch (error) {
+    console.error("Error declining table access:", error);
+    res.status(500).json({ message: "Failed to decline table access" });
+  }
+};
+
+/**
+ * GET /api/cashier/session/:sessionId/bill
+ * Retrieve itemized bill summary, taxes, and payments for a dining session
+ */
+export const getSessionBillDetails = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const sessionId = Number(req.params.sessionId);
+
+    const session = await prisma.diningSession.findUnique({
+      where: { id: sessionId },
+      include: {
+        table: true,
+        orders: {
+          include: {
+            orderItems: {
+              include: { menuItem: true },
+            },
+          },
+          orderBy: { orderedAt: "asc" },
+        },
+        payments: true,
+      },
+    });
+
+    if (!session) {
+      res.status(404).json({ message: "Dining session not found" });
+      return;
+    }
+
+    // Consolidate identical items across multiple order courses
+    const consolidatedItemsMap = new Map<number, {
+      menuItemId: number;
+      name: string;
+      unitPrice: number;
+      quantity: number;
+      subtotal: number;
+    }>();
+
+    let subtotal = 0;
+
+    session.orders.forEach((order) => {
+      // Don't include cancelled orders in the bill
+      if (order.status === "CANCELLED") return;
+
+      order.orderItems.forEach((oi) => {
+        const price = Number(oi.price);
+        const itemSubtotal = Number(oi.subtotal);
+        subtotal += itemSubtotal;
+
+        if (consolidatedItemsMap.has(oi.menuItemId)) {
+          const existing = consolidatedItemsMap.get(oi.menuItemId)!;
+          existing.quantity += oi.quantity;
+          existing.subtotal += itemSubtotal;
+        } else {
+          consolidatedItemsMap.set(oi.menuItemId, {
+            menuItemId: oi.menuItemId,
+            name: oi.menuItem.name,
+            unitPrice: price,
+            quantity: oi.quantity,
+            subtotal: itemSubtotal,
+          });
+        }
+      });
+    });
+
+    const items = Array.from(consolidatedItemsMap.values());
+    const taxRate = 0.05; // 5% GST
+    const taxAmount = Number((subtotal * taxRate).toFixed(2));
+    const grandTotal = Number((subtotal + taxAmount).toFixed(2));
+
+    const totalPaid = session.payments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const balanceDue = Math.max(0, Number((grandTotal - totalPaid).toFixed(2)));
+
+    res.json({
+      session: {
+        id: session.id,
+        sessionCode: session.sessionCode,
+        tableNumber: session.table?.tableNumber || "Takeaway",
+        startTime: session.startTime,
+        endTime: session.endTime,
+        status: session.status,
+      },
+      items,
+      subtotal: Number(subtotal.toFixed(2)),
+      taxRate: 5,
+      taxAmount,
+      discount: 0,
+      grandTotal,
+      totalPaid: Number(totalPaid.toFixed(2)),
+      balanceDue,
+      payments: session.payments,
+      orders: session.orders,
+    });
+  } catch (error) {
+    console.error("Error fetching bill details:", error);
+    res.status(500).json({ message: "Failed to generate bill details" });
+  }
+};
+
+/**
+ * POST /api/cashier/settle
+ * Settle a dining session bill with support for Split Payments (Cash + UPI + Card)
+ */
+export const settleBill = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const {
+      sessionId,
+      tableNumber,
+      payments, // Array<{ method: "CASH" | "CARD" | "UPI", amount: number }>
+      discount = 0,
+      notes,
+    } = req.body;
+
+    if (!sessionId || !payments || !Array.isArray(payments) || payments.length === 0) {
+      res.status(400).json({ message: "Please provide valid session and payment details." });
+      return;
+    }
+
+    const session = await prisma.diningSession.findUnique({
+      where: { id: Number(sessionId) },
+      include: {
+        table: true,
+        orders: {
+          include: {
+            orderItems: {
+              include: { menuItem: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!session) {
+      res.status(404).json({ message: "Dining session not found." });
+      return;
+    }
+
+    // Calculate grand total from order items
+    let subtotal = 0;
+    session.orders.forEach((ord) => {
+      if (ord.status !== "CANCELLED") {
+        ord.orderItems.forEach((oi) => {
+          subtotal += Number(oi.subtotal);
+        });
+      }
+    });
+
+    const taxAmount = Number((subtotal * 0.05).toFixed(2));
+    const netGrandTotal = Math.max(0, Number((subtotal + taxAmount - Number(discount || 0)).toFixed(2)));
+
+    // Verify payments cover the total
+    const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0);
+    if (Math.abs(totalPaid - netGrandTotal) > 1.0 && totalPaid < netGrandTotal) {
+      res.status(400).json({
+        message: `Payment amount ₹${totalPaid.toFixed(2)} is less than bill amount ₹${netGrandTotal.toFixed(2)}`,
+      });
+      return;
+    }
+
+    // Atomic transaction: Create payment records, complete session, and reset table
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create Payment record for each split method
+      const createdPayments = [];
+      for (const p of payments) {
+        if (Number(p.amount) > 0) {
+          const pm = await tx.payment.create({
+            data: {
+              diningSessionId: session.id,
+              amount: Number(p.amount),
+              paymentMethod: p.method,
+              paymentStatus: "PAID",
+              paidAt: new Date(),
+            },
+          });
+          createdPayments.push(pm);
+        }
+      }
+
+      // 2. Mark session COMPLETED
+      const updatedSession = await tx.diningSession.update({
+        where: { id: session.id },
+        data: {
+          status: "COMPLETED",
+          endTime: new Date(),
+          totalAmount: netGrandTotal,
+        },
+      });
+
+      // 3. Mark all pending/preparing orders as SERVED if completed
+      await tx.order.updateMany({
+        where: {
+          diningSessionId: session.id,
+          status: { in: ["PENDING", "PREPARING", "READY"] },
+        },
+        data: { status: "SERVED" },
+      });
+
+      // 4. Free the table if it is a dine-in table
+      let freedTable = null;
+      if (session.tableId) {
+        freedTable = await tx.restaurantTable.update({
+          where: { id: session.tableId },
+          data: { status: "AVAILABLE" },
+        });
+      }
+
+      return { createdPayments, updatedSession, freedTable };
+    });
+
+    // Notify customer table room via WebSockets
+    const displayTable = session.table ? session.table.tableNumber : tableNumber || "Takeaway";
+    emitToTable(displayTable, "session:settled", {
+      tableNumber: displayTable,
+      sessionCode: session.sessionCode,
+      grandTotal: netGrandTotal,
+      payments,
+      message: "Bill settled! Thank you for dining with us.",
+    });
+
+    // Broadcast table update to floor
+    if (result.freedTable) {
+      emitTableUpdate(result.freedTable);
+    }
+
+    emitToStaff("cashier:bill_settled", {
+      tableNumber: displayTable,
+      sessionId: session.id,
+      grandTotal: netGrandTotal,
+      payments,
+    });
+
+    res.json({
+      success: true,
+      message: "Bill settled successfully!",
+      receipt: {
+        invoiceNumber: `INV-${session.sessionCode}`,
+        tableNumber: displayTable,
+        dateTime: new Date(),
+        subtotal,
+        taxAmount,
+        discount: Number(discount || 0),
+        grandTotal: netGrandTotal,
+        payments,
+        items: session.orders.flatMap((o) =>
+          o.orderItems.map((oi) => ({
+            name: oi.menuItem.name,
+            quantity: oi.quantity,
+            price: Number(oi.price),
+            subtotal: Number(oi.subtotal),
+          }))
+        ),
+      },
+    });
+  } catch (error) {
+    console.error("Error settling bill:", error);
+    res.status(500).json({ message: "Failed to settle bill." });
+  }
+};
+
+/**
+ * POST /api/cashier/takeaway
+ * Fast POS creator for walk-in takeaway orders with immediate settlement
+ */
+export const createTakeawayBill = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const {
+      customerName,
+      items, // Array<{ menuItemId: number, quantity: number }>
+      payments, // Array<{ method: "CASH" | "CARD" | "UPI", amount: number }>
+      discount = 0,
+      notes,
+    } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ message: "Please select at least one item." });
+      return;
+    }
+
+    if (!payments || !Array.isArray(payments) || payments.length === 0) {
+      res.status(400).json({ message: "Payment details required." });
+      return;
+    }
+
+    // Fetch items with price and inventory
+    const menuItemIds = items.map((i) => i.menuItemId);
+    const menuItems = await prisma.menuItem.findMany({
+      where: { id: { in: menuItemIds } },
+      include: { inventory: true },
+    });
+
+    const itemMap = new Map(menuItems.map((m) => [m.id, m]));
+
+    // Validate availability & calculate total
+    let subtotal = 0;
+    const validatedItems: Array<{
+      menuItemId: number;
+      name: string;
+      price: number;
+      quantity: number;
+      subtotal: number;
+    }> = [];
+
+    for (const item of items) {
+      const dish = itemMap.get(item.menuItemId);
+      if (!dish) {
+        res.status(400).json({ message: `Item ID ${item.menuItemId} not found.` });
+        return;
+      }
+      if (!dish.isAvailable || (dish.inventory && dish.inventory.remainingQty < item.quantity)) {
+        res.status(400).json({ message: `"${dish.name}" does not have sufficient stock.` });
+        return;
+      }
+
+      const price = Number(dish.price);
+      const itemSubtotal = price * item.quantity;
+      subtotal += itemSubtotal;
+      validatedItems.push({
+        menuItemId: dish.id,
+        name: dish.name,
+        price,
+        quantity: item.quantity,
+        subtotal: itemSubtotal,
+      });
+    }
+
+    const taxAmount = Number((subtotal * 0.05).toFixed(2));
+    const grandTotal = Number((subtotal + taxAmount - Number(discount || 0)).toFixed(2));
+
+    const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0);
+    if (Math.abs(totalPaid - grandTotal) > 1.0 && totalPaid < grandTotal) {
+      res.status(400).json({
+        message: `Payment amount ₹${totalPaid.toFixed(2)} is less than total ₹${grandTotal.toFixed(2)}`,
+      });
+      return;
+    }
+
+    // Transaction to create session, order, payment & deduct stock
+    const sessionCode = `TAKEAWAY-${Date.now().toString().slice(-6)}`;
+    const orderNumber = `TK-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create Takeaway Table or virtual session (tableId: 1 or dedicated)
+      // Find or create virtual takeaway table
+      let takeawayTable = await tx.restaurantTable.findFirst({
+        where: { tableNumber: 999 },
+      });
+
+      if (!takeawayTable) {
+        takeawayTable = await tx.restaurantTable.create({
+          data: {
+            tableNumber: 999,
+            capacity: 0,
+            status: "AVAILABLE",
+            qrCodeToken: `takeaway-${crypto.randomUUID()}`,
+          },
+        });
+      }
+
+      // 2. Create DiningSession
+      const session = await tx.diningSession.create({
+        data: {
+          tableId: takeawayTable.id,
+          sessionCode,
+          status: "COMPLETED",
+          startTime: new Date(),
+          endTime: new Date(),
+          totalAmount: grandTotal,
+        },
+      });
+
+      // 3. Create Order
+      const order = await tx.order.create({
+        data: {
+          diningSessionId: session.id,
+          orderNumber,
+          status: "PREPARING", // Send directly to kitchen!
+          notes: notes ? `[Takeaway: ${customerName || "Customer"}] ${notes}` : `[Takeaway: ${customerName || "Customer"}]`,
+          orderedAt: new Date(),
+        },
+      });
+
+      // 4. Create OrderItems & deduct stock
+      for (const vi of validatedItems) {
+        await tx.orderItem.create({
+          data: {
+            orderId: order.id,
+            menuItemId: vi.menuItemId,
+            quantity: vi.quantity,
+            price: vi.price,
+            subtotal: vi.subtotal,
+          },
+        });
+
+        // Deduct inventory
+        const dish = itemMap.get(vi.menuItemId);
+        if (dish?.inventory) {
+          const newQty = Math.max(0, dish.inventory.remainingQty - vi.quantity);
+          await tx.inventory.update({
+            where: { menuItemId: vi.menuItemId },
+            data: {
+              remainingQty: newQty,
+              isAvailable: newQty > 0,
+            },
+          });
+        }
+      }
+
+      // 5. Create Payments
+      for (const p of payments) {
+        if (Number(p.amount) > 0) {
+          await tx.payment.create({
+            data: {
+              diningSessionId: session.id,
+              amount: Number(p.amount),
+              paymentMethod: p.method,
+              paymentStatus: "PAID",
+              paidAt: new Date(),
+            },
+          });
+        }
+      }
+
+      return { session, order };
+    });
+
+    // Broadcast new order to Kitchen Display System!
+    emitToStaff("order:placed", {
+      orderId: result.order.id,
+      orderNumber: result.order.orderNumber,
+      tableNumber: "Takeaway",
+      status: "PREPARING",
+      notes: result.order.notes,
+      items: validatedItems,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Takeaway order created, paid, and dispatched to kitchen!",
+      receipt: {
+        invoiceNumber: `INV-${sessionCode}`,
+        orderNumber,
+        customerName: customerName || "Guest",
+        tableNumber: "Takeaway",
+        dateTime: new Date(),
+        subtotal,
+        taxAmount,
+        discount: Number(discount || 0),
+        grandTotal,
+        payments,
+        items: validatedItems,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating takeaway bill:", error);
+    res.status(500).json({ message: "Failed to create takeaway order" });
+  }
+};
+
+/**
+ * GET /api/cashier/history
+ * Today's closed bills and shift transactions
+ */
+export const getSettledBillsHistory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const sessions = await prisma.diningSession.findMany({
+      where: {
+        status: "COMPLETED",
+        endTime: { gte: today },
+      },
+      orderBy: { endTime: "desc" },
+      include: {
+        table: true,
+        orders: {
+          include: {
+            orderItems: {
+              include: { menuItem: true },
+            },
+          },
+        },
+        payments: true,
+      },
+    });
+
+    const history = sessions.map((s) => {
+      const tableNumber = s.table?.tableNumber === 999 ? "Takeaway" : s.table?.tableNumber || "Takeaway";
+      const totalAmount = Number(s.totalAmount);
+      const itemsCount = s.orders.reduce(
+        (sum, o) => sum + o.orderItems.reduce((oiSum, oi) => oiSum + oi.quantity, 0),
+        0
+      );
+
+      return {
+        id: s.id,
+        invoiceNumber: `INV-${s.sessionCode}`,
+        sessionCode: s.sessionCode,
+        tableNumber,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        totalAmount,
+        itemsCount,
+        payments: s.payments.map((p) => ({
+          method: p.paymentMethod,
+          amount: Number(p.amount),
+        })),
+        items: s.orders.flatMap((o) =>
+          o.orderItems.map((oi) => ({
+            name: oi.menuItem.name,
+            quantity: oi.quantity,
+            price: Number(oi.price),
+            subtotal: Number(oi.subtotal),
+          }))
+        ),
+      };
+    });
+
+    res.json(history);
+  } catch (error) {
+    console.error("Error fetching settled bills history:", error);
+    res.status(500).json({ message: "Failed to load settlement history" });
+  }
+};
+
+/**
+ * GET /api/cashier/stats
+ * Cashier shift metrics (Revenue, Cash vs UPI vs Card breakdown, Settled bills count)
+ */
+export const getCashierStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const payments = await prisma.payment.findMany({
+      where: {
+        paymentStatus: "PAID",
+        paidAt: { gte: today },
+      },
+    });
+
+    let totalRevenue = 0;
+    let cashTotal = 0;
+    let upiTotal = 0;
+    let cardTotal = 0;
+
+    payments.forEach((p) => {
+      const amt = Number(p.amount);
+      totalRevenue += amt;
+      if (p.paymentMethod === "CASH") cashTotal += amt;
+      else if (p.paymentMethod === "UPI") upiTotal += amt;
+      else if (p.paymentMethod === "CARD") cardTotal += amt;
+    });
+
+    const activeTablesCount = await prisma.restaurantTable.count({
+      where: { status: { in: ["OCCUPIED", "BILLING"] } },
+    });
+
+    const billingTablesCount = await prisma.restaurantTable.count({
+      where: { status: "BILLING" },
+    });
+
+    const settledSessionsCount = await prisma.diningSession.count({
+      where: {
+        status: "COMPLETED",
+        endTime: { gte: today },
+      },
+    });
+
+    res.json({
+      totalRevenue: Number(totalRevenue.toFixed(2)),
+      cashTotal: Number(cashTotal.toFixed(2)),
+      upiTotal: Number(upiTotal.toFixed(2)),
+      cardTotal: Number(cardTotal.toFixed(2)),
+      settledBillsCount: settledSessionsCount,
+      activeTablesCount,
+      billingTablesCount,
+      pendingAccessCount: pendingAccessRequests.size,
+    });
+  } catch (error) {
+    console.error("Error fetching cashier stats:", error);
+    res.status(500).json({ message: "Failed to calculate cashier metrics" });
+  }
+};

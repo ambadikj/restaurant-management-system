@@ -11,13 +11,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   X,
-  Users,
   Sparkles,
-  Timer,
   RefreshCw,
   ExternalLink,
   Layers,
-  Eye,
 } from "lucide-react";
 
 interface RestaurantTable {

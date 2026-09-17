@@ -6,7 +6,6 @@ import {
   Receipt,
   LogOut,
   PanelLeftClose,
-  PanelLeft,
 } from "lucide-react";
 import { BrandLogo, BrandCrest } from "@/components/BrandLogo";
 import {
@@ -22,13 +21,18 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
   SidebarRail,
-  useSidebar,
 } from "@/components/ui/sidebar";
 
 const navSections = [
   {
-    label: "RESTAURANT MANAGEMENT",
+    label: "OPERATIONS & POS",
     items: [
+      {
+        title: "Cashier POS",
+        url: "/cashier",
+        icon: Receipt,
+        badge: "Billing",
+      },
       {
         title: "Menu & Auto-86",
         url: "/admin/menu",
@@ -65,7 +69,6 @@ const navSections = [
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toggleSidebar } = useSidebar();
 
   const userString = localStorage.getItem("user");
   const user = userString

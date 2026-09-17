@@ -13,9 +13,6 @@ import {
   Shield,
   ChefHat,
   ReceiptText,
-  Users,
-  Sparkles,
-  Layers,
 } from "lucide-react";
 
 interface Role {
@@ -211,12 +208,6 @@ export default function Employees() {
 
     return matchesSearch && matchesRole;
   });
-
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.isActive).length;
-  const adminCount = users.filter((u) => u.role.name.toUpperCase() === "ADMIN").length;
-  const cashierCount = users.filter((u) => u.role.name.toUpperCase() === "CASHIER").length;
-  const kitchenCount = users.filter((u) => u.role.name.toUpperCase() === "KITCHEN").length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
