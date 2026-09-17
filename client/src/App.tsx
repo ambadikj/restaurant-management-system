@@ -33,7 +33,9 @@ function App() {
             path="/cashier"
             element={<ProtectedRoute allowedRoles={["Cashier", "Admin"]} />}
           >
-            <Route index element={<CashierDashboard />} />
+            <Route element={<AdminLayout />}>
+              <Route index element={<CashierDashboard />} />
+            </Route>
           </Route>
 
           {/* Protected Kitchen Display System (KDS) */}

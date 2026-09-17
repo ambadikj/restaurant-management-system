@@ -66,9 +66,14 @@ export default function AdminLayout() {
   }, [playChime]);
 
   useEffect(() => {
+    const joinStaffRooms = () => {
+      socket.emit("join:staff", "admin");
+      socket.emit("join:staff", "cashier");
+    };
+
     const onConnect = () => {
       setIsConnected(true);
-      socket.emit("join:staff", "admin");
+      joinStaffRooms();
     };
     const onDisconnect = () => setIsConnected(false);
 
@@ -77,7 +82,7 @@ export default function AdminLayout() {
 
     if (socket.connected) {
       setIsConnected(true);
-      socket.emit("join:staff", "admin");
+      joinStaffRooms();
     }
 
     // New Order received
@@ -85,7 +90,7 @@ export default function AdminLayout() {
       const tableText = data.tableName || `Table ${data.tableNumber}`;
       const orderNum = data.order?.orderNumber || "ORD";
       const total = data.order?.diningSession?.totalAmount || data.order?.totalAmount;
-      const totalStr = total ? ` • $${Number(total).toFixed(2)}` : "";
+      const totalStr = total ? ` • ₹${Number(total).toFixed(2)}` : "";
       addAlert({
         type: "order",
         title: "New Order Placed",
@@ -100,6 +105,15 @@ export default function AdminLayout() {
         type: "service",
         title: isBill ? "Bill Requested" : "Guest Assistance",
         description: `Table ${data.tableNumber}: ${data.message || (isBill ? "Bill settlement requested" : "Waiter called")}`,
+      });
+    };
+
+    // Customer QR Scan Request
+    const handleAccessRequestAlert = (data: any) => {
+      addAlert({
+        type: "service",
+        title: `QR Scan • Table #${data.tableNumber}`,
+        description: `Customer scanned QR and requested dining session access.`,
       });
     };
 
@@ -127,6 +141,7 @@ export default function AdminLayout() {
 
     socket.on("order:new", handleNewOrder);
     socket.on("service:alert", handleServiceAlert);
+    socket.on("cashier:access_request", handleAccessRequestAlert);
     socket.on("inventory:stock_update", handleStockUpdate);
     socket.on("order:status_update", handleKitchenUpdate);
 
@@ -135,6 +150,7 @@ export default function AdminLayout() {
       socket.off("disconnect", onDisconnect);
       socket.off("order:new", handleNewOrder);
       socket.off("service:alert", handleServiceAlert);
+      socket.off("cashier:access_request", handleAccessRequestAlert);
       socket.off("inventory:stock_update", handleStockUpdate);
       socket.off("order:status_update", handleKitchenUpdate);
     };

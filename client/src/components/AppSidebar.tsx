@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   UtensilsCrossed,
@@ -91,6 +92,28 @@ export function AppSidebar() {
       .toUpperCase();
   };
 
+  const userRole = (user?.role || "Staff").toUpperCase();
+  const isCashier = userRole === "CASHIER";
+
+  const visibleSections = useMemo(() => {
+    if (isCashier) {
+      return [
+        {
+          label: "OPERATIONS & POS",
+          items: [
+            {
+              title: "Cashier POS",
+              url: "/cashier",
+              icon: Receipt,
+              badge: "Terminal",
+            },
+          ],
+        },
+      ];
+    }
+    return navSections;
+  }, [isCashier]);
+
   return (
     <Sidebar
       collapsible="icon"
@@ -114,7 +137,7 @@ export function AppSidebar() {
               <span className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5 font-sans">
                 Serve_Sync
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/[0.08] text-neutral-300 border border-white/[0.1] tracking-wider uppercase">
-                  Admin
+                  {userRole}
                 </span>
               </span>
               <span className="text-[10px] text-neutral-400 font-medium tracking-wide truncate">
@@ -145,7 +168,7 @@ export function AppSidebar() {
 
       {/* Navigation Sections */}
       <SidebarContent className="px-2.5 py-3 space-y-4 group-data-[collapsible=icon]:px-1.5">
-        {navSections.map((section) => (
+        {visibleSections.map((section) => (
           <SidebarGroup key={section.label} className="p-0">
             <SidebarGroupLabel className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-2 mb-1.5 overflow-hidden whitespace-nowrap group-data-[collapsible=icon]:hidden">
               {section.label}
