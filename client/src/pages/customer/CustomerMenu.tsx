@@ -19,6 +19,7 @@ import {
   UtensilsCrossed,
   ShoppingBag,
   Timer,
+  Info,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { socket } from "../../lib/socket";
@@ -99,6 +100,21 @@ export default function CustomerMenu() {
   const [orderNotes, setOrderNotes] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [isConnected, setIsConnected] = useState(socket.connected);
+
+  // Active in-card description overlay (for horizontal carousel)
+  const [activeInfoCardId, setActiveInfoCardId] = useState<number | null>(null);
+  // Expanded dish ID for category list view
+  const [expandedDishId, setExpandedDishId] = useState<number | null>(null);
+  // Selected dish for full modal sheet
+  const [selectedDishDetail, setSelectedDishDetail] = useState<MenuItem | null>(null);
+
+  const toggleInfo = (dishId: number) => {
+    setActiveInfoCardId((prev) => (prev === dishId ? null : dishId));
+  };
+
+  const toggleExpandDish = (dishId: number) => {
+    setExpandedDishId((prev) => (prev === dishId ? null : dishId));
+  };
 
   // Load menu & table info
   const loadMenuAndTable = async () => {
@@ -639,13 +655,21 @@ export default function CustomerMenu() {
                     </div>
 
                     {/* Horizontal Carousel (Album Artwork Style) */}
-                    <div className="flex gap-3.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory -mx-4 px-4">
+                    <div
+                      onWheel={(e) => {
+                        if (e.deltaY !== 0) {
+                          e.currentTarget.scrollLeft += e.deltaY;
+                        }
+                      }}
+                      className="flex gap-3.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-proximity -mx-4 px-4 touch-pan-x scroll-smooth"
+                    >
                       {cat.menuItems.map((dish) => {
                         const cartEntry = cart.find((ci) => ci.item.id === dish.id);
                         const isSoldOut =
                           !dish.isAvailable ||
                           (dish.inventory && dish.inventory.remainingQty <= 0);
                         const remaining = dish.inventory ? dish.inventory.remainingQty : null;
+                        const isInfoOpen = activeInfoCardId === dish.id;
 
                         return (
                           <div
@@ -653,27 +677,72 @@ export default function CustomerMenu() {
                             className="w-40 sm:w-44 flex-shrink-0 snap-start group"
                           >
                             {/* Square Artwork (1:1 Ratio) */}
-                            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#181818] shadow-md">
+                            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#181818] shadow-md border border-white/5">
                               <img
                                 src={getImageUrl(dish.imageUrl)}
                                 alt={dish.name}
-                                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                className={`h-full w-full object-cover transition-all duration-300 ${
+                                  isInfoOpen ? "scale-105 filter blur-xs" : "group-hover:scale-105"
+                                }`}
                                 onError={(e: any) => {
                                   e.target.src =
                                     "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80";
                                 }}
                               />
 
+                              {/* Info ('i') Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleInfo(dish.id);
+                                }}
+                                className={`absolute top-2.5 right-2.5 h-7 w-7 rounded-full flex items-center justify-center transition-all duration-300 z-20 backdrop-blur-md border cursor-pointer ${
+                                  isInfoOpen
+                                    ? "bg-white text-black border-white shadow-xl scale-110 rotate-90"
+                                    : "bg-black/65 hover:bg-black/85 text-white/90 hover:text-white border-white/20 hover:scale-110 active:scale-95 shadow-md"
+                                }`}
+                                title={isInfoOpen ? "Close description" : "View description"}
+                                aria-label={`View description for ${dish.name}`}
+                              >
+                                {isInfoOpen ? (
+                                  <X className="h-3.5 w-3.5 stroke-[2.5]" />
+                                ) : (
+                                  <Info className="h-3.5 w-3.5 stroke-[2.2]" />
+                                )}
+                              </button>
+
+                              {/* Smooth Animated In-Card Description Overlay */}
+                              <div
+                                className={`absolute inset-0 bg-[#0A0A0A]/95 backdrop-blur-md p-3.5 pr-4 pb-14 flex flex-col justify-start transition-all duration-300 ease-out z-10 ${
+                                  isInfoOpen
+                                    ? "opacity-100 translate-y-0 pointer-events-auto"
+                                    : "opacity-0 translate-y-full pointer-events-none"
+                                }`}
+                              >
+                                <div className="flex items-center gap-1.5 pb-2 pr-7">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-[#FF4D4D] animate-pulse" />
+                                  <span className="text-[10px] font-bold text-[#FF4D4D] uppercase tracking-wider">
+                                    Description
+                                  </span>
+                                </div>
+                                <div className="overflow-y-auto scrollbar-none pr-1 max-h-[105px]">
+                                  <p className="text-[11.5px] leading-relaxed text-[#EDEDED] font-normal select-text">
+                                    {dish.description || "Freshly crafted to order with authentic seasonings and premium kitchen ingredients."}
+                                  </p>
+                                </div>
+                              </div>
+
                               {/* Out of Stock Overlay */}
                               {isSoldOut ? (
-                                <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-2 text-center">
+                                <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-2 text-center z-15">
                                   <span className="text-[10px] font-black uppercase tracking-wider text-[#FF4D4D] bg-[#212121] px-2 py-0.5 rounded border border-[#FF0000]/40">
                                     Sold Out
                                   </span>
                                 </div>
                               ) : cartEntry ? (
                                 /* In-Cart Counter Pill overlay */
-                                <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-[#212121]/95 backdrop-blur-md rounded-xl p-1 flex items-center justify-between border border-white/15 shadow-xl">
+                                <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-[#212121]/95 backdrop-blur-md rounded-xl p-1 flex items-center justify-between border border-white/15 shadow-xl z-15">
                                   <button
                                     onClick={() => updateQuantity(dish.id, -1)}
                                     className="h-6 w-6 rounded-lg bg-[#303030] flex items-center justify-center text-white active:scale-90"
@@ -694,7 +763,7 @@ export default function CustomerMenu() {
                                 /* YouTube Red Floating Play / Add Button */
                                 <button
                                   onClick={() => addToCart(dish)}
-                                  className="absolute bottom-2.5 right-2.5 h-10 w-10 rounded-full bg-[#FF0000] text-white flex items-center justify-center shadow-xl shadow-black/60 hover:scale-110 active:scale-95 transition-all group-hover:opacity-100"
+                                  className="absolute bottom-2.5 right-2.5 h-10 w-10 rounded-full bg-[#FF0000] text-white flex items-center justify-center shadow-xl shadow-black/60 hover:scale-110 active:scale-95 transition-all group-hover:opacity-100 z-15"
                                   title="Add to tray"
                                 >
                                   <Plus className="h-5 w-5 stroke-[2.5]" />
@@ -703,7 +772,7 @@ export default function CustomerMenu() {
 
                               {/* Urgency Badge */}
                               {remaining !== null && remaining > 0 && remaining <= 5 && !isSoldOut && (
-                                <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-xs px-1.5 py-0.5 rounded text-[9px] font-bold text-[#FF4D4D] flex items-center gap-0.5">
+                                <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-xs px-1.5 py-0.5 rounded text-[9px] font-bold text-[#FF4D4D] flex items-center gap-0.5 z-15">
                                   <Flame className="h-3 w-3" />
                                   <span>{remaining} left</span>
                                 </div>
@@ -712,9 +781,15 @@ export default function CustomerMenu() {
 
                             {/* Title and Metadata */}
                             <div className="mt-2 leading-tight">
-                              <h3 className="font-['Roboto'] text-sm font-bold text-white line-clamp-1 group-hover:text-[#FF4D4D] transition-colors">
-                                {dish.name}
-                              </h3>
+                              <div className="flex items-center justify-between gap-1">
+                                <h3
+                                  onClick={() => toggleInfo(dish.id)}
+                                  className="font-['Roboto'] text-sm font-bold text-white line-clamp-1 group-hover:text-[#FF4D4D] transition-colors cursor-pointer flex-1"
+                                  title="Click to view description"
+                                >
+                                  {dish.name}
+                                </h3>
+                              </div>
                               <div className="text-xs text-[#AAAAAA] mt-0.5 flex items-center gap-1 font-medium">
                                 <span className="text-white font-bold">
                                   ₹{Number(dish.price).toFixed(2)}
@@ -747,76 +822,121 @@ export default function CustomerMenu() {
                   const isSoldOut =
                     !dish.isAvailable ||
                     (dish.inventory && dish.inventory.remainingQty <= 0);
+                  const isExpanded = expandedDishId === dish.id;
 
                   return (
                     <div
                       key={dish.id}
-                      className={`p-2.5 rounded-xl bg-[#121212] hover:bg-[#1A1A1A] border border-white/5 transition-all flex items-center justify-between gap-3 ${
-                        isSoldOut ? "opacity-50" : ""
-                      }`}
+                      className={`p-2.5 rounded-2xl bg-[#121212] hover:bg-[#181818] border transition-all duration-300 ${
+                        isExpanded ? "border-white/20 bg-[#171717] shadow-xl" : "border-white/5"
+                      } ${isSoldOut ? "opacity-50" : ""}`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={getImageUrl(dish.imageUrl)}
-                          alt={dish.name}
-                          className="h-14 w-14 rounded-xl object-cover bg-[#212121] flex-shrink-0"
-                          onError={(e: any) => {
-                            e.target.src =
-                              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80";
-                          }}
-                        />
-                        <div className="truncate">
-                          <h3 className="text-sm font-bold text-white truncate leading-snug">
-                            {dish.name}
-                          </h3>
-                          <div className="text-xs text-[#AAAAAA] mt-0.5 flex items-center gap-1.5">
-                            <span className="text-white font-bold">
-                              ₹{Number(dish.price).toFixed(2)}
-                            </span>
-                            {dish.description && (
-                              <>
-                                <span>•</span>
-                                <span className="truncate max-w-[140px] text-[11px] text-[#717171]">
-                                  {dish.description}
-                                </span>
-                              </>
-                            )}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <img
+                            src={getImageUrl(dish.imageUrl)}
+                            alt={dish.name}
+                            onClick={() => toggleExpandDish(dish.id)}
+                            className="h-14 w-14 rounded-xl object-cover bg-[#212121] flex-shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
+                            onError={(e: any) => {
+                              e.target.src =
+                                "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80";
+                            }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <h3
+                                onClick={() => toggleExpandDish(dish.id)}
+                                className="text-sm font-bold text-white truncate leading-snug cursor-pointer hover:text-[#FF4D4D] transition-colors"
+                              >
+                                {dish.name}
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={() => toggleExpandDish(dish.id)}
+                                className={`h-5 w-5 rounded-full flex items-center justify-center transition-all duration-200 border shrink-0 cursor-pointer ${
+                                  isExpanded
+                                    ? "bg-white text-black border-white shadow-sm scale-105"
+                                    : "bg-[#212121] hover:bg-[#303030] text-[#AAAAAA] hover:text-white border-white/10 active:scale-90"
+                                }`}
+                                title={isExpanded ? "Collapse details" : "Extend to show details"}
+                              >
+                                {isExpanded ? (
+                                  <X className="h-2.5 w-2.5 stroke-[2.5]" />
+                                ) : (
+                                  <Info className="h-3 w-3" />
+                                )}
+                              </button>
+                            </div>
+                            <div className="text-xs text-[#AAAAAA] mt-0.5 flex items-center gap-1.5">
+                              <span className="text-white font-bold">
+                                ₹{Number(dish.price).toFixed(2)}
+                              </span>
+                              {!isExpanded && dish.description && (
+                                <>
+                                  <span>•</span>
+                                  <span className="truncate max-w-[160px] text-[11px] text-[#717171]">
+                                    {dish.description}
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
+                        </div>
+
+                        {/* Action Stepper / Add */}
+                        <div className="flex-shrink-0">
+                          {isSoldOut ? (
+                            <span className="text-[10px] font-bold text-[#717171] uppercase px-2 py-1">
+                              Sold Out
+                            </span>
+                          ) : cartEntry ? (
+                            <div className="flex items-center gap-1 bg-[#212121] p-1 rounded-lg border border-white/10">
+                              <button
+                                onClick={() => updateQuantity(dish.id, -1)}
+                                className="h-6 w-6 rounded bg-[#303030] flex items-center justify-center text-white active:scale-90"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="font-['Outfit'] text-xs font-bold text-white w-4 text-center">
+                                {cartEntry.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(dish.id, 1)}
+                                className="h-6 w-6 rounded bg-[#FF0000] text-white flex items-center justify-center active:scale-90"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => addToCart(dish)}
+                              className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#FF0000] text-white flex items-center justify-center active:scale-90 transition-all border border-white/10"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
 
-                      {/* Action */}
-                      <div className="flex-shrink-0">
-                        {isSoldOut ? (
-                          <span className="text-[10px] font-bold text-[#717171] uppercase px-2 py-1">
-                            Sold Out
-                          </span>
-                        ) : cartEntry ? (
-                          <div className="flex items-center gap-1 bg-[#212121] p-1 rounded-lg border border-white/10">
-                            <button
-                              onClick={() => updateQuantity(dish.id, -1)}
-                              className="h-6 w-6 rounded bg-[#303030] flex items-center justify-center text-white active:scale-90"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className="font-['Outfit'] text-xs font-bold text-white w-4 text-center">
-                              {cartEntry.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(dish.id, 1)}
-                              className="h-6 w-6 rounded bg-[#FF0000] text-white flex items-center justify-center active:scale-90"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </button>
+                      {/* Smooth Extended Card Details */}
+                      <div
+                        className={`grid transition-all duration-300 ease-out overflow-hidden ${
+                          isExpanded
+                            ? "grid-rows-[1fr] opacity-100 mt-2.5 pt-2.5 border-t border-white/10"
+                            : "grid-rows-[0fr] opacity-0 mt-0 pt-0"
+                        }`}
+                      >
+                        <div className="overflow-hidden space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#FF4D4D] uppercase tracking-wider">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#FF4D4D] animate-pulse" />
+                            <span>Description & Details</span>
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => addToCart(dish)}
-                            className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#FF0000] text-white flex items-center justify-center active:scale-90 transition-all border border-white/10"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        )}
+                          <p className="text-xs text-[#E0E0E0] leading-relaxed font-normal">
+                            {dish.description ||
+                              "Freshly prepared in our kitchen using authentic spices and quality ingredients."}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1293,6 +1413,159 @@ export default function CustomerMenu() {
           </button>
         </div>
       </nav>
+
+      {/* ================= DISH DETAILS MODAL / BOTTOM SHEET ================= */}
+      {selectedDishDetail && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setSelectedDishDetail(null)}
+        >
+          <div
+            className="w-full max-w-md bg-[#121212] border-t sm:border border-white/15 rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Mobile Drag Handle */}
+            <div className="w-10 h-1 rounded-full bg-white/20 mx-auto sm:hidden -mt-1 mb-1" />
+
+            {/* Header with Artwork and Close Button */}
+            <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-[#1a1a1a] shadow-lg border border-white/10">
+              <img
+                src={getImageUrl(selectedDishDetail.imageUrl)}
+                alt={selectedDishDetail.name}
+                className="h-full w-full object-cover"
+                onError={(e: any) => {
+                  e.target.src =
+                    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setSelectedDishDetail(null)}
+                className="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-white flex items-center justify-center border border-white/20 active:scale-95 transition-all cursor-pointer"
+                title="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              {/* Stock / Availability Pill */}
+              <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                {!selectedDishDetail.isAvailable ||
+                (selectedDishDetail.inventory && selectedDishDetail.inventory.remainingQty <= 0) ? (
+                  <span className="bg-rose-950/80 text-rose-300 border border-rose-500/30 text-[10px] font-black uppercase px-2.5 py-1 rounded-full backdrop-blur-md">
+                    Sold Out
+                  </span>
+                ) : selectedDishDetail.inventory &&
+                  selectedDishDetail.inventory.remainingQty <= 5 ? (
+                  <span className="bg-amber-950/80 text-amber-300 border border-amber-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md flex items-center gap-1">
+                    <Flame className="h-3 w-3 text-amber-400" />
+                    Only {selectedDishDetail.inventory.remainingQty} left
+                  </span>
+                ) : (
+                  <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md">
+                    Freshly Available
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Dish Title & Price */}
+            <div className="flex items-start justify-between gap-3 pt-1">
+              <div>
+                <h2 className="font-['Outfit'] text-xl font-black text-white tracking-tight leading-snug">
+                  {selectedDishDetail.name}
+                </h2>
+                <span className="text-xs text-[#AAAAAA] font-medium mt-0.5 block">
+                  {categories.find((c) => c.id === selectedDishDetail.categoryId)?.name || "Dish"}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="font-['Outfit'] text-xl font-black text-white">
+                  ₹{Number(selectedDishDetail.price).toFixed(2)}
+                </span>
+                <span className="text-[10px] text-[#717171] block">+ 5% GST</span>
+              </div>
+            </div>
+
+            {/* Description Card */}
+            <div className="p-3.5 rounded-2xl bg-[#1A1A1A] border border-white/5 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#FF4D4D] uppercase tracking-wider">
+                <Info className="h-3.5 w-3.5" />
+                <span>Description & Preparation</span>
+              </div>
+              <p className="text-xs text-[#CCCCCC] leading-relaxed font-normal">
+                {selectedDishDetail.description ||
+                  "Prepared freshly to order in our kitchen using authentic recipes, signature seasoning, and quality ingredients."}
+              </p>
+            </div>
+
+            {/* Action Footer */}
+            <div className="pt-2">
+              {(() => {
+                const cartEntry = cart.find((ci) => ci.item.id === selectedDishDetail.id);
+                const isSoldOut =
+                  !selectedDishDetail.isAvailable ||
+                  (selectedDishDetail.inventory && selectedDishDetail.inventory.remainingQty <= 0);
+
+                if (isSoldOut) {
+                  return (
+                    <button
+                      disabled
+                      className="w-full py-3 rounded-2xl bg-[#212121] text-[#717171] text-xs font-bold uppercase tracking-wider cursor-not-allowed border border-white/5"
+                    >
+                      Item Sold Out
+                    </button>
+                  );
+                }
+
+                if (cartEntry) {
+                  return (
+                    <div className="flex items-center justify-between p-2 rounded-2xl bg-[#212121] border border-white/10">
+                      <div className="flex items-center gap-2 pl-2">
+                        <span className="text-xs text-[#AAAAAA]">In your tray:</span>
+                        <span className="font-['Outfit'] text-sm font-black text-white">
+                          {cartEntry.quantity} portion(s)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(selectedDishDetail.id, -1)}
+                          className="h-8 w-8 rounded-xl bg-[#303030] flex items-center justify-center text-white active:scale-90 cursor-pointer"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="font-['Outfit'] text-sm font-black text-white w-5 text-center">
+                          {cartEntry.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(selectedDishDetail.id, 1)}
+                          className="h-8 w-8 rounded-xl bg-[#FF0000] text-white flex items-center justify-center active:scale-90 font-bold cursor-pointer"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addToCart(selectedDishDetail);
+                    }}
+                    className="w-full py-3 rounded-2xl bg-[#FF0000] hover:bg-[#D90000] text-white text-xs font-bold flex items-center justify-center gap-2 active:scale-98 transition-all shadow-lg shadow-red-600/30 cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4 stroke-[2.5]" />
+                    <span>Add to Tray • ₹{Number(selectedDishDetail.price).toFixed(2)}</span>
+                  </button>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
