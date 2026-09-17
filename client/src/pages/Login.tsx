@@ -55,13 +55,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50/60 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100">
+    <div className="min-h-screen flex flex-col bg-[#121214] text-neutral-100 font-sans antialiased selection:bg-[#FA2D48] selection:text-white relative overflow-hidden dark">
+      {/* Apple Music Ambient Mesh Glow */}
+      <div className="pointer-events-none fixed -top-40 -left-40 h-96 w-96 rounded-full bg-[#FA2D48]/12 blur-3xl" />
+      <div className="pointer-events-none fixed top-1/4 -right-40 h-[28rem] w-[28rem] rounded-full bg-violet-600/8 blur-3xl" />
+      <div className="pointer-events-none fixed -bottom-40 left-1/3 h-80 w-80 rounded-full bg-[#FA2D48]/6 blur-3xl" />
+
       {/* Top Header Bar matching Admin Layout */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200/80 bg-white/95 px-4 sm:px-6 backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900/95">
+      <header className="relative z-20 flex h-14 shrink-0 items-center justify-between border-b border-white/[0.07] bg-[#121214]/80 px-4 sm:px-6 backdrop-blur-2xl">
         <div className="flex items-center gap-3">
           <BrandCrest className="h-8 w-8 shrink-0" />
           <div className="flex flex-col">
-            <span className="font-bold text-sm tracking-tight text-neutral-900 dark:text-neutral-50 uppercase leading-none">
+            <span className="font-bold text-sm tracking-tight text-white uppercase leading-none font-sans">
               Serve_Sync
             </span>
             <span className="text-[10px] font-mono text-neutral-400 mt-0.5">
@@ -71,52 +76,59 @@ export default function Login() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="font-mono">WS: ONLINE</span>
+          <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-medium text-emerald-400 border border-emerald-500/20 backdrop-blur-md">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-mono tracking-wide">WS: ONLINE</span>
           </div>
         </div>
       </header>
 
       {/* Main Centered Landscape Card Layout */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8">
-        <div className="w-full max-w-4xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl shadow-xl shadow-neutral-200/30 dark:shadow-neutral-950/40 overflow-hidden flex flex-col md:flex-row">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 relative z-10">
+        <div className="w-full max-w-4xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] rounded-3xl shadow-2xl backdrop-blur-2xl overflow-hidden flex flex-col md:flex-row relative">
+          {/* Subtle Ambient Bloom inside card */}
+          <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/10 blur-3xl" />
+
           {/* Left Side: Clean Brand Identity */}
-          <div className="w-full md:w-1/2 p-8 md:p-12 bg-neutral-50/70 dark:bg-neutral-900/50 border-b md:border-b-0 md:border-r border-neutral-200/80 dark:border-neutral-800 flex flex-col justify-center items-start">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#141416] border border-white/[0.12] shadow-md shadow-black/40 mb-5">
+          <div className="w-full md:w-1/2 p-8 md:p-12 bg-white/[0.02] border-b md:border-b-0 md:border-r border-white/[0.07] flex flex-col justify-center items-start relative z-10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#141416] border border-white/[0.12] shadow-xl shadow-black/50 mb-5">
               <BrandLogo size={24} />
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50 mb-2">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2 font-sans">
               Sign in
             </h1>
-            <h2 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
+            <h2 className="text-xs font-semibold text-neutral-400 tracking-widest uppercase">
               Restaurant Management & POS System
             </h2>
           </div>
 
           {/* Right Side: Credentials Form */}
-          <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center">
+          <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center relative z-10">
             <div className="mb-6">
-              <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+              <h2 className="text-xl font-bold tracking-tight text-white font-sans">
                 Staff Credentials
               </h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+              <p className="text-xs text-neutral-400 mt-1">
                 Enter your username and password to access the console
               </p>
             </div>
 
             {/* Error Feedback message */}
             {error && (
-              <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-red-200/80 bg-red-50/80 p-3 text-xs font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300 animate-in fade-in">
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+              <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-medium text-red-300 animate-in fade-in backdrop-blur-md">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 tracking-wider uppercase">
+                <label className="text-xs font-semibold text-neutral-300 tracking-wider uppercase">
                   Username
                 </label>
                 <div className="relative">
@@ -130,13 +142,13 @@ export default function Login() {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-9 bg-neutral-50/50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 h-10 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-600 transition-all"
+                    className="pl-9 bg-white/[0.05] hover:bg-white/[0.07] border-white/[0.1] focus:border-[#FA2D48] text-white placeholder:text-neutral-500 h-10.5 rounded-xl focus-visible:ring-2 focus-visible:ring-[#FA2D48]/30 transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 tracking-wider uppercase">
+                <label className="text-xs font-semibold text-neutral-300 tracking-wider uppercase">
                   Password
                 </label>
                 <div className="relative">
@@ -150,7 +162,7 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-9 bg-neutral-50/50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 h-10 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-600 transition-all"
+                    className="pl-9 bg-white/[0.05] hover:bg-white/[0.07] border-white/[0.1] focus:border-[#FA2D48] text-white placeholder:text-neutral-500 h-10.5 rounded-xl focus-visible:ring-2 focus-visible:ring-[#FA2D48]/30 transition-all"
                   />
                 </div>
               </div>
@@ -158,7 +170,7 @@ export default function Login() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 h-10 rounded-lg shadow-sm shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full mt-2 bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB7185] hover:opacity-95 text-white font-semibold py-2.5 h-11 rounded-xl shadow-lg shadow-[#FA2D48]/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-60"
               >
                 {isLoading ? (
                   <>
@@ -178,7 +190,7 @@ export default function Login() {
       </main>
 
       {/* Footer */}
-      <footer className="py-4 text-center text-xs text-neutral-400 dark:text-neutral-600 font-mono">
+      <footer className="py-4 text-center text-xs text-neutral-500 font-mono relative z-10">
         Serve_Sync Real-Time Restaurant Management • System Version 2.4
       </footer>
     </div>
