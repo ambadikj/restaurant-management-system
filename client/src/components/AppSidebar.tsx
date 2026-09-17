@@ -5,10 +5,10 @@ import {
   QrCode,
   Receipt,
   LogOut,
-  Sparkles,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
+import { BrandLogo, BrandCrest } from "@/components/BrandLogo";
 import {
   Sidebar,
   SidebarContent,
@@ -104,20 +104,14 @@ export function AppSidebar() {
         {/* Expanded State: Logo + Title + Panel Close Button */}
         <div className="flex h-9 w-full items-center justify-between px-1 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Glowing Apple Music style crest */}
-            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FA2D48] via-[#FF4565] to-[#FB7185] text-white shadow-lg shadow-[#FA2D48]/30">
-              <Sparkles className="h-4 w-4 fill-white/20" />
-              <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-              </span>
-            </div>
+            {/* Minimal, Sleek & Professional Brand Crest */}
+            <BrandCrest className="h-8 w-8 shrink-0" />
 
             <div className="flex flex-col min-w-0 overflow-hidden whitespace-nowrap">
               <span className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5 font-sans">
                 Serve_Sync
-                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#FA2D48]/20 text-[#FA2D48] border border-[#FA2D48]/30 tracking-wider">
-                  ADMIN
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/[0.08] text-neutral-300 border border-white/[0.1] tracking-wider uppercase">
+                  Admin
                 </span>
               </span>
               <span className="text-[10px] text-neutral-400 font-medium tracking-wide truncate">
@@ -135,13 +129,13 @@ export function AppSidebar() {
           </SidebarTrigger>
         </div>
 
-        {/* Collapsed State: Centered Toggle Button with PanelLeft Icon */}
+        {/* Collapsed State: Centered Minimal Logo Toggle */}
         <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-full py-0.5">
           <SidebarTrigger
-            className="relative flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FA2D48] via-[#FF4565] to-[#FB7185] text-white shadow-lg shadow-[#FA2D48]/30 transition-transform hover:scale-105 active:scale-95 cursor-pointer p-0"
+            className="group relative flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-[#1f1f23] to-[#141416] border border-white/[0.12] hover:border-white/[0.25] text-white shadow-md shadow-black/40 transition-all hover:scale-105 active:scale-95 cursor-pointer p-0"
             title="Expand Sidebar (Ctrl+B)"
           >
-            <PanelLeft className="h-4 w-4 text-white" />
+            <BrandLogo size={18} className="transition-transform group-hover:scale-110" />
           </SidebarTrigger>
         </div>
       </SidebarHeader>
