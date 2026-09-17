@@ -18,7 +18,14 @@ const SwipeableToastItem: React.FC<SwipeableToastItemProps> = ({ toast: t }) => 
   const startYRef = useRef<number | null>(null);
   const isHorizontalGestureRef = useRef<boolean | null>(null);
 
-  const message = resolveValue(t.message, t);
+  const cleanMessage = (msg: any) => {
+    if (typeof msg === "string") {
+      return msg.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, "").trim();
+    }
+    return msg;
+  };
+
+  const message = cleanMessage(resolveValue(t.message, t));
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
@@ -158,7 +165,7 @@ const SwipeableToastItem: React.FC<SwipeableToastItemProps> = ({ toast: t }) => 
         opacity,
         transition,
       }}
-      className={`group relative pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border ${accentBorder} shadow-2xl shadow-black/80 select-none cursor-grab active:cursor-grabbing w-full max-w-sm transition-shadow hover:shadow-white/5 animate-in fade-in slide-in-from-top-2 duration-300`}
+      className={`group relative pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border ${accentBorder} shadow-2xl shadow-black/80 select-none cursor-grab active:cursor-grabbing w-full max-w-md transition-shadow hover:shadow-white/5 animate-in fade-in slide-in-from-top-2 duration-300`}
     >
       {/* Type Icon */}
       <div

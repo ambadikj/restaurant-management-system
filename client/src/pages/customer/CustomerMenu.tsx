@@ -213,7 +213,7 @@ export default function CustomerMenu() {
       setSessionOrders((prev) =>
         prev.map((o) => (o.id === data.orderId ? { ...o, status: data.status } : o))
       );
-      toast(`Order status updated to ${data.status}!`, { icon: "🔔" });
+      toast(`Order status updated to ${data.status}!`);
     });
 
     // Real-time: Auto-86 / stock deduction across customer menus
@@ -305,7 +305,6 @@ export default function CustomerMenu() {
     socket.on("service:acknowledged", (data: { message: string }) => {
       toast.success(data.message || "Staff has been alerted and will arrive shortly!", {
         duration: 4000,
-        icon: "🛎️",
       });
     });
 
@@ -407,7 +406,7 @@ export default function CustomerMenu() {
 
       const res = await axios.post(`${API_BASE}/order`, payload);
 
-      toast.success("🎉 Order sent to the kitchen!", {
+      toast.success("Order sent to the kitchen!", {
         duration: 4000,
       });
 
@@ -441,8 +440,8 @@ export default function CustomerMenu() {
       });
       toast.success(
         type === "CALL_WAITER"
-          ? "🔔 Waiter has been alerted to your table!"
-          : "🧾 Final bill requested! Staff will assist you shortly.",
+          ? "Waiter has been alerted to your table"
+          : "Final bill requested. Staff will assist you shortly.",
         { duration: 4000 }
       );
     } catch (err) {
@@ -461,35 +460,35 @@ export default function CustomerMenu() {
       case "PENDING":
         return {
           label: "In Queue",
-          icon: "⏳",
+          icon: <Timer className="h-3 w-3" />,
           color: "bg-amber-500/20 text-amber-300 border-amber-500/40",
           step: 1,
         };
       case "PREPARING":
         return {
           label: "Cooking Live",
-          icon: "🍳",
+          icon: <CookingPot className="h-3 w-3 animate-pulse" />,
           color: "bg-[#FF0000]/20 text-[#FF4D4D] border-[#FF0000]/40 animate-pulse",
           step: 2,
         };
       case "READY":
         return {
           label: "Ready to Serve",
-          icon: "🔔",
+          icon: <Bell className="h-3 w-3" />,
           color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
           step: 3,
         };
       case "SERVED":
         return {
           label: "Served",
-          icon: "✨",
+          icon: <CheckCircle2 className="h-3 w-3" />,
           color: "bg-neutral-800 text-neutral-300 border-neutral-700",
           step: 4,
         };
       case "CANCELLED":
         return {
           label: "Cancelled",
-          icon: "❌",
+          icon: <X className="h-3 w-3" />,
           color: "bg-rose-500/20 text-rose-400 border-rose-500/40",
           step: 0,
         };
@@ -517,15 +516,15 @@ export default function CustomerMenu() {
   }, [categories, activeCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#030303] text-white font-['Roboto',sans-serif] antialiased pb-36 select-none selection:bg-[#FF0000] selection:text-white">
+    <div className="min-h-screen w-full bg-[#030303] text-white font-['Roboto',sans-serif] antialiased pb-36 overflow-x-hidden selection:bg-[#FF0000] selection:text-white">
       <SwipeableToaster />
 
       {/* Subtle YouTube Ambient Radial Top Gradient */}
       <div className="fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-[#1F1F1F] via-[#0A0A0A] to-transparent pointer-events-none -z-10 opacity-60" />
 
       {/* ================= YOUTUBE MUSIC TOP APP BAR ================= */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#030303]/90 border-b border-[#1F1F1F] px-4 py-2.5">
-        <div className="max-w-md mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#030303]/90 border-b border-[#1F1F1F] px-4 py-2.5 w-full">
+        <div className="w-full max-w-3xl mx-auto flex items-center justify-between">
           {/* Brand: Logo Icon, Name, and Table Number */}
           <div className="flex items-center gap-2.5">
             <BrandCrest className="h-8 w-8 shrink-0" />
@@ -545,7 +544,7 @@ export default function CustomerMenu() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all"
+              className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
               title="Search menu"
             >
               <Search className="h-4 w-4" />
@@ -554,7 +553,7 @@ export default function CustomerMenu() {
             {!isTakeawayParam && (
               <button
                 onClick={() => handleServiceRequest("CALL_WAITER")}
-                className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all"
+                className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
                 title="Call waiter"
               >
                 <Bell className="h-4 w-4 text-[#FF4D4D]" />
@@ -565,7 +564,7 @@ export default function CustomerMenu() {
 
         {/* Collapsible Search Bar */}
         {isSearchOpen && (
-          <div className="max-w-md mx-auto mt-2.5 pt-2 border-t border-[#212121] animate-in slide-in-from-top-2 duration-200">
+          <div className="w-full max-w-3xl mx-auto mt-2.5 pt-2 border-t border-[#212121] animate-in slide-in-from-top-2 duration-200">
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#AAAAAA]" />
               <input
@@ -590,12 +589,12 @@ export default function CustomerMenu() {
       </header>
 
       {/* ================= MAIN CONTAINER ================= */}
-      <main className="max-w-md mx-auto px-4 pt-3">
+      <main className="w-full max-w-3xl mx-auto px-4 pt-3">
         {/* ================= TAB 1: MENU (HOME) ================= */}
         {activeTab === "menu" && (
           <div className="space-y-6 animate-in fade-in duration-200">
             {/* YouTube Music Horizontal Category Chips */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none select-none -mx-4 px-4">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none select-none -mx-4 px-4 touch-auto">
               <button
                 onClick={() => setActiveCategory("ALL")}
                 className={`px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-150 active:scale-95 ${
@@ -695,7 +694,7 @@ export default function CustomerMenu() {
                       </div>
                     </div>
 
-                    {/* Horizontal Carousel (Album Artwork Style) - Fluid Inertial Scrolling */}
+                    {/* Horizontal Carousel (Album Artwork Style) - Fluid & Phone Scroll Friendly */}
                     <div
                       id={`carousel-${cat.id}`}
                       onWheel={(e) => {
@@ -703,7 +702,7 @@ export default function CustomerMenu() {
                           e.currentTarget.scrollLeft += e.deltaY;
                         }
                       }}
-                      className="flex gap-3.5 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 touch-pan-x overscroll-x-contain"
+                      className="flex gap-3.5 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 touch-auto"
                       style={{ WebkitOverflowScrolling: "touch" }}
                     >
                       {cat.menuItems.map((dish) => {
@@ -718,7 +717,7 @@ export default function CustomerMenu() {
                           <div
                             key={dish.id}
                             data-carousel-card={dish.id}
-                            className="w-40 sm:w-44 flex-shrink-0 group select-none"
+                            className="w-36 min-[400px]:w-44 sm:w-48 flex-shrink-0 group select-none"
                           >
                             {/* Square Artwork (1:1 Ratio) */}
                             <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#181818] shadow-md border border-white/5 select-none">
@@ -921,7 +920,7 @@ export default function CustomerMenu() {
                               {!isExpanded && dish.description && (
                                 <>
                                   <span>•</span>
-                                  <span className="truncate max-w-[160px] text-[11px] text-[#717171]">
+                                  <span className="truncate flex-1 min-w-0 text-[11px] text-[#717171]">
                                     {dish.description}
                                   </span>
                                 </>
@@ -1365,7 +1364,7 @@ export default function CustomerMenu() {
       {cart.length > 0 && activeTab === "menu" && (
         <div
           onClick={() => setActiveTab("order")}
-          className="fixed bottom-16 left-3 right-3 max-w-md mx-auto z-40 cursor-pointer bg-[#212121]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-2.5 flex items-center justify-between shadow-2xl active:scale-98 transition-all"
+          className="fixed bottom-16 left-3 right-3 max-w-3xl mx-auto z-40 cursor-pointer bg-[#212121]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-2.5 flex items-center justify-between shadow-2xl active:scale-98 transition-all"
         >
           <div className="flex items-center gap-3 min-w-0">
             <img
@@ -1393,7 +1392,7 @@ export default function CustomerMenu() {
 
       {/* ================= BOTTOM NAVIGATION BAR (UNFILLED, RED ACCENT) ================= */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#1A1C1E]/95 backdrop-blur-2xl border-t border-[#2D3135] pt-2 pb-3 shadow-[0_-4px_24px_rgba(0,0,0,0.5)]">
-        <div className="max-w-md mx-auto px-4 flex items-center justify-around select-none">
+        <div className="w-full max-w-3xl mx-auto px-4 flex items-center justify-around select-none">
           {/* TAB 1: MENU */}
           <button
             onClick={() => setActiveTab("menu")}
@@ -1492,7 +1491,7 @@ export default function CustomerMenu() {
           onClick={() => setSelectedDishDetail(null)}
         >
           <div
-            className="w-full max-w-md bg-[#121212] border-t sm:border border-white/15 rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto space-y-4"
+            className="w-full max-w-lg bg-[#121212] border-t sm:border border-white/15 rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Mobile Drag Handle */}
