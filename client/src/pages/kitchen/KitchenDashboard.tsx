@@ -310,19 +310,24 @@ export default function KitchenDashboard() {
   }, [now]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#F0ECE4] text-neutral-900 font-mono select-none overflow-hidden antialiased">
-      {/* ════════════════ STREAMLINED KDS TITLE BAR (Matching Paper Theme) ════════════════ */}
-      <header className="h-12 bg-[#FAF8F5] border-b border-neutral-300/90 px-4 flex items-center justify-between shrink-0 z-30 shadow-sm">
+    <div className="flex flex-col h-screen w-screen bg-[#121214] text-neutral-100 font-mono select-none overflow-hidden antialiased relative dark">
+      {/* Ambient Mesh Glows */}
+      <div className="pointer-events-none fixed -top-40 -left-40 h-96 w-96 rounded-full bg-[#FA2D48]/10 blur-3xl" />
+      <div className="pointer-events-none fixed top-1/3 -right-40 h-[28rem] w-[28rem] rounded-full bg-violet-600/10 blur-3xl" />
+      <div className="pointer-events-none fixed -bottom-40 left-1/3 h-80 w-80 rounded-full bg-[#FA2D48]/5 blur-3xl" />
+
+      {/* ════════════════ STREAMLINED KDS TITLE BAR (Dark Glass Theme) ════════════════ */}
+      <header className="h-12 bg-[#121214]/90 border-b border-white/[0.08] px-4 flex items-center justify-between shrink-0 z-30 backdrop-blur-xl shadow-lg relative">
         {/* Left: Clean Branding & Active Orders */}
         <div className="flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FA2D48] text-white shadow-sm">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#FA2D48] via-[#FF4565] to-[#FB7185] text-white shadow-md shadow-[#FA2D48]/30">
             <ChefHat className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="font-bold text-sm text-neutral-900 tracking-tight font-sans">
+            <span className="font-bold text-sm text-white tracking-tight font-sans">
               Kitchen Display
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 text-[11px] font-sans font-semibold text-neutral-800 border border-neutral-300/70">
+            <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-[11px] font-sans font-semibold text-neutral-300 border border-white/[0.1]">
               {orders.length} {orders.length === 1 ? "Order" : "Orders"}
             </span>
           </div>
@@ -334,10 +339,10 @@ export default function KitchenDashboard() {
           <button
             type="button"
             onClick={() => setShowHistory(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-xs font-sans font-semibold text-neutral-800 transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-sans font-semibold text-neutral-200 transition-all shadow-sm active:scale-95"
             title="Recall Recently Bumped Tickets"
           >
-            <History className="h-3.5 w-3.5 text-neutral-600" />
+            <History className="h-3.5 w-3.5 text-neutral-400" />
             <span>Recall ({historyOrders.length})</span>
           </button>
 
@@ -347,8 +352,8 @@ export default function KitchenDashboard() {
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`p-1.5 rounded-lg border transition-all shadow-sm active:scale-95 ${
               soundEnabled
-                ? "bg-neutral-100 border-neutral-300 text-emerald-600 hover:bg-neutral-200"
-                : "bg-neutral-100 border-neutral-300 text-neutral-400 hover:bg-neutral-200"
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                : "bg-white/[0.05] border-white/[0.1] text-neutral-400 hover:bg-white/[0.1]"
             }`}
             title={soundEnabled ? "Audio chime ON" : "Audio muted"}
           >
@@ -356,10 +361,10 @@ export default function KitchenDashboard() {
           </button>
 
           {/* Live Clock with connection indicator */}
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-neutral-800 px-1 py-1">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-neutral-200 px-1 py-1">
             <span
               className={`h-2 w-2 rounded-full ${
-                isConnected ? "bg-emerald-500" : "bg-amber-500"
+                isConnected ? "bg-emerald-400 shadow-sm shadow-emerald-400/50" : "bg-amber-400"
               }`}
             />
             <span>{liveTimeStr}</span>
@@ -373,7 +378,7 @@ export default function KitchenDashboard() {
               localStorage.removeItem("user");
               navigate("/login");
             }}
-            className="p-1.5 rounded-lg bg-neutral-100 hover:bg-rose-50 hover:border-rose-300 border border-neutral-300 text-neutral-600 hover:text-rose-600 transition-all ml-1 shadow-sm active:scale-95"
+            className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-rose-500/20 hover:border-rose-500/40 border border-white/[0.1] text-neutral-400 hover:text-rose-300 transition-all ml-1 shadow-sm active:scale-95"
             title="Sign out of kitchen"
           >
             <LogOut className="h-4 w-4" />
@@ -381,33 +386,33 @@ export default function KitchenDashboard() {
         </div>
       </header>
 
-      {/* ════════════════ MAIN KDS TICKET TRACK (Grid Pattern Surface) ════════════════ */}
+      {/* ════════════════ MAIN KDS TICKET TRACK (Dark Grid Surface) ════════════════ */}
       <main
-        className="flex-1 overflow-x-auto overflow-y-auto p-3 sm:p-4 bg-[#EDE8DF]"
+        className="flex-1 overflow-x-auto overflow-y-auto p-3 sm:p-4 bg-[#0E0F12] relative z-10"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(0, 0, 0, 0.055) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.055) 1px, transparent 1px)
+            linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px)
           `,
-          backgroundSize: "26px 26px",
+          backgroundSize: "28px 28px",
         }}
       >
         {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <div className="h-8 w-8 rounded-full border-2 border-[#FA2D48] border-t-transparent animate-spin" />
-              <span className="text-xs text-neutral-600 font-sans font-semibold tracking-wide">
+              <span className="text-xs text-neutral-400 font-sans font-semibold tracking-wide">
                 INITIALIZING KDS TERMINAL...
               </span>
             </div>
           </div>
         ) : orders.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-neutral-500">
-            <div className="h-16 w-16 rounded-2xl bg-white border border-neutral-300 flex items-center justify-center mb-3 shadow-sm">
-              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-neutral-400">
+            <div className="h-16 w-16 rounded-2xl bg-white/[0.04] border border-white/[0.1] flex items-center justify-center mb-3 shadow-xl backdrop-blur-md">
+              <CheckCircle2 className="h-8 w-8 text-emerald-400" />
             </div>
-            <h3 className="text-lg font-sans font-bold text-neutral-900">Cook Line Clear</h3>
-            <p className="text-xs font-sans text-neutral-600 max-w-sm mt-1">
+            <h3 className="text-lg font-sans font-bold text-white">Cook Line Clear</h3>
+            <p className="text-xs font-sans text-neutral-400 max-w-sm mt-1">
               All active tickets have been bumped. Incoming orders will appear instantly.
             </p>
           </div>
@@ -432,22 +437,22 @@ export default function KitchenDashboard() {
               return (
                 <div
                   key={order.id}
-                  className="group relative flex flex-col rounded-2xl overflow-hidden shadow-2xl transition-all duration-200 hover:-translate-y-0.5 bg-[#FAF8F5] border border-neutral-300/90"
+                  className="group relative flex flex-col rounded-2xl overflow-hidden shadow-2xl transition-all duration-200 hover:-translate-y-0.5 bg-[#17181D] border border-white/[0.1]"
                 >
-                  {/* ═════════ 1. STAINLESS STEEL TICKET RAIL CLIP ═════════ */}
-                  <div className="h-4 bg-gradient-to-b from-neutral-300 via-neutral-100 to-neutral-400 border-b border-neutral-400/60 relative flex items-center justify-between px-3 shadow-inner select-none shrink-0">
+                  {/* ═════════ 1. DARK ANODIZED STEEL TICKET RAIL CLIP ═════════ */}
+                  <div className="h-4 bg-gradient-to-b from-[#2E303B] via-[#202128] to-[#17181D] border-b border-white/[0.08] relative flex items-center justify-between px-3 shadow-inner select-none shrink-0">
                     {/* Left Silver Rivet */}
-                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-600 shadow-[inset_0_1px_1px_rgba(0,0,0,0.8)] border border-neutral-300" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#111215] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] border border-neutral-600" />
                     {/* Rail Channel Indicator */}
-                    <div className="text-[8px] font-mono text-neutral-600 font-extrabold tracking-widest uppercase opacity-75">
+                    <div className="text-[8px] font-mono text-neutral-400 font-extrabold tracking-widest uppercase opacity-80">
                       SLIP #{order.orderNumber}
                     </div>
                     {/* Right Silver Rivet */}
-                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-600 shadow-[inset_0_1px_1px_rgba(0,0,0,0.8)] border border-neutral-300" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#111215] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] border border-neutral-600" />
                   </div>
 
-                  {/* ═════════ 2. AUTHENTIC THERMAL PAPER DOCKET ═════════ */}
-                  <div className="bg-[#FAF8F5] text-neutral-900 p-3.5 sm:p-4 font-mono select-none flex flex-col flex-1 relative">
+                  {/* ═════════ 2. SLEEK OBSIDIAN DOCKET ═════════ */}
+                  <div className="bg-[#17181D] text-neutral-100 p-3.5 sm:p-4 font-mono select-none flex flex-col flex-1 relative">
                     {/* Top Chit Title */}
                     <div className="text-center pb-1">
                       <span className="text-[9px] font-mono font-bold tracking-[0.25em] text-neutral-500 uppercase">
@@ -459,12 +464,12 @@ export default function KitchenDashboard() {
                     <div className="flex items-center justify-between gap-2 my-1.5">
                       {/* Big Table Callout */}
                       <div className="flex-1">
-                        <div className="border-2 border-neutral-900 bg-neutral-100/90 py-1 px-2.5 rounded text-center shadow-sm">
-                          <span className="text-xl font-black font-mono tracking-tight text-neutral-950 block leading-none">
+                        <div className="border border-white/15 bg-white/[0.04] py-1 px-2.5 rounded text-center shadow-inner">
+                          <span className="text-xl font-black font-mono tracking-tight text-white block leading-none">
                             {tableText}
                           </span>
                           {isTakeaway && (
-                            <span className="text-[9px] font-extrabold text-amber-700 tracking-wider uppercase block mt-0.5">
+                            <span className="text-[9px] font-extrabold text-amber-400 tracking-wider uppercase block mt-0.5">
                               [ TAKEAWAY PACK ]
                             </span>
                           )}
@@ -476,41 +481,41 @@ export default function KitchenDashboard() {
                         <div
                           className={`flex items-center gap-1 font-mono font-black text-xs px-2.5 py-1 rounded shadow-sm ${
                             urgency === "urgent"
-                              ? "bg-rose-600 text-white animate-pulse"
+                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse"
                               : urgency === "warning"
-                              ? "bg-amber-400 text-neutral-950"
-                              : "bg-neutral-200 text-neutral-800"
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                              : "bg-white/[0.06] text-neutral-300 border border-white/10"
                           }`}
                         >
                           <Timer className="h-3.5 w-3.5" />
                           <span>{formatTimer(elapsedSec)}</span>
                         </div>
-                        <span className="text-[9px] text-neutral-500 mt-0.5 font-bold">
+                        <span className="text-[9px] text-neutral-400 mt-0.5 font-bold">
                           {formatOrderTime(order.orderedAt || order.createdAt)}
                         </span>
                       </div>
                     </div>
 
-                    {/* Rubber Ink Status Stamp */}
+                    {/* Status Stamps */}
                     <div className="flex items-center justify-between my-1.5">
-                      <span className="text-[10px] text-neutral-500 font-bold">
+                      <span className="text-[10px] text-neutral-400 font-bold">
                         POS #{order.diningSession?.id || "1"}
                       </span>
 
                       {/* Angled Rubber Ink Stamp */}
                       <div>
                         {isPending && (
-                          <div className="inline-block border-2 border-dashed border-amber-600 text-amber-700 bg-amber-500/10 font-black text-[10px] px-2.5 py-0.5 rounded tracking-widest uppercase -rotate-2 shadow-sm">
+                          <div className="inline-block border border-dashed border-amber-500/50 text-amber-400 bg-amber-500/10 font-black text-[10px] px-2.5 py-0.5 rounded tracking-widest uppercase -rotate-2 shadow-sm">
                             NEW TICKET
                           </div>
                         )}
                         {isPreparing && (
-                          <div className="inline-block border-2 border-dashed border-blue-600 text-blue-700 bg-blue-500/10 font-black text-[10px] px-2.5 py-0.5 rounded tracking-widest uppercase rotate-2 shadow-sm">
+                          <div className="inline-block border border-dashed border-sky-500/50 text-sky-400 bg-sky-500/10 font-black text-[10px] px-2.5 py-0.5 rounded tracking-widest uppercase rotate-2 shadow-sm">
                             COOKING
                           </div>
                         )}
                         {isReady && (
-                          <div className="inline-block border-2 border-dashed border-emerald-600 text-emerald-700 bg-emerald-500/10 font-black text-[10px] px-2.5 py-0.5 rounded tracking-widest uppercase -rotate-1 shadow-sm">
+                          <div className="inline-block border border-dashed border-emerald-500/50 text-emerald-400 bg-emerald-500/10 font-black text-[10px] px-2.5 py-0.5 rounded tracking-widest uppercase -rotate-1 shadow-sm">
                             AT PASS
                           </div>
                         )}
@@ -518,9 +523,9 @@ export default function KitchenDashboard() {
                     </div>
 
                     {/* Perforated Dashed Line & Column Headers */}
-                    <div className="border-t-2 border-dashed border-neutral-300 pt-1.5 pb-1 flex items-center justify-between text-[9px] text-neutral-400 font-mono uppercase font-bold tracking-wider">
+                    <div className="border-t border-dashed border-white/[0.1] pt-1.5 pb-1 flex items-center justify-between text-[9px] text-neutral-400 font-mono uppercase font-bold tracking-wider">
                       <span>QTY  ITEM</span>
-                      <span className="italic text-[8px]">
+                      <span className="italic text-[8px] text-neutral-400">
                         {isPending
                           ? "AWAITING FIRE"
                           : isPreparing
@@ -529,8 +534,8 @@ export default function KitchenDashboard() {
                       </span>
                     </div>
 
-                    {/* ── DISH ITEMS LIST (With Chinagraph Red Marker Strikethrough) ── */}
-                    <div className="divide-y divide-dashed divide-neutral-200 flex-1 my-1">
+                    {/* ── DISH ITEMS LIST (With Red Marker Strikethrough) ── */}
+                    <div className="divide-y divide-dashed divide-white/[0.06] flex-1 my-1">
                       {order.orderItems.map((oi) => {
                         const checkKey = `${order.id}_${oi.id}`;
                         const isChecked = isReady || !!checkedItems[checkKey];
@@ -549,9 +554,9 @@ export default function KitchenDashboard() {
                                 : "cursor-pointer group"
                             } ${
                               isChecked && !isPending
-                                ? "bg-neutral-100/50"
+                                ? "bg-white/[0.02]"
                                 : !isPending
-                                ? "hover:bg-neutral-100/80"
+                                ? "hover:bg-white/[0.04]"
                                 : ""
                             }`}
                             title={
@@ -564,8 +569,8 @@ export default function KitchenDashboard() {
                             <span
                               className={`font-mono font-black text-sm px-1.5 py-0.5 rounded border leading-none shrink-0 min-w-[26px] text-center transition-all ${
                                 isChecked && !isPending
-                                  ? "bg-neutral-200/60 border-neutral-300 text-neutral-400 line-through decoration-rose-600 decoration-[2px]"
-                                  : "bg-neutral-900 border-neutral-900 text-white shadow-sm"
+                                  ? "bg-white/[0.03] border-white/5 text-neutral-600 line-through decoration-rose-500 decoration-[2px]"
+                                  : "bg-white/[0.08] border-white/15 text-white shadow-sm"
                               }`}
                             >
                               {oi.quantity}×
@@ -576,8 +581,8 @@ export default function KitchenDashboard() {
                               <span
                                 className={`text-[14px] font-bold leading-tight block break-words transition-all ${
                                   isChecked && !isPending
-                                    ? "line-through decoration-rose-600 decoration-[2.5px] text-neutral-400 italic"
-                                    : "text-neutral-900"
+                                    ? "line-through decoration-rose-500 decoration-[2.5px] text-neutral-500 italic"
+                                    : "text-neutral-100"
                                 }`}
                               >
                                 {oi.menuItem?.name || `Item #${oi.menuItemId}`}
@@ -589,13 +594,13 @@ export default function KitchenDashboard() {
                               )}
                             </div>
 
-                            {/* Chinagraph Grease Pencil Checkbox (Hidden when ticket is pending) */}
+                            {/* Chinagraph Grease Pencil Checkbox */}
                             {!isPending && (
                               <div
                                 className={`h-4 w-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                                   isChecked
-                                    ? "border-rose-600 text-rose-600 bg-rose-50"
-                                    : "border-neutral-300 group-hover:border-neutral-500 text-transparent"
+                                    ? "border-rose-500 text-rose-400 bg-rose-500/10"
+                                    : "border-white/20 group-hover:border-white/40 text-transparent"
                                 }`}
                               >
                                 {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
@@ -606,14 +611,14 @@ export default function KitchenDashboard() {
                       })}
                     </div>
 
-                    {/* Customer Special Instructions (Memo Yellow Box) */}
+                    {/* Customer Special Instructions */}
                     {order.notes && (
-                      <div className="mt-2.5 p-2 bg-amber-100/90 border-2 border-dashed border-amber-400/90 rounded text-amber-950 font-mono text-xs shadow-sm">
-                        <div className="flex items-center gap-1 font-black text-[9px] uppercase tracking-wider text-amber-900">
-                          <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0" />
+                      <div className="mt-2.5 p-2 bg-amber-500/10 border border-dashed border-amber-500/30 rounded text-amber-300 font-mono text-xs shadow-sm">
+                        <div className="flex items-center gap-1 font-black text-[9px] uppercase tracking-wider text-amber-400">
+                          <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
                           <span>SPECIAL INSTRUCTION:</span>
                         </div>
-                        <p className="mt-0.5 font-bold text-[12px] leading-snug break-words">
+                        <p className="mt-0.5 font-bold text-[12px] leading-snug break-words text-amber-200">
                           "{order.notes}"
                         </p>
                       </div>
@@ -621,14 +626,14 @@ export default function KitchenDashboard() {
                   </div>
 
                   {/* ═════════ 3. MATCHING TACTILE BUMP BAR ═════════ */}
-                  <div className="p-3 bg-[#FAF8F5] border-t-2 border-dashed border-neutral-300 rounded-b-2xl flex items-center gap-2">
+                  <div className="p-3 bg-[#17181D] border-t border-dashed border-white/[0.1] rounded-b-2xl flex items-center gap-2">
                     {/* Step Back Button (if PREPARING or READY) */}
                     {!isPending && (
                       <button
                         type="button"
                         disabled={updatingOrderId === order.id}
                         onClick={() => handleStepBackStatus(order)}
-                        className="h-10 w-10 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 border border-neutral-300 text-neutral-700 hover:text-neutral-950 flex items-center justify-center transition-all shrink-0 active:scale-95 shadow-sm"
+                        className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-neutral-300 hover:text-white flex items-center justify-center transition-all shrink-0 active:scale-95 shadow-sm"
                         title={isReady ? "Revert to Cooking" : "Revert to New Ticket"}
                       >
                         <RotateCcw className="h-4 w-4" />
@@ -642,12 +647,12 @@ export default function KitchenDashboard() {
                       onClick={() => handleProgressStatus(order)}
                       className={`flex-1 h-10 px-3 rounded-xl font-sans font-black text-xs tracking-wider flex items-center justify-center gap-2 uppercase transition-all shadow-md active:scale-[0.98] ${
                         isPending
-                          ? "bg-amber-500 hover:bg-amber-400 text-neutral-950 shadow-amber-500/25"
+                          ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 shadow-amber-500/30 font-extrabold cursor-pointer"
                           : isPreparing
                           ? allChecked
-                            ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/25 cursor-pointer"
-                            : "bg-neutral-200/90 text-neutral-400 border border-neutral-300 shadow-none cursor-not-allowed active:scale-100"
-                          : "bg-[#FA2D48] hover:bg-[#ff455d] text-white shadow-[#FA2D48]/25 cursor-pointer"
+                            ? "bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/30 cursor-pointer"
+                            : "bg-white/[0.05] text-neutral-500 border border-white/[0.08] shadow-none cursor-not-allowed active:scale-100"
+                          : "bg-gradient-to-r from-[#FA2D48] via-[#FF4565] to-[#FB7185] hover:opacity-95 text-white shadow-[#FA2D48]/30 cursor-pointer"
                       }`}
                       title={
                         isPreparing && !allChecked
@@ -681,22 +686,22 @@ export default function KitchenDashboard() {
 
       {/* ════════════════ RECALL / BUMP HISTORY DRAWER ════════════════ */}
       {showHistory && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#F5F2EB] border-l border-neutral-300 flex flex-col h-full shadow-2xl animate-in slide-in-from-right duration-200 text-neutral-900 font-mono">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#16171B] border-l border-white/[0.08] flex flex-col h-full shadow-2xl animate-in slide-in-from-right duration-200 text-neutral-100 font-mono">
             {/* Drawer Header */}
-            <div className="p-4 border-b border-neutral-300/80 flex items-center justify-between bg-[#FAF8F5]">
+            <div className="p-4 border-b border-white/[0.08] flex items-center justify-between bg-[#191A20]">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-[#FA2D48] text-white shadow-sm">
+                <div className="p-1.5 rounded-lg bg-[#FA2D48] text-white shadow-sm shadow-[#FA2D48]/30">
                   <History className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-sans font-bold text-neutral-900">Bumped Order Recall</h3>
-                  <p className="text-[10px] text-neutral-500 font-sans">Recently fulfilled tickets (Last 2 hours)</p>
+                  <h3 className="text-sm font-sans font-bold text-white">Bumped Order Recall</h3>
+                  <p className="text-[10px] text-neutral-400 font-sans">Recently fulfilled tickets (Last 2 hours)</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowHistory(false)}
-                className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200/60 transition-all"
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.08] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -705,7 +710,7 @@ export default function KitchenDashboard() {
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {historyOrders.length === 0 ? (
-                <div className="h-48 flex items-center justify-center text-center text-neutral-500 text-xs font-sans">
+                <div className="h-48 flex items-center justify-center text-center text-neutral-400 text-xs font-sans">
                   No orders bumped recently.
                 </div>
               ) : (
@@ -714,39 +719,39 @@ export default function KitchenDashboard() {
                   return (
                     <div
                       key={hOrder.id}
-                      className="rounded-xl border border-neutral-300 bg-[#FAF8F5] p-3.5 flex flex-col gap-2 hover:border-neutral-400 transition-all shadow-sm"
+                      className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 flex flex-col gap-2 hover:border-white/[0.15] transition-all shadow-sm"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="font-bold text-neutral-900 font-sans text-sm">{tableText}</span>
-                          <span className="text-[10px] font-mono text-neutral-500 ml-2">
+                          <span className="font-bold text-white font-sans text-sm">{tableText}</span>
+                          <span className="text-[10px] font-mono text-neutral-400 ml-2">
                             #{hOrder.orderNumber}
                           </span>
                         </div>
-                        <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[9px] font-mono px-2 py-0.5 rounded font-bold uppercase">
+                        <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-mono px-2 py-0.5 rounded font-bold uppercase">
                           {hOrder.status}
                         </span>
                       </div>
 
                       {/* Items list */}
-                      <div className="space-y-1 text-xs text-neutral-700 font-mono border-t border-dashed border-neutral-200 pt-2">
+                      <div className="space-y-1 text-xs text-neutral-300 font-mono border-t border-dashed border-white/[0.08] pt-2">
                         {hOrder.orderItems.map((oi) => (
                           <div key={oi.id} className="flex items-center gap-2">
-                            <span className="font-mono text-neutral-900 font-bold text-[11px]">{oi.quantity}×</span>
+                            <span className="font-mono text-white font-bold text-[11px]">{oi.quantity}×</span>
                             <span className="truncate">{oi.menuItem?.name || `Item #${oi.menuItemId}`}</span>
                           </div>
                         ))}
                       </div>
 
                       {/* Recall Button */}
-                      <div className="flex items-center justify-between border-t border-dashed border-neutral-200 pt-2 mt-1">
-                        <span className="text-[10px] text-neutral-500 font-mono">
+                      <div className="flex items-center justify-between border-t border-dashed border-white/[0.08] pt-2 mt-1">
+                        <span className="text-[10px] text-neutral-400 font-mono">
                           {formatOrderTime(hOrder.updatedAt || hOrder.createdAt)}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRecallOrder(hOrder.id)}
-                          className="flex items-center gap-1 text-xs font-sans font-bold text-[#FA2D48] hover:text-[#d9223a] hover:bg-[#FA2D48]/10 px-2 py-1 rounded transition-all active:scale-95"
+                          className="flex items-center gap-1 text-xs font-sans font-bold text-[#FA2D48] hover:text-[#ff455d] hover:bg-[#FA2D48]/10 px-2 py-1 rounded transition-all active:scale-95"
                         >
                           <RotateCcw className="h-3 w-3" />
                           <span>Restore to Board</span>
