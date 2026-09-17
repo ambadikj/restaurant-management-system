@@ -88,27 +88,37 @@ export default function Login() {
 
       {/* Main Centered Landscape Card Layout */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 relative z-10">
-        <div className="w-full max-w-4xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] rounded-3xl shadow-2xl backdrop-blur-2xl overflow-hidden flex flex-col md:flex-row relative">
+        <div className="w-full max-w-4xl min-h-[440px] bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] rounded-3xl shadow-2xl backdrop-blur-2xl overflow-hidden flex flex-col md:flex-row relative">
           {/* Subtle Ambient Bloom inside card */}
           <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/10 blur-3xl" />
 
-          {/* Left Side: Clean Brand Identity */}
-          <div className="w-full md:w-1/2 p-8 md:p-12 bg-white/[0.02] border-b md:border-b-0 md:border-r border-white/[0.07] flex flex-col justify-center items-start relative z-10">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#141416] border border-white/[0.12] shadow-xl shadow-black/50 mb-5">
-              <BrandLogo size={24} />
+          {/* Left Side: Clean Brand Identity (Balanced & Symmetrically Aligned) */}
+          <div className="w-full md:w-1/2 p-8 md:p-12 bg-white/[0.02] border-b md:border-b-0 md:border-r border-white/[0.07] flex flex-col justify-between items-start relative z-10">
+            <div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#141416] border border-white/[0.12] shadow-xl shadow-black/50 mb-6">
+                <BrandLogo size={24} />
+              </div>
+
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2 font-sans">
+                Sign in
+              </h1>
+              <h2 className="text-xs font-semibold text-neutral-400 tracking-widest uppercase">
+                Restaurant Management & POS System
+              </h2>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2 font-sans">
-              Sign in
-            </h1>
-            <h2 className="text-xs font-semibold text-neutral-400 tracking-widest uppercase">
-              Restaurant Management & POS System
-            </h2>
+            <div className="mt-8 pt-6 border-t border-white/[0.06] w-full flex items-center justify-between text-xs text-neutral-400">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                <span className="font-mono text-[11px] text-neutral-400 tracking-wider">TERMINAL READY</span>
+              </div>
+              <span className="font-mono text-[11px] text-neutral-500">v2.4</span>
+            </div>
           </div>
 
-          {/* Right Side: Credentials Form */}
-          <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center relative z-10">
+          {/* Right Side: Credentials Form (Symmetric Padding & Vertical Alignment) */}
+          <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center relative z-10">
             <div className="mb-6">
               <h2 className="text-xl font-bold tracking-tight text-white font-sans">
                 Staff Credentials
@@ -128,41 +138,43 @@ export default function Login() {
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-neutral-300 tracking-wider uppercase">
+                <label htmlFor="username" className="text-xs font-semibold text-neutral-300 tracking-wider uppercase block">
                   Username
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
                     <User className="h-4 w-4" />
                   </div>
                   <Input
+                    id="username"
                     type="text"
                     placeholder="Enter username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-9 bg-white/[0.05] hover:bg-white/[0.07] border-white/[0.1] focus:border-[#FA2D48] text-white placeholder:text-neutral-500 h-10.5 rounded-xl focus-visible:ring-2 focus-visible:ring-[#FA2D48]/30 transition-all"
+                    className="pl-10 bg-white/[0.05] hover:bg-white/[0.07] border-white/[0.1] focus:border-[#FA2D48] text-white placeholder:text-neutral-500 h-11 rounded-xl focus-visible:ring-2 focus-visible:ring-[#FA2D48]/30 transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-neutral-300 tracking-wider uppercase">
+                <label htmlFor="password" className="text-xs font-semibold text-neutral-300 tracking-wider uppercase block">
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
                     <Lock className="h-4 w-4" />
                   </div>
                   <Input
+                    id="password"
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-9 bg-white/[0.05] hover:bg-white/[0.07] border-white/[0.1] focus:border-[#FA2D48] text-white placeholder:text-neutral-500 h-10.5 rounded-xl focus-visible:ring-2 focus-visible:ring-[#FA2D48]/30 transition-all"
+                    className="pl-10 bg-white/[0.05] hover:bg-white/[0.07] border-white/[0.1] focus:border-[#FA2D48] text-white placeholder:text-neutral-500 h-11 rounded-xl focus-visible:ring-2 focus-visible:ring-[#FA2D48]/30 transition-all"
                   />
                 </div>
               </div>
@@ -190,7 +202,7 @@ export default function Login() {
       </main>
 
       {/* Footer */}
-      <footer className="py-4 text-center text-xs text-neutral-500 font-mono relative z-10">
+      <footer className="py-4 text-center text-xs text-neutral-500 font-mono relative z-10 shrink-0">
         Serve_Sync Real-Time Restaurant Management • System Version 2.4
       </footer>
     </div>
