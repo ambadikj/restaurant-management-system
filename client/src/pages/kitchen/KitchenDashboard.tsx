@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axiosInstance from "../../api/axiosInstance";
 import { socket } from "../../lib/socket";
 import {
-  ChefHat,
   CheckCircle2,
   Timer,
   ArrowRight,
@@ -15,6 +14,7 @@ import {
   AlertTriangle,
   Check,
 } from "lucide-react";
+import { BrandCrest } from "@/components/BrandLogo";
 import { useNavigate } from "react-router-dom";
 
 /* ─────────────────────────── TYPES ─────────────────────────── */
@@ -320,9 +320,7 @@ export default function KitchenDashboard() {
       <header className="h-12 bg-[#121214]/90 border-b border-white/[0.08] px-4 flex items-center justify-between shrink-0 z-30 backdrop-blur-xl shadow-lg relative">
         {/* Left: Clean Branding & Active Orders */}
         <div className="flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#FA2D48] via-[#FF4565] to-[#FB7185] text-white shadow-md shadow-[#FA2D48]/30">
-            <ChefHat className="h-4 w-4" />
-          </div>
+          <BrandCrest className="h-8 w-8 shrink-0" />
           <div className="flex items-center gap-2.5">
             <span className="font-bold text-sm text-white tracking-tight font-sans">
               Kitchen Display
