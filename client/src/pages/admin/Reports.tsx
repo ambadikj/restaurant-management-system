@@ -4,8 +4,8 @@ import {
   CreditCard,
   Star,
   Clock,
-  Sparkles,
 } from "lucide-react";
+import { BrandCrest } from "@/components/BrandLogo";
 
 export default function Reports() {
   return (
@@ -13,9 +13,7 @@ export default function Reports() {
       {/* Informational Staging Banner - Apple Music Frosted Capsule */}
       <div className="flex items-center justify-between gap-4 rounded-3xl border border-white/[0.1] bg-[#1c1c1f]/80 p-5 text-xs text-neutral-300 backdrop-blur-2xl shadow-xl">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FA2D48] to-[#FF4565] text-white shadow-lg shadow-[#FA2D48]/30">
-            <Sparkles className="h-5 w-5" />
-          </div>
+          <BrandCrest className="h-10 w-10 shrink-0 rounded-2xl" />
           <div>
             <p className="font-bold text-white text-sm">
               EOD Reporting & Review Pipeline in Staging

@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  ChefHat,
   Lock,
   User,
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
+import { BrandLogo, BrandCrest } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -59,9 +59,7 @@ export default function Login() {
       {/* Top Header Bar matching Admin Layout */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200/80 bg-white/95 px-4 sm:px-6 backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900/95">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm shadow-blue-500/30">
-            <ChefHat className="h-4 w-4" />
-          </div>
+          <BrandCrest className="h-8 w-8 shrink-0" />
           <div className="flex flex-col">
             <span className="font-bold text-sm tracking-tight text-neutral-900 dark:text-neutral-50 uppercase leading-none">
               Serve_Sync
@@ -85,8 +83,8 @@ export default function Login() {
         <div className="w-full max-w-4xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl shadow-xl shadow-neutral-200/30 dark:shadow-neutral-950/40 overflow-hidden flex flex-col md:flex-row">
           {/* Left Side: Clean Brand Identity */}
           <div className="w-full md:w-1/2 p-8 md:p-12 bg-neutral-50/70 dark:bg-neutral-900/50 border-b md:border-b-0 md:border-r border-neutral-200/80 dark:border-neutral-800 flex flex-col justify-center items-start">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 mb-5">
-              <ChefHat className="h-6 w-6" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#141416] border border-white/[0.12] shadow-md shadow-black/40 mb-5">
+              <BrandLogo size={24} />
             </div>
 
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50 mb-2">

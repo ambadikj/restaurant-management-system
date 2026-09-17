@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { socket } from "../../lib/socket";
+import { BrandCrest } from "@/components/BrandLogo";
 
 interface MenuItem {
   id: number;
@@ -475,11 +476,9 @@ export default function CustomerMenu() {
       {/* ================= YOUTUBE MUSIC TOP APP BAR ================= */}
       <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#030303]/90 border-b border-[#1F1F1F] px-4 py-2.5">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          {/* Brand with YouTube Music icon */}
+          {/* Brand with Minimal Serve_Sync Emblem */}
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-full bg-[#FF0000] flex items-center justify-center shadow-lg shadow-[#FF0000]/25">
-              <Play className="h-4 w-4 fill-white text-white ml-0.5" />
-            </div>
+            <BrandCrest className="h-8 w-8 shrink-0" />
             <div>
               <div className="flex items-center gap-1.5 leading-none">
                 <span className="font-['Outfit'] font-black text-base tracking-tight text-white">
