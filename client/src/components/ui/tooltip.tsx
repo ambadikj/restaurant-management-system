@@ -29,7 +29,7 @@ function TooltipTrigger({
 
 function TooltipContent({
   className,
-  sideOffset = 0,
+  sideOffset = 4,
   children,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
@@ -39,13 +39,13 @@ function TooltipContent({
         data-slot="tooltip-content"
         sideOffset={sideOffset}
         className={cn(
-          "z-50 w-fit origin-(--radix-tooltip-content-transform-origin) animate-in rounded-xl bg-[#1c1c1f]/95 border border-white/[0.14] px-3 py-1.5 text-xs font-semibold text-white shadow-2xl backdrop-blur-2xl fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+          "z-50 w-fit origin-(--radix-tooltip-content-transform-origin) animate-in rounded-lg bg-[#18181b] px-3 py-1.5 text-xs font-medium text-white border border-white/15 shadow-2xl shadow-black/80 backdrop-blur-xl fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
           className
         )}
         {...props}
       >
         {children}
-        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-[#1c1c1f] fill-[#1c1c1f]" />
+        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-[#18181b] fill-[#18181b] border-l border-b border-white/15" />
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   )

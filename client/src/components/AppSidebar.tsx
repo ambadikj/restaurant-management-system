@@ -6,6 +6,8 @@ import {
   Receipt,
   LogOut,
   Sparkles,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import {
   Sidebar,
@@ -18,6 +20,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const navSections = [
@@ -60,6 +65,7 @@ const navSections = [
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toggleSidebar } = useSidebar();
 
   const userString = localStorage.getItem("user");
   const user = userString
@@ -85,7 +91,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-white/[0.08] bg-[#161619]/95 text-neutral-200 backdrop-blur-2xl transition-all duration-300"
+      className="border-r border-white/[0.08] bg-[#161619]/95 text-neutral-200 backdrop-blur-2xl"
       style={
         {
           "--sidebar-accent": "rgba(255, 255, 255, 0.08)",
@@ -93,37 +99,58 @@ export function AppSidebar() {
         } as React.CSSProperties
       }
     >
-      {/* Brand Header - Apple Music Monogram Style */}
-      <SidebarHeader className="p-4 border-b border-white/[0.06] group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:border-none">
-        <div className="flex h-11 w-full items-center gap-3 px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          {/* Glowing Apple Music style crest */}
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FA2D48] via-[#FF4565] to-[#FB7185] text-white shadow-lg shadow-[#FA2D48]/30">
-            <Sparkles className="h-5 w-5 fill-white/20" />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
-            </span>
+      {/* Brand Header & Close Icon - Perfectly Aligned */}
+      <SidebarHeader className="p-3 border-b border-white/[0.06] group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:border-b-transparent">
+        {/* Expanded State: Logo + Title + Panel Close Button */}
+        <div className="flex h-9 w-full items-center justify-between px-1 group-data-[collapsible=icon]:hidden">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Glowing Apple Music style crest */}
+            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FA2D48] via-[#FF4565] to-[#FB7185] text-white shadow-lg shadow-[#FA2D48]/30">
+              <Sparkles className="h-4 w-4 fill-white/20" />
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
+            </div>
+
+            <div className="flex flex-col min-w-0 overflow-hidden whitespace-nowrap">
+              <span className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5 font-sans">
+                Serve_Sync
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#FA2D48]/20 text-[#FA2D48] border border-[#FA2D48]/30 tracking-wider">
+                  ADMIN
+                </span>
+              </span>
+              <span className="text-[10px] text-neutral-400 font-medium tracking-wide truncate">
+                Restaurant Console
+              </span>
+            </div>
           </div>
 
-          <div className="flex flex-col truncate group-data-[collapsible=icon]:hidden">
-            <span className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5 font-sans">
-              Serve_Sync
-              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full bg-[#FA2D48]/20 text-[#FA2D48] border border-[#FA2D48]/30">
-                ADMIN
-              </span>
-            </span>
-            <span className="text-[10px] text-neutral-400 font-medium tracking-wide">
-              Restaurant Console
-            </span>
-          </div>
+          {/* Close / Collapse Trigger with PanelLeftClose Icon */}
+          <SidebarTrigger
+            className="text-neutral-400 hover:text-white hover:bg-white/[0.08] rounded-lg size-8 shrink-0 transition-colors cursor-pointer"
+            title="Collapse Sidebar (Ctrl+B)"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </SidebarTrigger>
+        </div>
+
+        {/* Collapsed State: Centered Toggle Button with PanelLeft Icon */}
+        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-full py-0.5">
+          <SidebarTrigger
+            className="relative flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FA2D48] via-[#FF4565] to-[#FB7185] text-white shadow-lg shadow-[#FA2D48]/30 transition-transform hover:scale-105 active:scale-95 cursor-pointer p-0"
+            title="Expand Sidebar (Ctrl+B)"
+          >
+            <PanelLeft className="h-4 w-4 text-white" />
+          </SidebarTrigger>
         </div>
       </SidebarHeader>
 
       {/* Navigation Sections */}
-      <SidebarContent className="px-2 py-3 space-y-4">
+      <SidebarContent className="px-2.5 py-3 space-y-4 group-data-[collapsible=icon]:px-1.5">
         {navSections.map((section) => (
           <SidebarGroup key={section.label} className="p-0">
-            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-3 mb-1">
+            <SidebarGroupLabel className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-2 mb-1.5 overflow-hidden whitespace-nowrap group-data-[collapsible=icon]:hidden">
               {section.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -139,26 +166,37 @@ export function AppSidebar() {
                         asChild
                         isActive={isActive}
                         tooltip={item.title}
-                        className={`group relative flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium transition-all duration-200 ${
+                        className={`group relative flex items-center rounded-xl text-xs transition-colors duration-200 group-data-[collapsible=icon]:!h-9 group-data-[collapsible=icon]:!w-9 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:mx-auto ${
                           isActive
-                            ? "bg-gradient-to-r from-[#FA2D48] to-[#FF4B68] !text-white shadow-md shadow-[#FA2D48]/25 font-semibold"
-                            : "!text-neutral-300 hover:bg-white/[0.08] hover:!text-white"
+                            ? "bg-gradient-to-r from-[#FA2D48] to-[#FF4565] text-white shadow-lg shadow-[#FA2D48]/25 font-semibold"
+                            : "text-neutral-400 hover:text-white hover:bg-white/[0.06]"
                         }`}
                       >
-                        <NavLink to={item.url} className="flex items-center w-full !text-neutral-300 group-hover:!text-white">
+                        <NavLink
+                          to={item.url}
+                          className="flex items-center w-full px-3 py-2.5 group-data-[collapsible=icon]:!h-9 group-data-[collapsible=icon]:!w-9 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
+                        >
                           <item.icon
-                            className={`h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
-                              isActive ? "text-white" : "text-[#FA2D48]/80 group-hover:text-[#FA2D48]"
+                            className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                              isActive
+                                ? "text-white scale-105"
+                                : "text-neutral-400 group-hover:text-white group-hover:scale-110"
                             }`}
                           />
-                          <span className="ml-2.5 truncate group-hover:!text-white">{item.title}</span>
+                          <span
+                            className={`ml-2.5 flex-1 truncate group-data-[collapsible=icon]:hidden ${
+                              isActive ? "text-white font-semibold" : "text-neutral-300 group-hover:text-white"
+                            }`}
+                          >
+                            {item.title}
+                          </span>
 
                           {item.badge && (
                             <span
-                              className={`ml-auto text-[9px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wider group-data-[collapsible=icon]:hidden ${
+                              className={`ml-auto shrink-0 inline-flex items-center justify-center text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap group-data-[collapsible=icon]:hidden ${
                                 isActive
-                                  ? "bg-white/20 text-white"
-                                  : "bg-white/[0.08] text-neutral-400 group-hover:!text-white"
+                                  ? "bg-white/25 text-white shadow-sm border border-white/30"
+                                  : "bg-white/[0.08] text-neutral-400 group-hover:text-white border border-white/[0.08]"
                               }`}
                             >
                               {item.badge}
@@ -176,14 +214,18 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* User Profile & Session Footer */}
-      <SidebarFooter className="p-3 border-t border-white/[0.06] group-data-[collapsible=icon]:p-2">
-        <div className="flex items-center gap-2.5 rounded-xl bg-white/[0.04] p-2 border border-white/[0.06] hover:bg-white/[0.07] transition-all group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:border-none">
+      <SidebarFooter className="p-3 border-t border-white/[0.06] group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:border-t-transparent">
+        <div className="flex items-center gap-2.5 rounded-xl bg-white/[0.03] p-2 border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.1] transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:border-none">
           {/* Avatar with Apple Rose-Red gradient border */}
-          <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#FA2D48] to-[#FB7185] text-white text-xs font-bold shadow-md shadow-[#FA2D48]/20">
+          <button
+            onClick={handleLogout}
+            title={`Logged in as ${user.fullName} (${user.role}) • Click to log out`}
+            className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#FA2D48] to-[#FB7185] text-white text-xs font-bold shadow-md shadow-[#FA2D48]/20 transition-transform hover:scale-105 active:scale-95"
+          >
             {getInitials(user.fullName)}
-          </div>
+          </button>
 
-          <div className="flex flex-col min-w-0 flex-1 truncate group-data-[collapsible=icon]:hidden">
+          <div className="flex flex-col min-w-0 flex-1 overflow-hidden whitespace-nowrap group-data-[collapsible=icon]:hidden">
             <span className="truncate text-xs font-semibold text-white">
               {user.fullName || "Admin User"}
             </span>
@@ -201,6 +243,9 @@ export function AppSidebar() {
           </button>
         </div>
       </SidebarFooter>
+
+      {/* Official shadcn desktop rail on the border edge */}
+      <SidebarRail />
     </Sidebar>
   );
 }
