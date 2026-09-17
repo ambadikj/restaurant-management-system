@@ -7,6 +7,11 @@ import {
   Receipt,
   LogOut,
   PanelLeftClose,
+  Layers,
+  ShoppingBag,
+  FileText,
+  TrendingUp,
+  ArrowLeft,
 } from "lucide-react";
 import { BrandLogo, BrandCrest } from "@/components/BrandLogo";
 import {
@@ -24,16 +29,10 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-const navSections = [
+const adminNavSections = [
   {
-    label: "OPERATIONS & POS",
+    label: "OPERATIONS",
     items: [
-      {
-        title: "Cashier POS",
-        url: "/cashier",
-        icon: Receipt,
-        badge: "Billing",
-      },
       {
         title: "Menu & Auto-86",
         url: "/admin/menu",
@@ -67,6 +66,38 @@ const navSections = [
   },
 ];
 
+const cashierNavSections = [
+  {
+    label: "CASHIER POS",
+    items: [
+      {
+        title: "Floor & Live Bills",
+        url: "/cashier?tab=floor",
+        icon: Layers,
+        badge: "Live",
+      },
+      {
+        title: "Takeaway POS",
+        url: "/cashier?tab=takeaway",
+        icon: ShoppingBag,
+        badge: "Counter",
+      },
+      {
+        title: "Closed Bills Log",
+        url: "/cashier?tab=history",
+        icon: FileText,
+        badge: null,
+      },
+      {
+        title: "Shift Metrics",
+        url: "/cashier?tab=stats",
+        icon: TrendingUp,
+        badge: null,
+      },
+    ],
+  },
+];
+
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -94,25 +125,30 @@ export function AppSidebar() {
 
   const userRole = (user?.role || "Staff").toUpperCase();
   const isCashier = userRole === "CASHIER";
+  const isCashierRoute = location.pathname.startsWith("/cashier");
 
   const visibleSections = useMemo(() => {
-    if (isCashier) {
-      return [
-        {
-          label: "OPERATIONS & POS",
-          items: [
-            {
-              title: "Cashier POS",
-              url: "/cashier",
-              icon: Receipt,
-              badge: "Terminal",
-            },
-          ],
-        },
-      ];
+    if (isCashier || isCashierRoute) {
+      if (!isCashier && userRole === "ADMIN") {
+        return [
+          ...cashierNavSections,
+          {
+            label: "NAVIGATION",
+            items: [
+              {
+                title: "Admin Console",
+                url: "/admin/menu",
+                icon: ArrowLeft,
+                badge: null,
+              },
+            ],
+          },
+        ];
+      }
+      return cashierNavSections;
     }
-    return navSections;
-  }, [isCashier]);
+    return adminNavSections;
+  }, [isCashier, isCashierRoute, userRole]);
 
   return (
     <Sidebar
@@ -176,9 +212,16 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
                 {section.items.map((item) => {
-                  const isActive =
-                    location.pathname === item.url ||
-                    (item.url === "/admin/menu" && location.pathname === "/admin");
+                  const isCashierItem = item.url.startsWith("/cashier");
+                  const currentTab = new URLSearchParams(location.search).get("tab") || "floor";
+                  const itemTab = isCashierItem
+                    ? new URLSearchParams(item.url.split("?")[1] || "").get("tab") || "floor"
+                    : null;
+
+                  const isActive = isCashierItem
+                    ? location.pathname.startsWith("/cashier") && currentTab === itemTab
+                    : location.pathname === item.url ||
+                      (item.url === "/admin/menu" && location.pathname === "/admin");
 
                   return (
                     <SidebarMenuItem key={item.title}>

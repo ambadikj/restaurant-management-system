@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
   UtensilsCrossed,
@@ -12,11 +13,8 @@ import {
   CreditCard,
   QrCode,
   Banknote,
-  ShoppingBag,
   RefreshCw,
   TrendingUp,
-  Layers,
-  FileText,
   Clock,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -136,8 +134,11 @@ export default function CashierDashboard() {
     }
   }, []);
 
-  // Main UI Tab
-  const [activeTab, setActiveTab] = useState<"floor" | "takeaway" | "history" | "stats">("floor");
+  // Main UI Tab (driven by URL search params ?tab=...)
+  const [searchParams] = useSearchParams();
+  const rawTab = searchParams.get("tab");
+  const activeTab: "floor" | "takeaway" | "history" | "stats" =
+    rawTab === "takeaway" || rawTab === "history" || rawTab === "stats" ? rawTab : "floor";
 
   // Floor & Table states
   const [tables, setTables] = useState<FloorTable[]>([]);
@@ -562,69 +563,7 @@ export default function CashierDashboard() {
         </div>
       </div>
 
-      {/* Controls Bar: Mode Filter Tabs (Apple Music Pill Row) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          onClick={() => setActiveTab("floor")}
-          className={`flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-200 active:scale-95 ${
-            activeTab === "floor"
-              ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
-          }`}
-        >
-          <Layers className="h-3.5 w-3.5" />
-          <span>Floor & Live Bills</span>
-          {stats && stats.billingTablesCount > 0 && (
-            <span className="h-2 w-2 rounded-full bg-white animate-ping" />
-          )}
-        </button>
 
-        <button
-          onClick={() => setActiveTab("takeaway")}
-          className={`flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-200 active:scale-95 ${
-            activeTab === "takeaway"
-              ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
-          }`}
-        >
-          <ShoppingBag className="h-3.5 w-3.5" />
-          <span>Takeaway POS</span>
-          {takeawayCart.length > 0 && (
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/20 text-white">
-              {takeawayCart.length}
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-200 active:scale-95 ${
-            activeTab === "history"
-              ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
-          }`}
-        >
-          <FileText className="h-3.5 w-3.5" />
-          <span>Closed Bills Log</span>
-          {history.length > 0 && (
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/20 text-white">
-              {history.length}
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab("stats")}
-          className={`flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-200 active:scale-95 ${
-            activeTab === "stats"
-              ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-              : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
-          }`}
-        >
-          <TrendingUp className="h-3.5 w-3.5" />
-          <span>Shift Metrics</span>
-        </button>
-      </div>
         {/* ================= PENDING QR SCAN ACCESS REQUESTS BANNER ================= */}
         {pendingRequests.length > 0 && (
           <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-[#18181B] to-transparent border border-amber-500/30 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-3 duration-300">
