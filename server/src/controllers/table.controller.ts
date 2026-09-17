@@ -91,10 +91,11 @@ export const deleteTable = async (req: Request, res: Response): Promise<void> =>
 export const generateQR = async (req: Request, res: Response): Promise<void> => {
   try {
     const rawParam = String(req.params.tableNumber);
-    const isTakeaway = rawParam.toLowerCase() === "takeaway";
+    const host = req.headers.host ? req.headers.host.split(':')[0] : 'localhost';
+    const clientHost = host === 'localhost' || host === '127.0.0.1' ? (process.env.CLIENT_HOST || '192.168.100.253') : host;
     const customerUrl = isTakeaway
-      ? `http://localhost:5173/menu?takeaway=true`
-      : `http://localhost:5173/menu?table=${Number(rawParam)}`;
+      ? `http://${clientHost}:5173/menu?takeaway=true`
+      : `http://${clientHost}:5173/menu?table=${Number(rawParam)}`;
     
     // Generate the QR code as a base64 Data URL
     const qrCodeImage = await QRCode.toDataURL(customerUrl, {

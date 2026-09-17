@@ -2,15 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
-  Play,
-  Disc3,
-  Radio,
   Plus,
   Minus,
   Trash2,
   Search,
   Bell,
-  Receipt,
   X,
   ArrowRight,
   RefreshCw,
@@ -20,8 +16,16 @@ import {
   ShoppingBag,
   Timer,
   Info,
+  ChefHat,
+  CookingPot,
+  ReceiptIndianRupee,
+  Send,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import SwipeableToaster from "@/components/SwipeableToaster";
 import { socket } from "../../lib/socket";
 import { BrandCrest } from "@/components/BrandLogo";
 
@@ -70,8 +74,9 @@ interface SessionOrder {
   orderItems: OrderItem[];
 }
 
-const API_BASE = "http://localhost:5000/api/customer";
-const UPLOADS_BASE = "http://localhost:5000";
+const BACKEND_HOST = typeof window !== "undefined" && window.location.hostname ? window.location.hostname : "localhost";
+const API_BASE = `http://${BACKEND_HOST}:5000/api/customer`;
+const UPLOADS_BASE = `http://${BACKEND_HOST}:5000`;
 
 const QUICK_NOTES = ["Less Spicy", "No Onions", "Extra Cutlery", "Serve Fast"];
 
@@ -115,6 +120,35 @@ export default function CustomerMenu() {
   const toggleExpandDish = (dishId: number) => {
     setExpandedDishId((prev) => (prev === dishId ? null : dishId));
   };
+
+  // Close expanded category dish card or carousel info overlay when clicking / tapping anywhere outside
+  useEffect(() => {
+    if (expandedDishId === null && activeInfoCardId === null) return;
+
+    const handlePointerDownOutside = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      if (expandedDishId !== null) {
+        const insideCard = target.closest(`[data-category-card="${expandedDishId}"]`);
+        if (!insideCard) {
+          setExpandedDishId(null);
+        }
+      }
+
+      if (activeInfoCardId !== null) {
+        const insideCarousel = target.closest(`[data-carousel-card="${activeInfoCardId}"]`);
+        if (!insideCarousel) {
+          setActiveInfoCardId(null);
+        }
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDownOutside);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDownOutside);
+    };
+  }, [expandedDishId, activeInfoCardId]);
 
   // Load menu & table info
   const loadMenuAndTable = async () => {
@@ -312,7 +346,7 @@ export default function CustomerMenu() {
       return [...prev, { item, quantity: 1 }];
     });
 
-    toast.success(`Added ${item.name}`, { duration: 1200 });
+    toast.success(`Added ${item.name} to tray`, { duration: 3500 });
   };
 
   const updateQuantity = (itemId: number, delta: number) => {
@@ -484,7 +518,7 @@ export default function CustomerMenu() {
 
   return (
     <div className="min-h-screen bg-[#030303] text-white font-['Roboto',sans-serif] antialiased pb-36 select-none selection:bg-[#FF0000] selection:text-white">
-      <Toaster position="top-center" reverseOrder={false} />
+      <SwipeableToaster />
 
       {/* Subtle YouTube Ambient Radial Top Gradient */}
       <div className="fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-[#1F1F1F] via-[#0A0A0A] to-transparent pointer-events-none -z-10 opacity-60" />
@@ -492,37 +526,18 @@ export default function CustomerMenu() {
       {/* ================= YOUTUBE MUSIC TOP APP BAR ================= */}
       <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#030303]/90 border-b border-[#1F1F1F] px-4 py-2.5">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          {/* Brand with Minimal Serve_Sync Emblem */}
+          {/* Brand: Logo Icon, Name, and Table Number */}
           <div className="flex items-center gap-2.5">
             <BrandCrest className="h-8 w-8 shrink-0" />
             <div>
-              <div className="flex items-center gap-1.5 leading-none">
-                <span className="font-['Outfit'] font-black text-base tracking-tight text-white">
-                  Serve_Sync
-                </span>
-                <span className="text-[10px] font-bold text-[#AAAAAA] uppercase tracking-wider">
-                  Dining
-                </span>
-              </div>
-              <div className="text-[11px] text-[#AAAAAA] flex items-center gap-1 mt-0.5">
-                {isTakeawayParam ? (
-                  <span className="text-white font-medium">Takeaway Counter</span>
-                ) : (
-                  <>
-                    <span className="text-white font-bold">
-                      Table #{!isNaN(Number(tableIdentifier)) && Number(tableIdentifier) < 10 ? `0${tableIdentifier}` : tableIdentifier}
-                    </span>
-                    {tableInfo?.capacity && (
-                      <span className="text-[#717171]">• {tableInfo.capacity} Seats</span>
-                    )}
-                  </>
-                )}
-                <span className="h-1 w-1 rounded-full bg-[#717171] mx-0.5" />
-                <span className={`inline-flex items-center gap-1 text-[9px] font-bold ${isConnected ? "text-emerald-400" : "text-[#717171]"}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-400 animate-ping" : "bg-[#717171]"}`} />
-                  {isConnected ? "LIVE" : "SYNC"}
-                </span>
-              </div>
+              <span className="font-['Outfit'] font-black text-base tracking-tight text-white block leading-none">
+                Serve_Sync
+              </span>
+              <span className="text-xs text-[#AAAAAA] font-medium mt-1 block leading-none">
+                {isTakeawayParam
+                  ? "Takeaway Counter"
+                  : `Table #${!isNaN(Number(tableIdentifier)) && Number(tableIdentifier) < 10 ? `0${Number(tableIdentifier)}` : tableIdentifier}`}
+              </span>
             </div>
           </div>
 
@@ -646,22 +661,50 @@ export default function CustomerMenu() {
                           Popular dishes from this section
                         </span>
                       </div>
-                      <button
-                        onClick={() => setActiveCategory(cat.id)}
-                        className="text-xs font-bold text-[#AAAAAA] hover:text-white px-2.5 py-1 rounded-full border border-white/10 hover:border-white/30 transition-colors"
-                      >
-                        MORE
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById(`carousel-${cat.id}`);
+                            if (el) el.scrollBy({ left: -220, behavior: "smooth" });
+                          }}
+                          className="hidden sm:flex h-7 w-7 rounded-full bg-white/5 hover:bg-white/15 text-[#AAAAAA] hover:text-white items-center justify-center transition-colors border border-white/10 active:scale-95"
+                          title="Scroll left"
+                          aria-label="Scroll carousel left"
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById(`carousel-${cat.id}`);
+                            if (el) el.scrollBy({ left: 220, behavior: "smooth" });
+                          }}
+                          className="hidden sm:flex h-7 w-7 rounded-full bg-white/5 hover:bg-white/15 text-[#AAAAAA] hover:text-white items-center justify-center transition-colors border border-white/10 active:scale-95"
+                          title="Scroll right"
+                          aria-label="Scroll carousel right"
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setActiveCategory(cat.id)}
+                          className="text-xs font-bold text-[#AAAAAA] hover:text-white px-2.5 py-1 rounded-full border border-white/10 hover:border-white/30 transition-colors"
+                        >
+                          MORE
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Horizontal Carousel (Album Artwork Style) */}
+                    {/* Horizontal Carousel (Album Artwork Style) - Fluid Inertial Scrolling */}
                     <div
+                      id={`carousel-${cat.id}`}
                       onWheel={(e) => {
                         if (e.deltaY !== 0) {
                           e.currentTarget.scrollLeft += e.deltaY;
                         }
                       }}
-                      className="flex gap-3.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-proximity -mx-4 px-4 touch-pan-x scroll-smooth"
+                      className="flex gap-3.5 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 touch-pan-x overscroll-x-contain"
+                      style={{ WebkitOverflowScrolling: "touch" }}
                     >
                       {cat.menuItems.map((dish) => {
                         const cartEntry = cart.find((ci) => ci.item.id === dish.id);
@@ -674,14 +717,16 @@ export default function CustomerMenu() {
                         return (
                           <div
                             key={dish.id}
-                            className="w-40 sm:w-44 flex-shrink-0 snap-start group"
+                            data-carousel-card={dish.id}
+                            className="w-40 sm:w-44 flex-shrink-0 group select-none"
                           >
                             {/* Square Artwork (1:1 Ratio) */}
-                            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#181818] shadow-md border border-white/5">
+                            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#181818] shadow-md border border-white/5 select-none">
                               <img
+                                draggable={false}
                                 src={getImageUrl(dish.imageUrl)}
                                 alt={dish.name}
-                                className={`h-full w-full object-cover transition-all duration-300 ${
+                                className={`h-full w-full object-cover select-none pointer-events-none transition-all duration-300 ${
                                   isInfoOpen ? "scale-105 filter blur-xs" : "group-hover:scale-105"
                                 }`}
                                 onError={(e: any) => {
@@ -827,6 +872,7 @@ export default function CustomerMenu() {
                   return (
                     <div
                       key={dish.id}
+                      data-category-card={dish.id}
                       className={`p-2.5 rounded-2xl bg-[#121212] hover:bg-[#181818] border transition-all duration-300 ${
                         isExpanded ? "border-white/20 bg-[#171717] shadow-xl" : "border-white/5"
                       } ${isSoldOut ? "opacity-50" : ""}`}
@@ -949,10 +995,10 @@ export default function CustomerMenu() {
         {/* ================= TAB 2: ORDER TRAY (LIBRARY / ALBUM STYLE) ================= */}
         {activeTab === "order" && (
           <div className="space-y-5 animate-in fade-in duration-200">
-            {/* Playlist Header */}
+            {/* Dine-In Tray Header */}
             <div className="flex items-end gap-4 p-4 rounded-2xl bg-gradient-to-b from-[#282828] to-[#121212] border border-white/5">
-              <div className="h-20 w-20 rounded-xl bg-[#FF0000] flex items-center justify-center shadow-2xl flex-shrink-0">
-                <Disc3 className="h-10 w-10 text-white animate-spin" style={{ animationDuration: "8s" }} />
+              <div className="h-20 w-20 rounded-2xl bg-[#FF0000] flex items-center justify-center shadow-2xl flex-shrink-0">
+                <ShoppingBag className="h-10 w-10 text-white" />
               </div>
 
               <div className="leading-tight">
@@ -970,14 +1016,16 @@ export default function CustomerMenu() {
 
             {cart.length === 0 ? (
               <div className="text-center py-20 px-4 rounded-2xl bg-[#121212] border border-white/5">
-                <Disc3 className="h-12 w-12 text-[#717171] mx-auto mb-3" />
+                <div className="h-16 w-16 mx-auto rounded-2xl bg-neutral-900 border border-white/10 flex items-center justify-center mb-3">
+                  <ShoppingBag className="h-8 w-8 text-[#717171]" />
+                </div>
                 <h3 className="text-base font-bold text-white">Your tray is empty</h3>
                 <p className="text-xs text-[#AAAAAA] max-w-xs mx-auto mt-1 mb-5">
-                  Select tracks and dishes from the menu to start dining.
+                  Select dishes and beverages from the menu to start dining.
                 </p>
                 <button
                   onClick={() => setActiveTab("menu")}
-                  className="px-5 py-2.5 rounded-full bg-white text-black text-xs font-bold active:scale-95 transition-all"
+                  className="px-5 py-2.5 rounded-full bg-white text-black text-xs font-bold active:scale-95 transition-all cursor-pointer"
                 >
                   Browse Menu
                 </button>
@@ -1113,7 +1161,7 @@ export default function CustomerMenu() {
                     </>
                   ) : (
                     <>
-                      <Play className="h-4 w-4 fill-white text-white" />
+                      <Send className="h-4 w-4 text-white" />
                       <span>Send to Kitchen (₹{grandTotal.toFixed(2)})</span>
                     </>
                   )}
@@ -1123,76 +1171,99 @@ export default function CustomerMenu() {
           </div>
         )}
 
-        {/* ================= TAB 3: LIVE STATUS (NOW PLAYING SCREEN) ================= */}
+        {/* ================= TAB 3: LIVE STATUS (KITCHEN ORDERS) ================= */}
         {activeTab === "status" && (
           <div className="space-y-5 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between border-b border-[#1F1F1F] pb-3">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3 pt-1">
               <div>
-                <h1 className="font-['Outfit'] text-xl font-black text-white flex items-center gap-2">
-                  <Radio className="h-5 w-5 text-[#FF0000]" />
-                  Live Order Tracker
-                </h1>
-                <p className="text-xs text-[#AAAAAA] mt-0.5">
-                  Table #{tableIdentifier} • Live kitchen display
+                <div className="flex items-center gap-2">
+                  <h1 className="font-['Outfit'] text-lg font-black text-white tracking-tight leading-none">
+                    Kitchen Orders
+                  </h1>
+                  {sessionOrders.length > 0 && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      {sessionOrders.length} active
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#888888] mt-1">
+                  Real-time preparation & service updates
                 </p>
               </div>
 
               <button
                 onClick={() => setActiveTab("menu")}
-                className="text-xs font-bold text-black bg-white px-3 py-1.5 rounded-full hover:bg-neutral-200 active:scale-95 transition-all flex items-center gap-1"
+                className="text-xs font-bold text-black bg-white hover:bg-neutral-200 px-3.5 py-1.5 rounded-full active:scale-95 transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
               >
-                <Plus className="h-3.5 w-3.5" />
-                Add Dishes
+                <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                <span>Order More</span>
               </button>
             </div>
 
             {sessionOrders.length === 0 ? (
-              <div className="text-center py-20 px-4 rounded-2xl bg-[#121212] border border-white/5">
-                <Radio className="h-12 w-12 text-[#717171] mx-auto mb-3" />
-                <h3 className="text-base font-bold text-white">No active orders</h3>
-                <p className="text-xs text-[#AAAAAA] max-w-xs mx-auto mt-1 mb-5">
-                  You haven't dispatched any orders for Table #{tableIdentifier}.
-                </p>
-                <button
-                  onClick={() => setActiveTab("menu")}
-                  className="px-5 py-2.5 rounded-full bg-white text-black text-xs font-bold active:scale-95 transition-all"
-                >
-                  Explore Menu
-                </button>
+              <div className="text-center py-16 px-6 rounded-3xl bg-[#121212] border border-white/5 shadow-2xl relative overflow-hidden">
+                {/* Subtle ambient red glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#FF0000]/5 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative z-10 space-y-4">
+                  <div className="h-16 w-16 mx-auto rounded-2xl bg-gradient-to-b from-[#252525] to-[#181818] border border-white/10 flex items-center justify-center shadow-lg">
+                    <CookingPot className="h-8 w-8 text-[#FF4D4D]" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-['Outfit'] font-black text-white">
+                      No Active Orders Yet
+                    </h3>
+                    <p className="text-xs text-[#AAAAAA] max-w-xs mx-auto leading-relaxed">
+                      Browse the menu, choose your dishes, and place your order. Your kitchen status will appear right here!
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      onClick={() => setActiveTab("menu")}
+                      className="px-6 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black text-xs font-bold active:scale-95 transition-all flex items-center gap-2 mx-auto shadow-lg cursor-pointer"
+                    >
+                      <UtensilsCrossed className="h-3.5 w-3.5" />
+                      <span>Browse Menu</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Now Playing Top Equalizer Hero */}
-                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#252525] to-[#121212] border border-white/5 space-y-3 shadow-xl">
+                {/* Table Bill Summary Hero Card */}
+                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#222226] to-[#121214] border border-white/10 space-y-3.5 shadow-xl">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-[10px] font-bold text-[#AAAAAA] uppercase tracking-wider block">
-                        Table Running Total
+                        Current Table Total
                       </span>
                       <span className="font-['Outfit'] text-2xl font-black text-[#FF4D4D]">
                         ₹{sessionTotal.toFixed(2)}
                       </span>
-                      <span className="text-[11px] text-[#AAAAAA] block mt-0.5">
-                        {sessionOrders.length} round(s) active
+                      <span className="text-[11px] text-[#AAAAAA] block mt-0.5 font-medium">
+                        {sessionOrders.length} order course{sessionOrders.length > 1 ? "s" : ""} placed
                       </span>
                     </div>
 
-                    {/* Equalizer Visualizer */}
-                    <div className="flex items-end gap-1 h-6 px-3 py-1 rounded-full bg-black/40 border border-white/10">
-                      <span className="w-1 bg-[#FF0000] rounded-full animate-[bounce_1s_infinite_100ms] h-4" />
-                      <span className="w-1 bg-[#FF0000] rounded-full animate-[bounce_1s_infinite_300ms] h-6" />
-                      <span className="w-1 bg-[#FF0000] rounded-full animate-[bounce_1s_infinite_200ms] h-3" />
-                      <span className="w-1 bg-[#FF0000] rounded-full animate-[bounce_1s_infinite_400ms] h-5" />
+                    {/* Kitchen Active Live Badge */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 border border-white/10 shadow-inner">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5">
+                        <CookingPot className="h-3.5 w-3.5" />
+                        <span>Kitchen Active</span>
+                      </span>
                     </div>
                   </div>
 
                   {!isTakeawayParam && (
                     <button
                       onClick={() => handleServiceRequest("REQUEST_BILL")}
-                      className="w-full py-2.5 rounded-full bg-[#212121] hover:bg-[#303030] text-white text-xs font-bold border border-white/10 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                      className="w-full py-2.5 rounded-xl bg-[#1E1E20] hover:bg-[#28282C] text-white text-xs font-bold border border-white/10 flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer shadow-sm"
                     >
-                      <Receipt className="h-4 w-4 text-[#FF4D4D]" />
-                      Request Final Bill
+                      <ReceiptIndianRupee className="h-4 w-4 text-[#FF4D4D]" />
+                      <span>Request Final Bill</span>
                     </button>
                   )}
                 </div>
@@ -1377,11 +1448,11 @@ export default function CustomerMenu() {
                   : "font-medium text-[#8E918F]"
               }`}
             >
-              Order Tray
+              My Tray
             </span>
           </button>
 
-          {/* TAB 3: LIVE STATUS */}
+          {/* TAB 3: ORDERS */}
           <button
             onClick={() => setActiveTab("status")}
             className="flex flex-col items-center group cursor-pointer active:scale-95 transition-transform"
@@ -1394,7 +1465,7 @@ export default function CustomerMenu() {
                     : "text-[#C4C7C5] group-hover:text-white"
                 }`}
               >
-                <Timer className={`h-5 w-5 transition-all ${activeTab === "status" ? "stroke-[2.5] scale-110" : "stroke-[1.8]"}`} />
+                <ChefHat className={`h-5 w-5 transition-all ${activeTab === "status" ? "stroke-[2.5] scale-110" : "stroke-[1.8]"}`} />
               </div>
 
               {sessionOrders.length > 0 && (
@@ -1408,7 +1479,7 @@ export default function CustomerMenu() {
                   : "font-medium text-[#8E918F]"
               }`}
             >
-              Live Status
+              Orders
             </span>
           </button>
         </div>
