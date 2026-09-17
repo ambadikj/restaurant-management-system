@@ -327,12 +327,10 @@ export default function TablesQR() {
   };
 
   // Calculations
-  const totalCapacity = tables.reduce((acc, t) => acc + t.capacity, 0);
   const availableCount = tables.filter((t) => t.status === "AVAILABLE").length;
   const occupiedCount = tables.filter((t) => t.status === "OCCUPIED").length;
   const billingCount = tables.filter((t) => t.status === "BILLING").length;
   const cleaningCount = tables.filter((t) => t.status === "CLEANING").length;
-  const occupancyRate = tables.length > 0 ? Math.round((occupiedCount / tables.length) * 100) : 0;
 
   const filteredTables = tables.filter((t) => {
     if (statusFilter === "ALL") return true;
@@ -402,107 +400,7 @@ export default function TablesQR() {
         </div>
       </div>
 
-      {/* Live Floor KPIs (Apple Music Acrylic Cards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Capacity */}
-        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-white/[0.07] via-white/[0.03] to-[#161619]/90 border border-white/[0.09] hover:border-white/[0.2] p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
-          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-white/5 blur-2xl group-hover:bg-white/10 transition-all" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-              Floor Capacity
-            </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.08] text-neutral-300">
-              <Users className="h-3.5 w-3.5 text-[#FA2D48]" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight font-sans">
-              {totalCapacity}
-            </span>
-            <span className="text-[11px] text-neutral-400 font-medium">Seats</span>
-          </div>
-          <div className="mt-2 text-[11px] text-neutral-400 flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-neutral-400"></span>
-            <span>Across {tables.length} floor tables</span>
-          </div>
-        </div>
 
-        {/* Metric 2: Available */}
-        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-emerald-500/[0.08] via-white/[0.03] to-[#161619]/90 border border-emerald-500/20 hover:border-emerald-500/40 p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
-          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl group-hover:bg-emerald-500/20 transition-all" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
-              Available
-            </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-emerald-400 tracking-tight font-sans">
-              {availableCount}
-            </span>
-            <span className="text-[11px] text-emerald-400/80 font-medium">Vacant</span>
-          </div>
-          <div className="mt-2 text-[11px] text-emerald-400/90 flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-            <span>Ready for instant guests</span>
-          </div>
-        </div>
-
-        {/* Metric 3: Occupied & Rate */}
-        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-sky-500/[0.08] via-white/[0.03] to-[#161619]/90 border border-sky-500/20 hover:border-sky-500/40 p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
-          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-sky-500/10 blur-2xl group-hover:bg-sky-500/20 transition-all" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-sky-400 uppercase tracking-wider">
-              Occupancy Rate
-            </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400">
-              <Timer className="h-3.5 w-3.5" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-sky-400 tracking-tight font-sans">
-              {occupancyRate}%
-            </span>
-            <span className="text-[11px] text-sky-400/80 font-mono">({occupiedCount} active)</span>
-          </div>
-          <div className="mt-2.5 w-full bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-sky-400 h-1.5 rounded-full transition-all duration-500"
-              style={{ width: `${occupancyRate}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Metric 4: Turnover Queue */}
-        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-purple-500/[0.08] via-white/[0.03] to-[#161619]/90 border border-purple-500/20 hover:border-purple-500/40 p-4.5 backdrop-blur-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5">
-          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-purple-500/10 blur-2xl group-hover:bg-purple-500/20 transition-all" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">
-              Turnover Queue
-            </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-400">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-3">
-            <span className="text-2xl font-bold text-amber-400 font-mono">
-              {billingCount} <span className="text-[11px] font-sans font-medium text-amber-400/80">Bill</span>
-            </span>
-            <span className="text-2xl font-bold text-purple-400 font-mono">
-              {cleaningCount} <span className="text-[11px] font-sans font-medium text-purple-400/80">Clean</span>
-            </span>
-          </div>
-          <div className="mt-2 text-[11px] text-neutral-400 flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-purple-400"></span>
-            <span>Turnover in progress</span>
-          </div>
-        </div>
-      </div>
 
       {/* Controls Bar: Status Filter Tabs (Apple Music Pill Row) */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
