@@ -867,3 +867,276 @@ export const getCashierStats = async (req: Request, res: Response): Promise<void
     res.status(500).json({ message: "Failed to calculate cashier metrics" });
   }
 };
+
+/**
+ * POST /api/cashier/table/transfer
+ * Transfer active dining session from one table to another available table
+ */
+export const transferTable = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { fromTableNumber, toTableNumber } = req.body;
+
+    if (!fromTableNumber || !toTableNumber) {
+      res.status(400).json({ message: "Source and destination table numbers are required" });
+      return;
+    }
+
+    if (Number(fromTableNumber) === Number(toTableNumber)) {
+      res.status(400).json({ message: "Source and destination table must be different" });
+      return;
+    }
+
+    const sourceTable = await prisma.restaurantTable.findUnique({
+      where: { tableNumber: Number(fromTableNumber) },
+      include: {
+        sessions: {
+          where: { status: "ACTIVE" },
+          take: 1,
+        },
+      },
+    });
+
+    if (!sourceTable || sourceTable.sessions.length === 0) {
+      res.status(404).json({ message: `Table #${fromTableNumber} does not have an active dining session` });
+      return;
+    }
+
+    const activeSession = sourceTable.sessions[0];
+
+    const destTable = await prisma.restaurantTable.findUnique({
+      where: { tableNumber: Number(toTableNumber) },
+      include: {
+        sessions: {
+          where: { status: "ACTIVE" },
+          take: 1,
+        },
+      },
+    });
+
+    if (!destTable) {
+      res.status(404).json({ message: `Destination Table #${toTableNumber} not found` });
+      return;
+    }
+
+    if (destTable.sessions.length > 0 || destTable.status === "OCCUPIED" || destTable.status === "BILLING") {
+      res.status(400).json({ message: `Destination Table #${toTableNumber} is already occupied` });
+      return;
+    }
+
+    // Execute atomic transfer
+    const { updatedSource, updatedDest, updatedSession } = await prisma.$transaction(async (tx) => {
+      const updatedSession = await tx.diningSession.update({
+        where: { id: activeSession.id },
+        data: { tableId: destTable.id },
+      });
+
+      const updatedSource = await tx.restaurantTable.update({
+        where: { id: sourceTable.id },
+        data: { status: "AVAILABLE" },
+      });
+
+      const updatedDest = await tx.restaurantTable.update({
+        where: { id: destTable.id },
+        data: { status: "OCCUPIED" },
+      });
+
+      return { updatedSource, updatedDest, updatedSession };
+    });
+
+    // Notify rooms & staff
+    emitTableUpdate(updatedSource);
+    emitTableUpdate(updatedDest);
+
+    emitToTable(Number(fromTableNumber), "table:transferred", {
+      fromTable: fromTableNumber,
+      toTable: toTableNumber,
+      message: `Your table has been transferred to Table #${toTableNumber}`,
+    });
+
+    emitToStaff("cashier:table_transferred", {
+      fromTable: fromTableNumber,
+      toTable: toTableNumber,
+      sessionId: activeSession.id,
+    });
+
+    res.json({
+      success: true,
+      message: `Table #${fromTableNumber} successfully transferred to Table #${toTableNumber}`,
+      session: updatedSession,
+      sourceTable: updatedSource,
+      destTable: updatedDest,
+    });
+  } catch (error) {
+    console.error("Error transferring table:", error);
+    res.status(500).json({ message: "Failed to transfer table" });
+  }
+};
+
+/**
+ * POST /api/cashier/table/:tableNumber/add-items
+ * Directly punch items into an active table's dining session from cashier terminal
+ */
+export const addItemsToTableSession = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tableNumber = Number(req.params.tableNumber);
+    const { items, notes } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ message: "Please specify items to add" });
+      return;
+    }
+
+    const table = await prisma.restaurantTable.findUnique({
+      where: { tableNumber },
+      include: {
+        sessions: {
+          where: { status: "ACTIVE" },
+          take: 1,
+        },
+      },
+    });
+
+    if (!table) {
+      res.status(404).json({ message: `Table #${tableNumber} not found` });
+      return;
+    }
+
+    // If no active session, create one
+    let session = table.sessions[0];
+    if (!session) {
+      const sessionCode = `SESS-T${tableNumber}-${Date.now().toString().slice(-6)}`;
+      session = await prisma.diningSession.create({
+        data: {
+          tableId: table.id,
+          sessionCode,
+          status: "ACTIVE",
+          totalAmount: 0,
+        },
+      });
+
+      await prisma.restaurantTable.update({
+        where: { id: table.id },
+        data: { status: "OCCUPIED" },
+      });
+    }
+
+    // Validate menu items & stock
+    const menuItemIds = items.map((i: any) => i.menuItemId);
+    const menuItems = await prisma.menuItem.findMany({
+      where: { id: { in: menuItemIds } },
+      include: { inventory: true },
+    });
+
+    const itemMap = new Map(menuItems.map((m) => [m.id, m]));
+    let orderSubtotal = 0;
+    const validatedItems: Array<{
+      menuItemId: number;
+      name: string;
+      price: number;
+      quantity: number;
+      subtotal: number;
+    }> = [];
+
+    for (const it of items) {
+      const dish = itemMap.get(it.menuItemId);
+      if (!dish) {
+        res.status(400).json({ message: `Item ID ${it.menuItemId} not found.` });
+        return;
+      }
+      if (!dish.isAvailable || (dish.inventory && dish.inventory.remainingQty < it.quantity)) {
+        res.status(400).json({ message: `"${dish.name}" does not have sufficient stock.` });
+        return;
+      }
+
+      const price = Number(dish.price);
+      const subtotal = price * it.quantity;
+      orderSubtotal += subtotal;
+
+      validatedItems.push({
+        menuItemId: dish.id,
+        name: dish.name,
+        price,
+        quantity: it.quantity,
+        subtotal,
+      });
+    }
+
+    const orderNumber = `ORD-T${tableNumber}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          diningSessionId: session.id,
+          orderNumber,
+          status: "PREPARING",
+          notes: notes ? `[Cashier POS] ${notes}` : "[Cashier POS]",
+          orderedAt: new Date(),
+        },
+      });
+
+      for (const vi of validatedItems) {
+        await tx.orderItem.create({
+          data: {
+            orderId: order.id,
+            menuItemId: vi.menuItemId,
+            quantity: vi.quantity,
+            price: vi.price,
+            subtotal: vi.subtotal,
+          },
+        });
+
+        // Deduct inventory
+        const dish = itemMap.get(vi.menuItemId);
+        if (dish?.inventory) {
+          const newQty = Math.max(0, dish.inventory.remainingQty - vi.quantity);
+          await tx.inventory.update({
+            where: { menuItemId: vi.menuItemId },
+            data: {
+              remainingQty: newQty,
+              isAvailable: newQty > 0,
+            },
+          });
+        }
+      }
+
+      return order;
+    });
+
+    // Notify kitchen
+    emitToStaff("order:placed", {
+      orderId: result.id,
+      orderNumber: result.orderNumber,
+      tableNumber,
+      status: "PREPARING",
+      notes: result.notes,
+      items: validatedItems,
+    });
+
+    // Notify table room & floor
+    emitToTable(tableNumber, "order:placed", {
+      order: {
+        id: result.id,
+        orderNumber: result.orderNumber,
+        status: "PREPARING",
+        orderItems: validatedItems,
+      },
+    });
+
+    const updatedTable = await prisma.restaurantTable.findUnique({
+      where: { id: table.id },
+    });
+    if (updatedTable) {
+      emitTableUpdate(updatedTable);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `Items added to Table #${tableNumber} and sent to kitchen!`,
+      order: result,
+      items: validatedItems,
+    });
+  } catch (error) {
+    console.error("Error adding items to table:", error);
+    res.status(500).json({ message: "Failed to add items to table" });
+  }
+};

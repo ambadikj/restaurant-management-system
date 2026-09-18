@@ -16,6 +16,8 @@ import {
   RefreshCw,
   TrendingUp,
   Clock,
+  ArrowRightLeft,
+  PlusCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { socket } from "../../lib/socket";
@@ -28,6 +30,28 @@ const BACKEND_HOST =
 const API_BASE = `http://${BACKEND_HOST}:5000/api/cashier`;
 const MENU_API = `http://${BACKEND_HOST}:5000/api/menu`;
 const UPLOADS_BASE = `http://${BACKEND_HOST}:5000`;
+
+// Web Audio API Synth Chime for access and bill alerts
+const playChime = () => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const audioCtx = new AudioContextClass();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.12); // A5
+    gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.45);
+  } catch {
+    // Audio autoplay restrictions
+  }
+};
 
 interface OrderItemDetail {
   id: number;
@@ -147,6 +171,12 @@ export default function CashierDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Floor filtering & search
+  const [floorFilter, setFloorFilter] = useState<
+    "ALL" | "OCCUPIED" | "BILLING" | "AVAILABLE" | "CLEANING"
+  >("ALL");
+  const [tableSearch, setTableSearch] = useState("");
+
   // Bill Settlement Modal State
   const [settlementTable, setSettlementTable] = useState<FloorTable | null>(null);
   const [billDetails, setBillDetails] = useState<any | null>(null);
@@ -157,10 +187,27 @@ export default function CashierDashboard() {
   const [splitUpi, setSplitUpi] = useState<string>("");
   const [splitCard, setSplitCard] = useState<string>("");
   const [cashTendered, setCashTendered] = useState<string>("");
-  const [discountAmount, setDiscountAmount] = useState<string>("0");
+
+  // Discount configuration (Flat ₹ vs %)
+  const [discountType, setDiscountType] = useState<"FLAT" | "PERCENT">("FLAT");
+  const [discountInput, setDiscountInput] = useState<string>("0");
+
   const [isSettling, setIsSettling] = useState(false);
 
-  // Receipt Modal State
+  // Table Transfer Modal State
+  const [transferSourceTable, setTransferSourceTable] = useState<FloorTable | null>(null);
+  const [transferDestTableNumber, setTransferDestTableNumber] = useState<number | null>(null);
+  const [isTransferring, setIsTransferring] = useState(false);
+
+  // Direct Table Order Punching State
+  const [punchTable, setPunchTable] = useState<FloorTable | null>(null);
+  const [punchCart, setPunchCart] = useState<Array<{ item: MenuItem; quantity: number }>>([]);
+  const [punchNotes, setPunchNotes] = useState("");
+  const [punchSearch, setPunchSearch] = useState("");
+  const [punchActiveCat, setPunchActiveCat] = useState<number | "ALL">("ALL");
+  const [isPunching, setIsPunching] = useState(false);
+
+  // Thermal Receipt Modal State (handles final invoice, pro-forma check, or shift report)
   const [activeReceipt, setActiveReceipt] = useState<any | null>(null);
 
   // History Tab state
@@ -211,13 +258,13 @@ export default function CashierDashboard() {
     }
   };
 
-  // Load menu items for Takeaway POS
+  // Load menu items for Takeaway POS & Table Punching
   const loadMenuData = async () => {
     try {
       const res = await axios.get(MENU_API);
       setCategories(res.data || []);
     } catch (err) {
-      console.error("Failed to load menu for takeaway:", err);
+      console.error("Failed to load menu:", err);
     }
   };
 
@@ -250,6 +297,7 @@ export default function CashierDashboard() {
 
     // Live access request when guest scans QR
     const handleAccessRequest = (data: PendingAccessItem) => {
+      playChime();
       toast(
         () => (
           <div className="flex flex-col gap-1.5">
@@ -264,7 +312,7 @@ export default function CashierDashboard() {
       loadFloorData();
     };
 
-    // Live table state changes (orders placed, bill requested, etc.)
+    // Live table state changes
     const handleTableUpdate = () => {
       loadFloorData();
     };
@@ -272,6 +320,7 @@ export default function CashierDashboard() {
     // Customer pressed "Request Bill"
     const handleServiceAlert = (data: any) => {
       if (data.type === "REQUEST_BILL") {
+        playChime();
         toast.success(`Table #${data.tableNumber} has requested the bill!`, {
           duration: 5000,
         });
@@ -339,6 +388,29 @@ export default function CashierDashboard() {
     }
   };
 
+  // Pre-Bill / Pro-forma Check Printer
+  const handlePrintEstimate = async (tbl: FloorTable) => {
+    if (!tbl.activeSession) return;
+    try {
+      const res = await axios.get(`${API_BASE}/session/${tbl.activeSession.id}/bill`, authConfig);
+      const data = res.data;
+      setActiveReceipt({
+        isProforma: true,
+        invoiceNumber: `EST-${tbl.activeSession.sessionCode}`,
+        tableNumber: tbl.tableNumber,
+        dateTime: new Date().toISOString(),
+        subtotal: data.subtotal,
+        taxAmount: data.taxAmount,
+        discount: 0,
+        grandTotal: data.grandTotal,
+        payments: [],
+        items: data.items,
+      });
+    } catch {
+      toast.error("Failed to generate pre-bill check.");
+    }
+  };
+
   // Open Bill Settlement Modal
   const openSettlementModal = async (tbl: FloorTable) => {
     if (!tbl.activeSession) {
@@ -351,7 +423,8 @@ export default function CashierDashboard() {
     setPaymentMode("SINGLE");
     setSingleMethod("CASH");
     setCashTendered("");
-    setDiscountAmount("0");
+    setDiscountType("FLAT");
+    setDiscountInput("0");
 
     try {
       const res = await axios.get(
@@ -372,16 +445,26 @@ export default function CashierDashboard() {
     }
   };
 
-  // Calculate Net Bill Totals
+  // Calculate Discount Amount & Net Total
+  const calculatedDiscount = useMemo(() => {
+    if (!billDetails) return 0;
+    const gross = (Number(billDetails.subtotal) || 0) + (Number(billDetails.taxAmount) || 0);
+    const val = Number(discountInput) || 0;
+    if (val <= 0) return 0;
+    if (discountType === "PERCENT") {
+      return Math.min(gross, Number(((gross * val) / 100).toFixed(2)));
+    }
+    return Math.min(gross, val);
+  }, [billDetails, discountType, discountInput]);
+
   const currentNetTotal = useMemo(() => {
     if (!billDetails) return 0;
     const sub = Number(billDetails.subtotal || 0);
     const tax = Number(billDetails.taxAmount || 0);
-    const disc = Number(discountAmount) || 0;
-    return Math.max(0, Number((sub + tax - disc).toFixed(2)));
-  }, [billDetails, discountAmount]);
+    return Math.max(0, Number((sub + tax - calculatedDiscount).toFixed(2)));
+  }, [billDetails, calculatedDiscount]);
 
-  // Settle Bill
+  // Execute Bill Settlement
   const handleExecuteSettlement = async () => {
     if (!settlementTable || !billDetails) return;
 
@@ -417,7 +500,7 @@ export default function CashierDashboard() {
           sessionId: billDetails.session.id,
           tableNumber: settlementTable.tableNumber,
           payments: paymentsPayload,
-          discount: Number(discountAmount) || 0,
+          discount: calculatedDiscount,
         },
         authConfig
       );
@@ -437,6 +520,124 @@ export default function CashierDashboard() {
       setIsSettling(false);
     }
   };
+
+  // Execute Table Transfer
+  const handleExecuteTransfer = async () => {
+    if (!transferSourceTable || !transferDestTableNumber) {
+      toast.error("Please select a target table.");
+      return;
+    }
+
+    try {
+      setIsTransferring(true);
+      const res = await axios.post(
+        `${API_BASE}/table/transfer`,
+        {
+          fromTableNumber: transferSourceTable.tableNumber,
+          toTableNumber: transferDestTableNumber,
+        },
+        authConfig
+      );
+
+      toast.success(res.data.message || "Table transferred successfully!");
+      setTransferSourceTable(null);
+      setTransferDestTableNumber(null);
+      loadFloorData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to transfer table.");
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  // Direct Table Order Punching Operations
+  const addToPunchCart = (dish: MenuItem) => {
+    setPunchCart((prev) => {
+      const existing = prev.find((ci) => ci.item.id === dish.id);
+      if (existing) {
+        return prev.map((ci) =>
+          ci.item.id === dish.id ? { ...ci, quantity: ci.quantity + 1 } : ci
+        );
+      }
+      return [...prev, { item: dish, quantity: 1 }];
+    });
+  };
+
+  const updatePunchQty = (dishId: number, delta: number) => {
+    setPunchCart((prev) =>
+      prev
+        .map((ci) => (ci.item.id === dishId ? { ...ci, quantity: ci.quantity + delta } : ci))
+        .filter((ci) => ci.quantity > 0)
+    );
+  };
+
+  const handleExecutePunch = async () => {
+    if (!punchTable || punchCart.length === 0) {
+      toast.error("Please select at least one item to add.");
+      return;
+    }
+
+    try {
+      setIsPunching(true);
+      const res = await axios.post(
+        `${API_BASE}/table/${punchTable.tableNumber}/add-items`,
+        {
+          items: punchCart.map((ci) => ({ menuItemId: ci.item.id, quantity: ci.quantity })),
+          notes: punchNotes.trim() || undefined,
+        },
+        authConfig
+      );
+
+      toast.success(res.data.message || `Items added to Table #${punchTable.tableNumber}!`);
+      setPunchTable(null);
+      setPunchCart([]);
+      setPunchNotes("");
+      loadFloorData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to add items to table.");
+    } finally {
+      setIsPunching(false);
+    }
+  };
+
+  // Print Daily Shift Register Report
+  const handlePrintShiftReport = () => {
+    if (!stats) return;
+    setActiveReceipt({
+      isShiftReport: true,
+      cashierName: user?.fullName || "Staff",
+      dateTime: new Date().toISOString(),
+      totalRevenue: stats.totalRevenue,
+      cashTotal: stats.cashTotal,
+      upiTotal: stats.upiTotal,
+      cardTotal: stats.cardTotal,
+      settledBillsCount: stats.settledBillsCount,
+      activeTablesCount: stats.activeTablesCount,
+    });
+  };
+
+  // Filtered Tables for Floor Grid
+  const filteredTables = useMemo(() => {
+    return tables.filter((tbl) => {
+      if (floorFilter === "OCCUPIED" && tbl.status !== "OCCUPIED") return false;
+      if (floorFilter === "BILLING" && tbl.status !== "BILLING") return false;
+      if (floorFilter === "AVAILABLE" && tbl.status !== "AVAILABLE") return false;
+      if (floorFilter === "CLEANING" && tbl.status !== "CLEANING") return false;
+      if (tableSearch.trim()) {
+        const q = tableSearch.trim();
+        return String(tbl.tableNumber).includes(q);
+      }
+      return true;
+    });
+  }, [tables, floorFilter, tableSearch]);
+
+  // Available Destination Tables for Transfer Modal
+  const availableDestTables = useMemo(() => {
+    if (!transferSourceTable) return [];
+    return tables.filter(
+      (t) => t.status === "AVAILABLE" && t.tableNumber !== transferSourceTable.tableNumber
+    );
+  }, [tables, transferSourceTable]);
 
   // Takeaway Cart Operations
   const addToTakeawayCart = (dish: MenuItem) => {
@@ -518,6 +719,18 @@ export default function CashierDashboard() {
     return dishes;
   }, [categories, takeawayActiveCat, takeawaySearch]);
 
+  // Filtered menu for table punch modal
+  const filteredPunchDishes = useMemo(() => {
+    const q = punchSearch.toLowerCase().trim();
+    let dishes = categories.flatMap((c) =>
+      punchActiveCat === "ALL" || c.id === punchActiveCat ? c.menuItems : []
+    );
+    if (q) {
+      dishes = dishes.filter((d) => d.name.toLowerCase().includes(q));
+    }
+    return dishes;
+  }, [categories, punchActiveCat, punchSearch]);
+
   return (
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       <SwipeableToaster />
@@ -541,7 +754,7 @@ export default function CashierDashboard() {
               Cashier POS & Floor Checkout
             </h1>
             <p className="text-xs sm:text-sm text-neutral-400 max-w-xl font-normal leading-relaxed">
-              Real-time table settlement, split payments (Cash / UPI / Card), floor status control, and walk-in takeaway counter.
+              Real-time table settlement, split payments (Cash / UPI / Card), table transfer, direct order punching, and walk-in counter.
             </p>
           </div>
 
@@ -554,7 +767,7 @@ export default function CashierDashboard() {
 
             <button
               onClick={loadFloorData}
-              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95"
+              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95 cursor-pointer"
             >
               <RefreshCw className="h-3.5 w-3.5 text-neutral-400" />
               <span>Refresh Floor</span>
@@ -563,150 +776,204 @@ export default function CashierDashboard() {
         </div>
       </div>
 
+      {/* ================= PENDING QR SCAN ACCESS REQUESTS BANNER ================= */}
+      {pendingRequests.length > 0 && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-[#18181B] to-transparent border border-amber-500/30 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-3 duration-300">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-400 font-['Outfit'] text-sm font-bold">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+              </span>
+              <span>Customer QR Scan Access Requests ({pendingRequests.length})</span>
+            </div>
+            <span className="text-[11px] text-amber-300/80">Authorize guest tables to start ordering</span>
+          </div>
 
-        {/* ================= PENDING QR SCAN ACCESS REQUESTS BANNER ================= */}
-        {pendingRequests.length > 0 && (
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-[#18181B] to-transparent border border-amber-500/30 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-3 duration-300">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-amber-400 font-['Outfit'] text-sm font-bold">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
-                </span>
-                <span>Customer QR Scan Access Requests ({pendingRequests.length})</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {pendingRequests.map((req) => (
+              <div
+                key={req.tableNumber}
+                className="p-3 rounded-xl bg-[#141416] border border-amber-500/30 flex items-center justify-between gap-3 shadow-md"
+              >
+                <div>
+                  <span className="font-['Outfit'] text-base font-black text-white block leading-none">
+                    Table #{req.tableNumber < 10 ? `0${req.tableNumber}` : req.tableNumber}
+                  </span>
+                  <span className="text-[11px] text-[#888888] mt-1 block">
+                    {new Date(req.requestedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleDeclineAccess(req.tableNumber)}
+                    className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 text-[#888888] hover:text-rose-400 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Decline
+                  </button>
+                  <button
+                    onClick={() => handleApproveAccess(req.tableNumber)}
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black transition-all shadow-md active:scale-95 flex items-center gap-1 cursor-pointer"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
+                    <span>Approve</span>
+                  </button>
+                </div>
               </div>
-              <span className="text-[11px] text-amber-300/80">Authorize guest tables to start ordering</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB 1: FLOOR & LIVE BILLS ================= */}
+      {activeTab === "floor" && (
+        <div className="space-y-6">
+          {/* Quick Metrics Ribbon */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex items-center gap-3.5 shadow-xl">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <UtensilsCrossed className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
+                  Occupied Tables
+                </span>
+                <span className="font-['Outfit'] text-lg font-black text-white">
+                  {tables.filter((t) => t.status === "OCCUPIED" || t.status === "BILLING").length} / {tables.length}
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {pendingRequests.map((req) => (
-                <div
-                  key={req.tableNumber}
-                  className="p-3 rounded-xl bg-[#141416] border border-amber-500/30 flex items-center justify-between gap-3 shadow-md"
-                >
-                  <div>
-                    <span className="font-['Outfit'] text-base font-black text-white block leading-none">
-                      Table #{req.tableNumber < 10 ? `0${req.tableNumber}` : req.tableNumber}
-                    </span>
-                    <span className="text-[11px] text-[#888888] mt-1 block">
-                      {new Date(req.requestedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
+            <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex items-center gap-3.5 shadow-xl">
+              <div className="h-10 w-10 rounded-xl bg-[#FA2D48]/15 border border-[#FA2D48]/25 flex items-center justify-center text-[#FA2D48] shrink-0">
+                <Receipt className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
+                  Bill Requested
+                </span>
+                <span className="font-['Outfit'] text-lg font-black text-[#FA2D48]">
+                  {tables.filter((t) => t.status === "BILLING").length}
+                </span>
+              </div>
+            </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleDeclineAccess(req.tableNumber)}
-                      className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 text-[#888888] hover:text-rose-400 text-xs font-bold transition-all"
-                    >
-                      Decline
-                    </button>
-                    <button
-                      onClick={() => handleApproveAccess(req.tableNumber)}
-                      className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black transition-all shadow-md active:scale-95 flex items-center gap-1"
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
-                      <span>Approve</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex items-center gap-3.5 shadow-xl">
+              <div className="h-10 w-10 rounded-xl bg-sky-500/15 border border-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
+                <QrCode className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
+                  Today's Invoices
+                </span>
+                <span className="font-['Outfit'] text-lg font-black text-white">
+                  {stats?.settledBillsCount || 0}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex items-center gap-3.5 shadow-xl">
+              <div className="h-10 w-10 rounded-xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
+                  Shift Sales
+                </span>
+                <span className="font-['Outfit'] text-lg font-black text-white">
+                  ₹{stats?.totalRevenue ? stats.totalRevenue.toFixed(2) : "0.00"}
+                </span>
+              </div>
             </div>
           </div>
-        )}
 
-        {/* ================= TAB 1: FLOOR & LIVE BILLS ================= */}
-        {activeTab === "floor" && (
-          <div className="space-y-6">
-            {/* Quick Metrics Ribbon */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-              <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex items-center gap-3.5 shadow-xl">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                  <UtensilsCrossed className="h-5 w-5" />
-                </div>
-                <div>
-                  <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
-                    Occupied Tables
-                  </span>
-                  <span className="font-['Outfit'] text-lg font-black text-white">
-                    {tables.filter((t) => t.status === "OCCUPIED" || t.status === "BILLING").length} / {tables.length}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex items-center gap-3.5 shadow-xl">
-                <div className="h-10 w-10 rounded-xl bg-[#FA2D48]/15 border border-[#FA2D48]/25 flex items-center justify-center text-[#FA2D48] shrink-0">
-                  <Receipt className="h-5 w-5" />
-                </div>
-                <div>
-                  <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
-                    Bill Requested
-                  </span>
-                  <span className="font-['Outfit'] text-lg font-black text-[#FA2D48]">
-                    {tables.filter((t) => t.status === "BILLING").length}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex items-center gap-3.5 shadow-xl">
-                <div className="h-10 w-10 rounded-xl bg-sky-500/15 border border-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
-                  <QrCode className="h-5 w-5" />
-                </div>
-                <div>
-                  <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
-                    Today's Invoices
-                  </span>
-                  <span className="font-['Outfit'] text-lg font-black text-white">
-                    {stats?.settledBillsCount || 0}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex items-center gap-3.5 shadow-xl">
-                <div className="h-10 w-10 rounded-xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
-                  <TrendingUp className="h-5 w-5" />
-                </div>
-                <div>
-                  <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
-                    Shift Sales
-                  </span>
-                  <span className="font-['Outfit'] text-lg font-black text-white">
-                    ₹{stats?.totalRevenue ? stats.totalRevenue.toFixed(2) : "0.00"}
-                  </span>
-                </div>
-              </div>
+          {/* Floor Controls & Filters */}
+          <div className="p-4 rounded-2xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-lg">
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+              <button
+                onClick={() => setFloorFilter("ALL")}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  floorFilter === "ALL"
+                    ? "bg-white text-black shadow-md"
+                    : "bg-white/[0.05] text-neutral-300 hover:bg-white/[0.1] border border-white/10"
+                }`}
+              >
+                All Tables ({tables.length})
+              </button>
+              <button
+                onClick={() => setFloorFilter("BILLING")}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  floorFilter === "BILLING"
+                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                    : "bg-white/[0.05] text-[#FA2D48] hover:bg-white/[0.1] border border-[#FA2D48]/30"
+                }`}
+              >
+                Bill Requested ({tables.filter((t) => t.status === "BILLING").length})
+              </button>
+              <button
+                onClick={() => setFloorFilter("OCCUPIED")}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  floorFilter === "OCCUPIED"
+                    ? "bg-amber-500 text-black shadow-md"
+                    : "bg-white/[0.05] text-amber-300 hover:bg-white/[0.1] border border-amber-500/30"
+                }`}
+              >
+                Occupied ({tables.filter((t) => t.status === "OCCUPIED").length})
+              </button>
+              <button
+                onClick={() => setFloorFilter("AVAILABLE")}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  floorFilter === "AVAILABLE"
+                    ? "bg-emerald-500 text-black shadow-md"
+                    : "bg-white/[0.05] text-emerald-400 hover:bg-white/[0.1] border border-emerald-500/30"
+                }`}
+              >
+                Available ({tables.filter((t) => t.status === "AVAILABLE").length})
+              </button>
+              <button
+                onClick={() => setFloorFilter("CLEANING")}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  floorFilter === "CLEANING"
+                    ? "bg-sky-500 text-black shadow-md"
+                    : "bg-white/[0.05] text-sky-400 hover:bg-white/[0.1] border border-sky-500/30"
+                }`}
+              >
+                Cleaning ({tables.filter((t) => t.status === "CLEANING").length})
+              </button>
             </div>
 
-            {/* Floor Tables Grid */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="font-['Outfit'] text-base font-black text-white tracking-tight flex items-center gap-2">
-                  <span>Dining Room Tables</span>
-                  <span className="text-xs text-[#888888] font-normal">
-                    (Click a table to manage status or settle bill)
-                  </span>
-                </h2>
+            {/* Quick Table Search */}
+            <div className="relative w-full md:w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+              <input
+                type="text"
+                value={tableSearch}
+                onChange={(e) => setTableSearch(e.target.value)}
+                placeholder="Search table #..."
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50"
+              />
+            </div>
+          </div>
 
-                <button
-                  onClick={loadFloorData}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#888] hover:text-white transition-colors flex items-center gap-1.5 text-xs font-bold"
-                  title="Refresh floor"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  <span>Refresh</span>
-                </button>
+          {/* Floor Tables Grid */}
+          <div className="space-y-3">
+            {isLoading && tables.length === 0 ? (
+              <div className="py-16 flex flex-col items-center justify-center gap-2 text-center text-[#888888]">
+                <RefreshCw className="h-5 w-5 animate-spin text-white" />
+                <span className="text-xs">Loading restaurant tables...</span>
               </div>
-
-              {isLoading && tables.length === 0 ? (
-                <div className="py-16 flex flex-col items-center justify-center gap-2 text-center text-[#888888]">
-                  <RefreshCw className="h-5 w-5 animate-spin text-white" />
-                  <span className="text-xs">Loading restaurant tables...</span>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {tables.map((tbl) => {
-                    const isBilling = tbl.status === "BILLING";
-                    const isOccupied = tbl.status === "OCCUPIED";
-                    const isCleaning = tbl.status === "CLEANING";
+            ) : filteredTables.length === 0 ? (
+              <div className="py-16 text-center text-xs text-neutral-400">
+                No tables found matching your filter criteria.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredTables.map((tbl) => {
+                  const isBilling = tbl.status === "BILLING";
+                  const isOccupied = tbl.status === "OCCUPIED";
+                  const isCleaning = tbl.status === "CLEANING";
 
                   let cardBorder = "border-white/[0.08]";
                   let statusBadgeBg = "bg-white/5 text-[#888888] border-white/10";
@@ -752,7 +1019,7 @@ export default function CashierDashboard() {
                       </div>
 
                       {/* Middle Body: Orders & Bill Amount */}
-                      <div className="py-3.5 space-y-2">
+                      <div className="py-3 space-y-2">
                         {tbl.activeSession ? (
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
@@ -771,10 +1038,63 @@ export default function CashierDashboard() {
                             </div>
                           </div>
                         ) : (
-                          <div className="py-2 text-center text-xs text-neutral-500">
+                          <div className="py-3 text-center text-xs text-neutral-500">
                             No active dining session
                           </div>
                         )}
+
+                        {/* Mid Action Buttons: Pre-bill Print & Move Table & Add Dishes */}
+                        <div className="pt-2 flex items-center justify-between gap-1 text-xs">
+                          {tbl.activeSession ? (
+                            <>
+                              <button
+                                onClick={() => handlePrintEstimate(tbl)}
+                                title="Print Pre-bill Check"
+                                className="flex-1 py-1.5 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/10 flex items-center justify-center gap-1 font-semibold text-[11px] transition-all cursor-pointer"
+                              >
+                                <Printer className="h-3 w-3 text-neutral-400" />
+                                <span>Check</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setTransferSourceTable(tbl);
+                                  setTransferDestTableNumber(null);
+                                }}
+                                title="Transfer to another table"
+                                className="flex-1 py-1.5 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/10 flex items-center justify-center gap-1 font-semibold text-[11px] transition-all cursor-pointer"
+                              >
+                                <ArrowRightLeft className="h-3 w-3 text-neutral-400" />
+                                <span>Transfer</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setPunchTable(tbl);
+                                  setPunchCart([]);
+                                  setPunchNotes("");
+                                }}
+                                title="Add dishes directly to table"
+                                className="flex-1 py-1.5 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/10 flex items-center justify-center gap-1 font-semibold text-[11px] transition-all cursor-pointer"
+                              >
+                                <PlusCircle className="h-3 w-3 text-[#FA2D48]" />
+                                <span>Add</span>
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setPunchTable(tbl);
+                                setPunchCart([]);
+                                setPunchNotes("");
+                              }}
+                              className="w-full py-1.5 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 hover:text-white border border-white/10 flex items-center justify-center gap-1.5 font-semibold text-[11px] transition-all cursor-pointer"
+                            >
+                              <PlusCircle className="h-3 w-3 text-emerald-400" />
+                              <span>Open Session & Punch Order</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Bottom Controls: Direct Status Dropdown & Settle Button */}
@@ -814,401 +1134,441 @@ export default function CashierDashboard() {
                     </div>
                   );
                 })}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ================= TAB 2: TAKEAWAY POS ================= */}
-        {activeTab === "takeaway" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Dish Selector */}
-            <div className="lg:col-span-2 space-y-4">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                {/* Search Bar */}
-                <div className="relative flex-1">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                  <input
-                    type="text"
-                    value={takeawaySearch}
-                    onChange={(e) => setTakeawaySearch(e.target.value)}
-                    placeholder="Search menu items for takeaway..."
-                    className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.05] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
-                  />
-                </div>
+      {/* ================= TAB 2: TAKEAWAY POS ================= */}
+      {activeTab === "takeaway" && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Dish Selector */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                <input
+                  type="text"
+                  value={takeawaySearch}
+                  onChange={(e) => setTakeawaySearch(e.target.value)}
+                  placeholder="Search menu items for takeaway..."
+                  className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.05] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
+                />
+              </div>
 
-                {/* Category Chips - Apple Music Pill Row */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {/* Category Chips - Apple Music Pill Row */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                <button
+                  onClick={() => setTakeawayActiveCat("ALL")}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    takeawayActiveCat === "ALL"
+                      ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                      : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+                  }`}
+                >
+                  All
+                </button>
+                {categories.map((cat) => (
                   <button
-                    onClick={() => setTakeawayActiveCat("ALL")}
-                    className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
-                      takeawayActiveCat === "ALL"
+                    key={cat.id}
+                    onClick={() => setTakeawayActiveCat(cat.id)}
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      takeawayActiveCat === cat.id
                         ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
                         : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                     }`}
                   >
-                    All
+                    {cat.name}
                   </button>
-                  {categories.map((cat) => (
+                ))}
+              </div>
+            </div>
+
+            {/* Dishes Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[620px] overflow-y-auto scrollbar-none pr-1">
+              {filteredTakeawayDishes.map((dish) => {
+                const cartEntry = takeawayCart.find((ci) => ci.item.id === dish.id);
+                return (
+                  <div
+                    key={dish.id}
+                    onClick={() => addToTakeawayCart(dish)}
+                    className="p-3 rounded-2xl bg-[#161619]/90 border border-white/[0.08] hover:border-white/20 backdrop-blur-xl transition-all cursor-pointer flex flex-col justify-between group active:scale-98 shadow-md"
+                  >
+                    <div className="aspect-square w-full rounded-xl bg-black/30 overflow-hidden mb-2 relative">
+                      <img
+                        src={
+                          dish.imageUrl?.startsWith("http")
+                            ? dish.imageUrl
+                            : `${UPLOADS_BASE}/${dish.imageUrl?.replace(/^\/+/, "")}`
+                        }
+                        alt={dish.name}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e: any) => {
+                          e.target.src =
+                            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80";
+                        }}
+                      />
+                      {cartEntry && (
+                        <div className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-[#FA2D48] text-white text-[11px] font-black flex items-center justify-center shadow-lg shadow-[#FA2D48]/40">
+                          {cartEntry.quantity}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="leading-snug">
+                      <h4 className="text-xs font-bold text-white line-clamp-1 group-hover:text-[#FA2D48]">
+                        {dish.name}
+                      </h4>
+                      <span className="font-['Outfit'] text-xs font-black text-white mt-1 block">
+                        ₹{Number(dish.price).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right: Takeaway Order Tray & Quick Checkout */}
+          <div className="p-5 rounded-3xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex flex-col justify-between space-y-4 shadow-xl">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 className="font-['Outfit'] text-base font-black text-white">Takeaway Order</h3>
+                <button
+                  onClick={() => setTakeawayCart([])}
+                  className="text-xs text-[#FA2D48] font-bold hover:underline cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+
+              {/* Customer Name */}
+              <div className="mt-3">
+                <label className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block mb-1">
+                  Customer Name / Reference
+                </label>
+                <input
+                  type="text"
+                  value={takeawayCustomerName}
+                  onChange={(e) => setTakeawayCustomerName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-[#FA2D48]/50"
+                />
+              </div>
+
+              {/* Cart Items List */}
+              <div className="mt-4 space-y-2 max-h-64 overflow-y-auto pr-1">
+                {takeawayCart.length === 0 ? (
+                  <div className="text-center py-12 text-xs text-neutral-500">
+                    Tray is empty. Tap dishes to add.
+                  </div>
+                ) : (
+                  takeawayCart.map((ci) => (
+                    <div
+                      key={ci.item.id}
+                      className="p-2.5 rounded-xl bg-white/[0.04] border border-white/5 flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <h5 className="text-xs font-bold text-white truncate">{ci.item.name}</h5>
+                        <span className="text-[11px] text-neutral-400">
+                          ₹{Number(ci.item.price).toFixed(2)} × {ci.quantity}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => updateTakeawayQty(ci.item.id, -1)}
+                          className="h-6 w-6 rounded-md bg-white/[0.08] text-white flex items-center justify-center text-xs active:scale-90 cursor-pointer"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-5 text-center text-xs font-bold text-white">
+                          {ci.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateTakeawayQty(ci.item.id, 1)}
+                          className="h-6 w-6 rounded-md bg-[#FA2D48] text-white flex items-center justify-center text-xs active:scale-90 font-bold cursor-pointer"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Payment Method & Total */}
+            <div className="space-y-3 pt-3 border-t border-white/10">
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between text-neutral-400">
+                  <span>Subtotal:</span>
+                  <span className="text-white">₹{takeawaySubtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-neutral-400">
+                  <span>GST (5%):</span>
+                  <span className="text-white">₹{takeawayTax.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-white pt-1 border-t border-white/10">
+                  <span>Grand Total:</span>
+                  <span className="font-['Outfit'] text-lg font-black text-white">
+                    ₹{takeawayGrandTotal.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Payment Method Selector */}
+              <div>
+                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block mb-1.5">
+                  Payment Method
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["UPI", "CASH", "CARD"] as const).map((m) => (
                     <button
-                      key={cat.id}
-                      onClick={() => setTakeawayActiveCat(cat.id)}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
-                        takeawayActiveCat === cat.id
-                          ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-                          : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+                      key={m}
+                      type="button"
+                      onClick={() => setTakeawayPaymentMethod(m)}
+                      className={`py-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                        takeawayPaymentMethod === m
+                          ? "bg-white text-black border-white shadow-md"
+                          : "bg-white/[0.04] text-neutral-300 border-white/10 hover:border-white/20"
                       }`}
                     >
-                      {cat.name}
+                      {m === "UPI" && <QrCode className="h-3.5 w-3.5" />}
+                      {m === "CASH" && <Banknote className="h-3.5 w-3.5" />}
+                      {m === "CARD" && <CreditCard className="h-3.5 w-3.5" />}
+                      <span>{m}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Dishes Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[620px] overflow-y-auto scrollbar-none pr-1">
-                {filteredTakeawayDishes.map((dish) => {
-                  const cartEntry = takeawayCart.find((ci) => ci.item.id === dish.id);
-                  return (
-                    <div
-                      key={dish.id}
-                      onClick={() => addToTakeawayCart(dish)}
-                      className="p-3 rounded-2xl bg-[#161619]/90 border border-white/[0.08] hover:border-white/20 backdrop-blur-xl transition-all cursor-pointer flex flex-col justify-between group active:scale-98 shadow-md"
-                    >
-                      <div className="aspect-square w-full rounded-xl bg-black/30 overflow-hidden mb-2 relative">
-                        <img
-                          src={
-                            dish.imageUrl?.startsWith("http")
-                              ? dish.imageUrl
-                              : `${UPLOADS_BASE}/${dish.imageUrl?.replace(/^\/+/, "")}`
-                          }
-                          alt={dish.name}
-                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e: any) => {
-                            e.target.src =
-                              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80";
-                          }}
-                        />
-                        {cartEntry && (
-                          <div className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-[#FA2D48] text-white text-[11px] font-black flex items-center justify-center shadow-lg shadow-[#FA2D48]/40">
-                            {cartEntry.quantity}
-                          </div>
-                        )}
-                      </div>
+              {/* Settle & Dispatch */}
+              <button
+                disabled={takeawayCart.length === 0 || isSubmittingTakeaway}
+                onClick={handleSettleTakeaway}
+                className="w-full py-3.5 rounded-2xl bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white font-['Outfit'] font-black text-sm tracking-wide transition-all active:scale-98 shadow-xl shadow-[#FA2D48]/30 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {isSubmittingTakeaway ? (
+                  <span>Processing...</span>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Collect ₹{takeawayGrandTotal.toFixed(2)} & Dispatch</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-                      <div className="leading-snug">
-                        <h4 className="text-xs font-bold text-white line-clamp-1 group-hover:text-[#FA2D48]">
-                          {dish.name}
-                        </h4>
-                        <span className="font-['Outfit'] text-xs font-black text-white mt-1 block">
-                          ₹{Number(dish.price).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+      {/* ================= TAB 3: SETTLED BILLS HISTORY ================= */}
+      {activeTab === "history" && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-['Outfit'] text-lg font-black text-white">
+                Today's Settled Bills ({history.length})
+              </h3>
+              <span className="text-xs text-[#888888]">
+                Closed transactions eligible for reprint, audit, and tax review
+              </span>
             </div>
 
-            {/* Right: Takeaway Order Tray & Quick Checkout */}
-            <div className="p-5 rounded-3xl bg-[#161619]/90 border border-white/[0.08] backdrop-blur-xl flex flex-col justify-between space-y-4 shadow-xl">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#888888]" />
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="Filter by table or invoice..."
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#111114] border border-white/10 text-xs text-white focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-[#111114] border border-white/[0.08] overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-white/[0.03] text-[#888888] uppercase font-bold border-b border-white/[0.06]">
+                  <tr>
+                    <th className="py-3 px-4">Invoice #</th>
+                    <th className="py-3 px-4">Table / Type</th>
+                    <th className="py-3 px-4">Time</th>
+                    <th className="py-3 px-4">Items</th>
+                    <th className="py-3 px-4">Payment Methods</th>
+                    <th className="py-3 px-4">Total Amount</th>
+                    <th className="py-3 px-4 text-right">Receipt</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {history
+                    .filter(
+                      (h) =>
+                        h.invoiceNumber.toLowerCase().includes(historySearch.toLowerCase()) ||
+                        String(h.tableNumber).toLowerCase().includes(historySearch.toLowerCase())
+                    )
+                    .map((bill) => (
+                      <tr key={bill.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3.5 px-4 font-mono font-bold text-white">
+                          {bill.invoiceNumber}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-white">
+                          {bill.tableNumber === "Takeaway"
+                            ? "Takeaway"
+                            : `Table #${bill.tableNumber}`}
+                        </td>
+                        <td className="py-3.5 px-4 text-[#AAAAAA]">
+                          {new Date(bill.endTime).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="py-3.5 px-4 text-[#AAAAAA]">
+                          {bill.itemsCount} portions
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {bill.payments.map((p, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-white"
+                              >
+                                {p.method}: ₹{p.amount.toFixed(2)}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 font-['Outfit'] font-black text-sm text-white">
+                          ₹{bill.totalAmount.toFixed(2)}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() =>
+                              setActiveReceipt({
+                                invoiceNumber: bill.invoiceNumber,
+                                tableNumber: bill.tableNumber,
+                                dateTime: bill.endTime,
+                                subtotal: bill.totalAmount / 1.05,
+                                taxAmount: bill.totalAmount - bill.totalAmount / 1.05,
+                                discount: 0,
+                                grandTotal: bill.totalAmount,
+                                payments: bill.payments,
+                                items: bill.items,
+                              })
+                            }
+                            className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                          >
+                            <Printer className="h-3 w-3" />
+                            <span>Print</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB 4: SHIFT METRICS & REGISTER ================= */}
+      {activeTab === "stats" && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-3xl bg-gradient-to-b from-[#18181D] to-[#111114] border border-white/10 space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <h3 className="font-['Outfit'] text-base font-black text-white">Takeaway Order</h3>
-                  <button
-                    onClick={() => setTakeawayCart([])}
-                    className="text-xs text-[#FA2D48] font-bold hover:underline cursor-pointer"
-                  >
-                    Clear
-                  </button>
-                </div>
-
-                {/* Customer Name */}
-                <div className="mt-3">
-                  <label className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block mb-1">
-                    Customer Name / Reference
-                  </label>
-                  <input
-                    type="text"
-                    value={takeawayCustomerName}
-                    onChange={(e) => setTakeawayCustomerName(e.target.value)}
-                    placeholder="e.g. Rahul Sharma"
-                    className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-[#FA2D48]/50"
-                  />
-                </div>
-
-                {/* Cart Items List */}
-                <div className="mt-4 space-y-2 max-h-64 overflow-y-auto pr-1">
-                  {takeawayCart.length === 0 ? (
-                    <div className="text-center py-12 text-xs text-neutral-500">
-                      Tray is empty. Tap dishes to add.
-                    </div>
-                  ) : (
-                    takeawayCart.map((ci) => (
-                      <div
-                        key={ci.item.id}
-                        className="p-2.5 rounded-xl bg-white/[0.04] border border-white/5 flex items-center justify-between gap-2"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <h5 className="text-xs font-bold text-white truncate">{ci.item.name}</h5>
-                          <span className="text-[11px] text-neutral-400">
-                            ₹{Number(ci.item.price).toFixed(2)} × {ci.quantity}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => updateTakeawayQty(ci.item.id, -1)}
-                            className="h-6 w-6 rounded-md bg-white/[0.08] text-white flex items-center justify-center text-xs active:scale-90"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="w-5 text-center text-xs font-bold text-white">
-                            {ci.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateTakeawayQty(ci.item.id, 1)}
-                            className="h-6 w-6 rounded-md bg-[#FA2D48] text-white flex items-center justify-center text-xs active:scale-90 font-bold"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                <span className="text-xs font-bold text-[#888888] uppercase tracking-wider block">
+                  Cashier Shift Register
+                </span>
+                <h2 className="font-['Outfit'] text-2xl font-black text-white mt-1">
+                  Today's Total Gross: ₹{stats?.totalRevenue ? stats.totalRevenue.toFixed(2) : "0.00"}
+                </h2>
               </div>
 
-              {/* Payment Method & Total */}
-              <div className="space-y-3 pt-3 border-t border-white/10">
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between text-neutral-400">
-                    <span>Subtotal:</span>
-                    <span className="text-white">₹{takeawaySubtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-400">
-                    <span>GST (5%):</span>
-                    <span className="text-white">₹{takeawayTax.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm font-bold text-white pt-1 border-t border-white/10">
-                    <span>Grand Total:</span>
-                    <span className="font-['Outfit'] text-lg font-black text-white">
-                      ₹{takeawayGrandTotal.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Payment Method Selector */}
-                <div>
-                  <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block mb-1.5">
-                    Payment Method
-                  </span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["UPI", "CASH", "CARD"] as const).map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setTakeawayPaymentMethod(m)}
-                        className={`py-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition-all ${
-                          takeawayPaymentMethod === m
-                            ? "bg-white text-black border-white shadow-md"
-                            : "bg-white/[0.04] text-neutral-300 border-white/10 hover:border-white/20"
-                        }`}
-                      >
-                        {m === "UPI" && <QrCode className="h-3.5 w-3.5" />}
-                        {m === "CASH" && <Banknote className="h-3.5 w-3.5" />}
-                        {m === "CARD" && <CreditCard className="h-3.5 w-3.5" />}
-                        <span>{m}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Settle & Dispatch */}
+              <div className="flex items-center gap-2">
                 <button
-                  disabled={takeawayCart.length === 0 || isSubmittingTakeaway}
-                  onClick={handleSettleTakeaway}
-                  className="w-full py-3.5 rounded-2xl bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white font-['Outfit'] font-black text-sm tracking-wide transition-all active:scale-98 shadow-xl shadow-[#FA2D48]/30 flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={handlePrintShiftReport}
+                  className="px-4 py-2 rounded-xl bg-white text-black font-bold text-xs flex items-center gap-2 hover:bg-neutral-200 transition-all cursor-pointer shadow-md"
                 >
-                  {isSubmittingTakeaway ? (
-                    <span>Processing...</span>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Collect ₹{takeawayGrandTotal.toFixed(2)} & Dispatch</span>
-                    </>
-                  )}
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>Print Shift Summary</span>
                 </button>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* ================= TAB 3: SETTLED BILLS HISTORY ================= */}
-        {activeTab === "history" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="font-['Outfit'] text-lg font-black text-white">
-                  Today's Settled Bills ({history.length})
-                </h3>
-                <span className="text-xs text-[#888888]">
-                  Closed transactions eligible for reprint and inspection
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">
+              <div className="p-4 rounded-2xl bg-[#141418] border border-white/5 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+                  <Banknote className="h-4 w-4" />
+                  <span>Cash in Drawer</span>
+                </div>
+                <span className="font-['Outfit'] text-xl font-black text-white block">
+                  ₹{stats?.cashTotal ? stats.cashTotal.toFixed(2) : "0.00"}
                 </span>
               </div>
 
-              <div className="relative w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#888888]" />
-                <input
-                  type="text"
-                  value={historySearch}
-                  onChange={(e) => setHistorySearch(e.target.value)}
-                  placeholder="Filter by table or invoice..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#111114] border border-white/10 text-xs text-white focus:outline-none"
-                />
+              <div className="p-4 rounded-2xl bg-[#141418] border border-white/5 space-y-1">
+                <div className="flex items-center gap-2 text-sky-400 font-bold text-xs">
+                  <QrCode className="h-4 w-4" />
+                  <span>UPI Collections</span>
+                </div>
+                <span className="font-['Outfit'] text-xl font-black text-white block">
+                  ₹{stats?.upiTotal ? stats.upiTotal.toFixed(2) : "0.00"}
+                </span>
               </div>
-            </div>
 
-            <div className="rounded-2xl bg-[#111114] border border-white/[0.08] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-white/[0.03] text-[#888888] uppercase font-bold border-b border-white/[0.06]">
-                    <tr>
-                      <th className="py-3 px-4">Invoice #</th>
-                      <th className="py-3 px-4">Table / Type</th>
-                      <th className="py-3 px-4">Time</th>
-                      <th className="py-3 px-4">Items</th>
-                      <th className="py-3 px-4">Payment Methods</th>
-                      <th className="py-3 px-4">Total Amount</th>
-                      <th className="py-3 px-4 text-right">Receipt</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/[0.04]">
-                    {history
-                      .filter(
-                        (h) =>
-                          h.invoiceNumber.toLowerCase().includes(historySearch.toLowerCase()) ||
-                          String(h.tableNumber).toLowerCase().includes(historySearch.toLowerCase())
-                      )
-                      .map((bill) => (
-                        <tr key={bill.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3.5 px-4 font-mono font-bold text-white">
-                            {bill.invoiceNumber}
-                          </td>
-                          <td className="py-3.5 px-4 font-bold text-white">
-                            {bill.tableNumber === "Takeaway"
-                              ? "Takeaway"
-                              : `Table #${bill.tableNumber}`}
-                          </td>
-                          <td className="py-3.5 px-4 text-[#AAAAAA]">
-                            {new Date(bill.endTime).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </td>
-                          <td className="py-3.5 px-4 text-[#AAAAAA]">
-                            {bill.itemsCount} portions
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-1.5">
-                              {bill.payments.map((p, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-white"
-                                >
-                                  {p.method}: ₹{p.amount.toFixed(2)}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-4 font-['Outfit'] font-black text-sm text-white">
-                            ₹{bill.totalAmount.toFixed(2)}
-                          </td>
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              onClick={() =>
-                                setActiveReceipt({
-                                  invoiceNumber: bill.invoiceNumber,
-                                  tableNumber: bill.tableNumber,
-                                  dateTime: bill.endTime,
-                                  subtotal: bill.totalAmount / 1.05,
-                                  taxAmount: bill.totalAmount - bill.totalAmount / 1.05,
-                                  discount: 0,
-                                  grandTotal: bill.totalAmount,
-                                  payments: bill.payments,
-                                  items: bill.items,
-                                })
-                              }
-                              className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs inline-flex items-center gap-1.5"
-                            >
-                              <Printer className="h-3 w-3" />
-                              <span>Print</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+              <div className="p-4 rounded-2xl bg-[#141418] border border-white/5 space-y-1">
+                <div className="flex items-center gap-2 text-violet-400 font-bold text-xs">
+                  <CreditCard className="h-4 w-4" />
+                  <span>Card Volume</span>
+                </div>
+                <span className="font-['Outfit'] text-xl font-black text-white block">
+                  ₹{stats?.cardTotal ? stats.cardTotal.toFixed(2) : "0.00"}
+                </span>
               </div>
             </div>
           </div>
-        )}
 
-        {/* ================= TAB 4: SHIFT METRICS ================= */}
-        {activeTab === "stats" && (
-          <div className="space-y-6">
-            <div className="p-6 rounded-3xl bg-gradient-to-b from-[#18181D] to-[#111114] border border-white/10 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-[#888888] uppercase tracking-wider block">
-                    Cashier Shift Summary
-                  </span>
-                  <h2 className="font-['Outfit'] text-2xl font-black text-white mt-1">
-                    Today's Total Gross: ₹{stats?.totalRevenue ? stats.totalRevenue.toFixed(2) : "0.00"}
-                  </h2>
-                </div>
-                <div className="h-12 w-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <TrendingUp className="h-6 w-6" />
-                </div>
-              </div>
+          {/* Operational Shift Statistics */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl bg-[#161619] border border-white/[0.08] space-y-1">
+              <span className="text-[11px] text-neutral-400 uppercase font-semibold block">
+                Total Bills Settled
+              </span>
+              <span className="font-['Outfit'] text-2xl font-black text-white">
+                {stats?.settledBillsCount || 0} bills
+              </span>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">
-                <div className="p-4 rounded-2xl bg-[#141418] border border-white/5 space-y-1">
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
-                    <Banknote className="h-4 w-4" />
-                    <span>Cash in Drawer</span>
-                  </div>
-                  <span className="font-['Outfit'] text-xl font-black text-white block">
-                    ₹{stats?.cashTotal ? stats.cashTotal.toFixed(2) : "0.00"}
-                  </span>
-                </div>
+            <div className="p-5 rounded-2xl bg-[#161619] border border-white/[0.08] space-y-1">
+              <span className="text-[11px] text-neutral-400 uppercase font-semibold block">
+                Average Bill Value (AOV)
+              </span>
+              <span className="font-['Outfit'] text-2xl font-black text-white">
+                ₹
+                {stats && stats.settledBillsCount > 0
+                  ? (stats.totalRevenue / stats.settledBillsCount).toFixed(2)
+                  : "0.00"}
+              </span>
+            </div>
 
-                <div className="p-4 rounded-2xl bg-[#141418] border border-white/5 space-y-1">
-                  <div className="flex items-center gap-2 text-sky-400 font-bold text-xs">
-                    <QrCode className="h-4 w-4" />
-                    <span>UPI Collections</span>
-                  </div>
-                  <span className="font-['Outfit'] text-xl font-black text-white block">
-                    ₹{stats?.upiTotal ? stats.upiTotal.toFixed(2) : "0.00"}
-                  </span>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-[#141418] border border-white/5 space-y-1">
-                  <div className="flex items-center gap-2 text-violet-400 font-bold text-xs">
-                    <CreditCard className="h-4 w-4" />
-                    <span>Card Volume</span>
-                  </div>
-                  <span className="font-['Outfit'] text-xl font-black text-white block">
-                    ₹{stats?.cardTotal ? stats.cardTotal.toFixed(2) : "0.00"}
-                  </span>
-                </div>
-              </div>
+            <div className="p-5 rounded-2xl bg-[#161619] border border-white/[0.08] space-y-1">
+              <span className="text-[11px] text-neutral-400 uppercase font-semibold block">
+                Active Table Load
+              </span>
+              <span className="font-['Outfit'] text-2xl font-black text-white">
+                {stats?.activeTablesCount || 0} active
+              </span>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-      {/* ================= BILL SETTLEMENT & SPLIT PAYMENT MODAL ================= */}
+      {/* ================= MODAL 1: BILL SETTLEMENT & SPLIT PAYMENT ================= */}
       {settlementTable && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="w-full max-w-2xl bg-[#121216] border border-white/15 rounded-3xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
@@ -1223,351 +1583,773 @@ export default function CashierDashboard() {
                 <div className="flex items-center justify-between pb-4 border-b border-white/10">
                   <div>
                     <span className="text-[10px] font-bold text-[#888888] uppercase tracking-wider block">
-                  Table Settlement & Checkout
-                </span>
-                <h3 className="font-['Outfit'] text-xl font-black text-white mt-0.5">
-                  Table #{settlementTable.tableNumber} • Session {billDetails.session.sessionCode}
+                      Table Settlement & Checkout
+                    </span>
+                    <h3 className="font-['Outfit'] text-xl font-black text-white mt-0.5">
+                      Table #{settlementTable.tableNumber} • Session {billDetails.session.sessionCode}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSettlementTable(null);
+                      setBillDetails(null);
+                    }}
+                    className="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/15 text-[#AAAAAA] hover:text-white flex items-center justify-center cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Modal Body: Two Columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left Column: Itemized Dish Summary */}
+                  <div className="space-y-3 bg-[#17171C] p-4 rounded-2xl border border-white/5">
+                    <span className="text-xs font-bold text-[#AAAAAA] uppercase tracking-wide block">
+                      Itemized Order Breakdown
+                    </span>
+
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {billDetails.items.map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between text-xs">
+                          <div className="truncate pr-2">
+                            <span className="font-bold text-white">{item.name}</span>
+                            <span className="text-[#888888] ml-1.5">× {item.quantity}</span>
+                          </div>
+                          <span className="font-mono text-white font-bold shrink-0">
+                            ₹{item.subtotal.toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-3 border-t border-white/10 space-y-2 text-xs">
+                      <div className="flex justify-between text-[#888]">
+                        <span>Subtotal:</span>
+                        <span className="text-white">₹{billDetails.subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-[#888]">
+                        <span>GST (5%):</span>
+                        <span className="text-white">₹{billDetails.taxAmount.toFixed(2)}</span>
+                      </div>
+
+                      {/* Discount Options: Flat vs Percent */}
+                      <div className="space-y-1.5 pt-1 border-t border-white/5">
+                        <div className="flex items-center justify-between text-[#888]">
+                          <span className="flex items-center gap-1 font-bold text-neutral-300">
+                            <span>Discount:</span>
+                            <span className="text-[10px] text-emerald-400">
+                              (-₹{calculatedDiscount.toFixed(2)})
+                            </span>
+                          </span>
+
+                          <div className="flex items-center gap-1 bg-[#24242A] p-0.5 rounded-lg border border-white/10">
+                            <button
+                              type="button"
+                              onClick={() => setDiscountType("FLAT")}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                discountType === "FLAT"
+                                  ? "bg-white text-black"
+                                  : "text-neutral-400 hover:text-white"
+                              }`}
+                            >
+                              ₹ Flat
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDiscountType("PERCENT")}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                discountType === "PERCENT"
+                                  ? "bg-white text-black"
+                                  : "text-neutral-400 hover:text-white"
+                              }`}
+                            >
+                              % Pct
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={discountInput}
+                            onChange={(e) => setDiscountInput(e.target.value)}
+                            placeholder="0"
+                            className="flex-1 px-2.5 py-1 rounded bg-[#24242A] border border-white/10 text-right text-xs text-white font-bold focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Quick Discount Presets */}
+                        <div className="flex items-center gap-1">
+                          {["5", "10", "15", "20"].map((pct) => (
+                            <button
+                              key={pct}
+                              type="button"
+                              onClick={() => {
+                                setDiscountType("PERCENT");
+                                setDiscountInput(pct);
+                              }}
+                              className="px-2 py-0.5 rounded bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
+                            >
+                              {pct}%
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDiscountType("FLAT");
+                              setDiscountInput("0");
+                            }}
+                            className="px-2 py-0.5 rounded bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-rose-400 border border-white/5 cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-white/10">
+                        <span>Net Grand Total:</span>
+                        <span className="font-['Outfit'] text-xl font-black text-white">
+                          ₹{currentNetTotal.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Payment Mode (Single vs Split) */}
+                  <div className="space-y-4">
+                    {/* Mode Selector Toggle */}
+                    <div>
+                      <span className="text-xs font-bold text-[#AAAAAA] uppercase tracking-wide block mb-1.5">
+                        Payment Mode
+                      </span>
+                      <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-white/[0.04] border border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMode("SINGLE")}
+                          className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            paymentMode === "SINGLE"
+                              ? "bg-white text-black shadow-md"
+                              : "text-neutral-400 hover:text-white"
+                          }`}
+                        >
+                          Single Method
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMode("SPLIT")}
+                          className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            paymentMode === "SPLIT"
+                              ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                              : "text-neutral-400 hover:text-white"
+                          }`}
+                        >
+                          Split Payment
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Single Method Form */}
+                    {paymentMode === "SINGLE" ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-2">
+                          {(["CASH", "UPI", "CARD"] as const).map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => setSingleMethod(m)}
+                              className={`py-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                                singleMethod === m
+                                  ? "bg-white text-black border-white shadow-md"
+                                  : "bg-[#17171C] text-[#AAAAAA] border-white/10 hover:border-white/20"
+                              }`}
+                            >
+                              {m === "CASH" && <Banknote className="h-4 w-4" />}
+                              {m === "UPI" && <QrCode className="h-4 w-4" />}
+                              {m === "CARD" && <CreditCard className="h-4 w-4" />}
+                              <span>{m}</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        {singleMethod === "CASH" && (
+                          <div className="p-3 rounded-xl bg-[#17171C] border border-white/5 space-y-2">
+                            <label className="text-[11px] text-[#888888] font-bold block">
+                              Cash Tendered (₹)
+                            </label>
+                            <input
+                              type="number"
+                              value={cashTendered}
+                              onChange={(e) => setCashTendered(e.target.value)}
+                              placeholder={`Enter amount e.g. ${Math.ceil(currentNetTotal / 100) * 100}`}
+                              className="w-full px-3 py-2 rounded-xl bg-[#24242A] border border-white/10 text-sm font-bold text-white focus:outline-none"
+                            />
+                            {/* Quick Tendered Notes */}
+                            <div className="flex items-center gap-1.5 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setCashTendered(String(currentNetTotal))}
+                                className="px-2 py-1 rounded bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
+                              >
+                                Exact
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCashTendered(String(Math.ceil(currentNetTotal / 100) * 100))
+                                }
+                                className="px-2 py-1 rounded bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
+                              >
+                                Round 100
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCashTendered(String(Math.ceil(currentNetTotal / 500) * 500))
+                                }
+                                className="px-2 py-1 rounded bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
+                              >
+                                Round 500
+                              </button>
+                            </div>
+
+                            {Number(cashTendered) >= currentNetTotal && (
+                              <div className="flex justify-between text-xs font-bold text-emerald-400 pt-1 border-t border-white/5">
+                                <span>Change Return:</span>
+                                <span>₹{(Number(cashTendered) - currentNetTotal).toFixed(2)}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* Split Payment Form (Cash + UPI + Card) */
+                      <div className="p-3.5 rounded-2xl bg-[#17171C] border border-white/10 space-y-3">
+                        <span className="text-[11px] text-amber-400 font-bold block">
+                          Enter Split Portions (Total must equal ₹{currentNetTotal.toFixed(2)})
+                        </span>
+
+                        <div className="space-y-2 text-xs">
+                          {/* Cash Portion */}
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 text-[#888] flex items-center gap-1 font-bold">
+                              <Banknote className="h-3.5 w-3.5 text-emerald-400" />
+                              <span>Cash:</span>
+                            </div>
+                            <input
+                              type="number"
+                              value={splitCash}
+                              onChange={(e) => setSplitCash(e.target.value)}
+                              className="flex-1 px-3 py-1.5 rounded-xl bg-[#24242A] border border-white/10 text-white font-bold focus:outline-none"
+                              placeholder="₹ 0"
+                            />
+                          </div>
+
+                          {/* UPI Portion */}
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 text-[#888] flex items-center gap-1 font-bold">
+                              <QrCode className="h-3.5 w-3.5 text-sky-400" />
+                              <span>UPI:</span>
+                            </div>
+                            <input
+                              type="number"
+                              value={splitUpi}
+                              onChange={(e) => setSplitUpi(e.target.value)}
+                              className="flex-1 px-3 py-1.5 rounded-xl bg-[#24242A] border border-white/10 text-white font-bold focus:outline-none"
+                              placeholder="₹ 0"
+                            />
+                          </div>
+
+                          {/* Card Portion */}
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 text-[#888] flex items-center gap-1 font-bold">
+                              <CreditCard className="h-3.5 w-3.5 text-violet-400" />
+                              <span>Card:</span>
+                            </div>
+                            <input
+                              type="number"
+                              value={splitCard}
+                              onChange={(e) => setSplitCard(e.target.value)}
+                              className="flex-1 px-3 py-1.5 rounded-xl bg-[#24242A] border border-white/10 text-white font-bold focus:outline-none"
+                              placeholder="₹ 0"
+                            />
+                          </div>
+
+                          {/* Sum check */}
+                          {(() => {
+                            const sum =
+                              (Number(splitCash) || 0) +
+                              (Number(splitUpi) || 0) +
+                              (Number(splitCard) || 0);
+                            const diff = currentNetTotal - sum;
+                            return (
+                              <div className="pt-2 border-t border-white/10 flex justify-between text-xs font-bold">
+                                <span className="text-[#888]">Allocated / Total:</span>
+                                <span className={Math.abs(diff) < 0.5 ? "text-emerald-400" : "text-amber-400"}>
+                                  ₹{sum.toFixed(2)} / ₹{currentNetTotal.toFixed(2)}
+                                  {Math.abs(diff) > 0.5 && (
+                                    <span className="block text-[10px] text-right text-rose-400">
+                                      Remaining: ₹{diff.toFixed(2)}
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Settle Button */}
+                    <button
+                      disabled={isSettling}
+                      onClick={handleExecuteSettlement}
+                      className="w-full py-3.5 rounded-2xl bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white font-['Outfit'] font-black text-sm tracking-wide transition-all active:scale-98 shadow-xl shadow-[#FA2D48]/30 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    >
+                      {isSettling ? (
+                        <span>Processing Settlement...</span>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>Complete Settlement & Print</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL 2: TABLE TRANSFER ================= */}
+      {transferSourceTable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#141418] border border-white/15 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5 text-[#FA2D48]" />
+                <h3 className="font-['Outfit'] text-lg font-black text-white">
+                  Transfer Table #{transferSourceTable.tableNumber}
                 </h3>
               </div>
               <button
-                onClick={() => {
-                  setSettlementTable(null);
-                  setBillDetails(null);
-                }}
-                className="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/15 text-[#AAAAAA] hover:text-white flex items-center justify-center"
+                onClick={() => setTransferSourceTable(null)}
+                className="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/15 text-[#AAAAAA] hover:text-white flex items-center justify-center cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Modal Body: Two Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column: Itemized Dish Summary */}
-              <div className="space-y-3 bg-[#17171C] p-4 rounded-2xl border border-white/5">
-                <span className="text-xs font-bold text-[#AAAAAA] uppercase tracking-wide block">
-                  Itemized Order Breakdown
-                </span>
+            <p className="text-xs text-neutral-400">
+              Move active session and orders from Table #{transferSourceTable.tableNumber} to an available destination table.
+            </p>
 
-                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                  {billDetails.items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between text-xs">
-                      <div className="truncate pr-2">
-                        <span className="font-bold text-white">{item.name}</span>
-                        <span className="text-[#888888] ml-1.5">× {item.quantity}</span>
-                      </div>
-                      <span className="font-mono text-white font-bold shrink-0">
-                        ₹{item.subtotal.toFixed(2)}
+            <div className="space-y-2">
+              <label className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
+                Select Destination Table
+              </label>
+
+              {availableDestTables.length === 0 ? (
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5 text-center text-xs text-amber-400">
+                  No other tables are currently available for transfer.
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+                  {availableDestTables.map((dest) => (
+                    <button
+                      key={dest.id}
+                      type="button"
+                      onClick={() => setTransferDestTableNumber(dest.tableNumber)}
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                        transferDestTableNumber === dest.tableNumber
+                          ? "bg-white text-black border-white shadow-lg font-black"
+                          : "bg-white/[0.04] text-white border-white/10 hover:border-white/20 font-bold"
+                      }`}
+                    >
+                      <span className="block text-sm">Table #{dest.tableNumber}</span>
+                      <span className="block text-[10px] text-neutral-400">
+                        Cap: {dest.capacity}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
-
-                <div className="pt-3 border-t border-white/10 space-y-1.5 text-xs">
-                  <div className="flex justify-between text-[#888]">
-                    <span>Subtotal:</span>
-                    <span className="text-white">₹{billDetails.subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-[#888]">
-                    <span>GST (5%):</span>
-                    <span className="text-white">₹{billDetails.taxAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[#888]">
-                    <span>Discount (₹):</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={discountAmount}
-                      onChange={(e) => setDiscountAmount(e.target.value)}
-                      className="w-20 px-2 py-0.5 rounded bg-[#24242A] border border-white/10 text-right text-xs text-white focus:outline-none"
-                    />
-                  </div>
-                  <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-white/10">
-                    <span>Net Grand Total:</span>
-                    <span className="font-['Outfit'] text-xl font-black text-white">
-                      ₹{currentNetTotal.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: Payment Mode (Single vs Split) */}
-              <div className="space-y-4">
-                {/* Mode Selector Toggle */}
-                <div>
-                  <span className="text-xs font-bold text-[#AAAAAA] uppercase tracking-wide block mb-1.5">
-                    Payment Mode
-                  </span>
-                  <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-white/[0.04] border border-white/10">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMode("SINGLE")}
-                      className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        paymentMode === "SINGLE"
-                          ? "bg-white text-black shadow-md"
-                          : "text-neutral-400 hover:text-white"
-                      }`}
-                    >
-                      Single Method
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMode("SPLIT")}
-                      className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        paymentMode === "SPLIT"
-                          ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-                          : "text-neutral-400 hover:text-white"
-                      }`}
-                    >
-                      Split (Cash + UPI)
-                    </button>
-                  </div>
-                </div>
-
-                {/* Single Method Form */}
-                {paymentMode === "SINGLE" ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      {(["CASH", "UPI", "CARD"] as const).map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => setSingleMethod(m)}
-                          className={`py-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition-all ${
-                            singleMethod === m
-                              ? "bg-white text-black border-white shadow-md"
-                              : "bg-[#17171C] text-[#AAAAAA] border-white/10 hover:border-white/20"
-                          }`}
-                        >
-                          {m === "CASH" && <Banknote className="h-4 w-4" />}
-                          {m === "UPI" && <QrCode className="h-4 w-4" />}
-                          {m === "CARD" && <CreditCard className="h-4 w-4" />}
-                          <span>{m}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {singleMethod === "CASH" && (
-                      <div className="p-3 rounded-xl bg-[#17171C] border border-white/5 space-y-2">
-                        <label className="text-[11px] text-[#888888] font-bold block">
-                          Cash Tendered (₹)
-                        </label>
-                        <input
-                          type="number"
-                          value={cashTendered}
-                          onChange={(e) => setCashTendered(e.target.value)}
-                          placeholder={`Enter amount e.g. ${Math.ceil(currentNetTotal / 100) * 100}`}
-                          className="w-full px-3 py-2 rounded-xl bg-[#24242A] border border-white/10 text-sm font-bold text-white focus:outline-none"
-                        />
-                        {Number(cashTendered) >= currentNetTotal && (
-                          <div className="flex justify-between text-xs font-bold text-emerald-400 pt-1">
-                            <span>Change Return:</span>
-                            <span>₹{(Number(cashTendered) - currentNetTotal).toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Split Payment Form (Cash + UPI + Card) */
-                  <div className="p-3.5 rounded-2xl bg-[#17171C] border border-white/10 space-y-3">
-                    <span className="text-[11px] text-amber-400 font-bold block">
-                      Enter Split Portions (Total must equal ₹{currentNetTotal.toFixed(2)})
-                    </span>
-
-                    <div className="space-y-2 text-xs">
-                      {/* Cash Portion */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 text-[#888] flex items-center gap-1 font-bold">
-                          <Banknote className="h-3.5 w-3.5 text-emerald-400" />
-                          <span>Cash:</span>
-                        </div>
-                        <input
-                          type="number"
-                          value={splitCash}
-                          onChange={(e) => setSplitCash(e.target.value)}
-                          className="flex-1 px-3 py-1.5 rounded-xl bg-[#24242A] border border-white/10 text-white font-bold focus:outline-none"
-                          placeholder="₹ 0"
-                        />
-                      </div>
-
-                      {/* UPI Portion */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 text-[#888] flex items-center gap-1 font-bold">
-                          <QrCode className="h-3.5 w-3.5 text-sky-400" />
-                          <span>UPI:</span>
-                        </div>
-                        <input
-                          type="number"
-                          value={splitUpi}
-                          onChange={(e) => setSplitUpi(e.target.value)}
-                          className="flex-1 px-3 py-1.5 rounded-xl bg-[#24242A] border border-white/10 text-white font-bold focus:outline-none"
-                          placeholder="₹ 0"
-                        />
-                      </div>
-
-                      {/* Card Portion */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 text-[#888] flex items-center gap-1 font-bold">
-                          <CreditCard className="h-3.5 w-3.5 text-violet-400" />
-                          <span>Card:</span>
-                        </div>
-                        <input
-                          type="number"
-                          value={splitCard}
-                          onChange={(e) => setSplitCard(e.target.value)}
-                          className="flex-1 px-3 py-1.5 rounded-xl bg-[#24242A] border border-white/10 text-white font-bold focus:outline-none"
-                          placeholder="₹ 0"
-                        />
-                      </div>
-
-                      {/* Sum check */}
-                      {(() => {
-                        const sum =
-                          (Number(splitCash) || 0) +
-                          (Number(splitUpi) || 0) +
-                          (Number(splitCard) || 0);
-                        const diff = currentNetTotal - sum;
-                        return (
-                          <div className="pt-2 border-t border-white/10 flex justify-between text-xs font-bold">
-                            <span className="text-[#888]">Allocated / Total:</span>
-                            <span className={Math.abs(diff) < 0.5 ? "text-emerald-400" : "text-amber-400"}>
-                              ₹{sum.toFixed(2)} / ₹{currentNetTotal.toFixed(2)}
-                              {Math.abs(diff) > 0.5 && (
-                                <span className="block text-[10px] text-right text-rose-400">
-                                  Remaining: ₹{diff.toFixed(2)}
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* Settle Button */}
-                <button
-                  disabled={isSettling}
-                  onClick={handleExecuteSettlement}
-                  className="w-full py-3.5 rounded-2xl bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white font-['Outfit'] font-black text-sm tracking-wide transition-all active:scale-98 shadow-xl shadow-[#FA2D48]/30 flex items-center justify-center gap-2 cursor-pointer mt-2"
-                >
-                  {isSettling ? (
-                    <span>Processing Settlement...</span>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Complete Settlement & Print</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              )}
             </div>
-            </>
-          )}
+
+            <div className="pt-3 border-t border-white/10 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setTransferSourceTable(null)}
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-bold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!transferDestTableNumber || isTransferring}
+                onClick={handleExecuteTransfer}
+                className="px-4 py-2 rounded-xl bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#FA2D48]/30"
+              >
+                {isTransferring ? "Transferring..." : "Confirm Transfer"}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ================= PRINTABLE THERMAL RECEIPT MODAL ================= */}
+      {/* ================= MODAL 3: DIRECT TABLE ORDER ENTRY (ADD DISHES) ================= */}
+      {punchTable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-3xl bg-[#141418] border border-white/15 rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <PlusCircle className="h-5 w-5 text-[#FA2D48]" />
+                <h3 className="font-['Outfit'] text-lg font-black text-white">
+                  Add Dishes to Table #{punchTable.tableNumber}
+                </h3>
+              </div>
+              <button
+                onClick={() => setPunchTable(null)}
+                className="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/15 text-[#AAAAAA] hover:text-white flex items-center justify-center cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Menu Browser */}
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+                  <input
+                    type="text"
+                    value={punchSearch}
+                    onChange={(e) => setPunchSearch(e.target.value)}
+                    placeholder="Search dishes to add..."
+                    className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+                  <button
+                    onClick={() => setPunchActiveCat("ALL")}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer ${
+                      punchActiveCat === "ALL"
+                        ? "bg-[#FA2D48] text-white"
+                        : "bg-white/[0.04] text-neutral-400 hover:text-white"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {categories.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setPunchActiveCat(c.id)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer ${
+                        punchActiveCat === c.id
+                          ? "bg-[#FA2D48] text-white"
+                          : "bg-white/[0.04] text-neutral-400 hover:text-white"
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+                  {filteredPunchDishes.map((dish) => {
+                    const cartEntry = punchCart.find((ci) => ci.item.id === dish.id);
+                    return (
+                      <div
+                        key={dish.id}
+                        onClick={() => addToPunchCart(dish)}
+                        className="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 transition-all cursor-pointer flex flex-col justify-between"
+                      >
+                        <div>
+                          <span className="text-xs font-bold text-white block line-clamp-1">
+                            {dish.name}
+                          </span>
+                          <span className="font-['Outfit'] text-xs font-black text-[#FA2D48] mt-1 block">
+                            ₹{Number(dish.price).toFixed(2)}
+                          </span>
+                        </div>
+                        {cartEntry && (
+                          <div className="mt-2 text-right">
+                            <span className="px-2 py-0.5 rounded-full bg-[#FA2D48] text-white text-[10px] font-black">
+                              Qty: {cartEntry.quantity}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Selected Order Basket */}
+              <div className="bg-[#18181D] p-4 rounded-2xl border border-white/5 flex flex-col justify-between space-y-3">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-xs font-bold text-neutral-300">Selected Items</span>
+                    <button
+                      onClick={() => setPunchCart([])}
+                      className="text-[11px] text-[#FA2D48] font-bold hover:underline cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {punchCart.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-neutral-500">
+                        No dishes selected. Tap dishes on the left to add.
+                      </div>
+                    ) : (
+                      punchCart.map((ci) => (
+                        <div
+                          key={ci.item.id}
+                          className="p-2 rounded-xl bg-white/[0.03] flex items-center justify-between gap-2"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <span className="text-xs font-bold text-white block truncate">
+                              {ci.item.name}
+                            </span>
+                            <span className="text-[10px] text-neutral-400">
+                              ₹{Number(ci.item.price).toFixed(2)} × {ci.quantity}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => updatePunchQty(ci.item.id, -1)}
+                              className="h-5 w-5 rounded bg-white/10 text-white flex items-center justify-center text-xs cursor-pointer"
+                            >
+                              -
+                            </button>
+                            <span className="w-4 text-center text-xs font-bold text-white">
+                              {ci.quantity}
+                            </span>
+                            <button
+                              onClick={() => updatePunchQty(ci.item.id, 1)}
+                              className="h-5 w-5 rounded bg-[#FA2D48] text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Kitchen Special Note */}
+                  <div>
+                    <label className="text-[10px] text-neutral-400 uppercase font-semibold block mb-1">
+                      Kitchen Instructions / Notes
+                    </label>
+                    <input
+                      type="text"
+                      value={punchNotes}
+                      onChange={(e) => setPunchNotes(e.target.value)}
+                      placeholder="e.g. Extra spicy, less oil"
+                      className="w-full px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-white/10">
+                  <button
+                    disabled={punchCart.length === 0 || isPunching}
+                    onClick={handleExecutePunch}
+                    className="w-full py-3 rounded-xl bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white font-bold text-xs tracking-wide transition-all cursor-pointer shadow-lg shadow-[#FA2D48]/30"
+                  >
+                    {isPunching ? "Sending to Kitchen..." : "Dispatch Order to Kitchen"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL 4: PRINTABLE THERMAL RECEIPT / CHECK / SHIFT REPORT ================= */}
       {activeReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-white text-black p-6 rounded-3xl shadow-2xl space-y-4 font-mono text-xs">
             {/* Action Bar (Hidden when printing) */}
             <div className="flex items-center justify-between pb-3 border-b border-neutral-300 print:hidden">
               <span className="font-bold text-neutral-600 uppercase text-[10px]">
-                Receipt Preview
+                {activeReceipt.isShiftReport
+                  ? "Shift Closeout Preview"
+                  : activeReceipt.isProforma
+                  ? "Pre-bill Check Preview"
+                  : "Tax Invoice Preview"}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded-lg bg-black text-white font-bold flex items-center gap-1.5 active:scale-95"
+                  className="px-3 py-1.5 rounded-lg bg-black text-white font-bold flex items-center gap-1.5 active:scale-95 cursor-pointer"
                 >
                   <Printer className="h-3.5 w-3.5" />
                   <span>Print</span>
                 </button>
                 <button
                   onClick={() => setActiveReceipt(null)}
-                  className="p-1 rounded-lg hover:bg-neutral-200"
+                  className="p-1 rounded-lg hover:bg-neutral-200 cursor-pointer"
                 >
                   <X className="h-4 w-4 text-black" />
                 </button>
               </div>
             </div>
 
-            {/* Printable Receipt Content */}
-            <div id="thermal-receipt" className="text-center space-y-2">
-              <div className="text-center">
-                <h2 className="font-black text-base uppercase tracking-wider">SERVE_SYNC DINING</h2>
-                <p className="text-[10px] text-neutral-600">Contactless Table & POS System</p>
-                <p className="text-[10px] text-neutral-600">GSTIN: 29ABCDE1234F1Z5</p>
-              </div>
+            {/* Shift Closeout Report Format */}
+            {activeReceipt.isShiftReport ? (
+              <div id="thermal-receipt" className="text-center space-y-2">
+                <div>
+                  <h2 className="font-black text-base uppercase tracking-wider">SERVE_SYNC POS</h2>
+                  <p className="text-[10px] text-neutral-600">DAILY REGISTER SHIFT REPORT</p>
+                </div>
 
-              <div className="border-t border-b border-dashed border-neutral-400 py-2 text-[11px] text-left space-y-1">
-                <div className="flex justify-between">
-                  <span>INV: {activeReceipt.invoiceNumber}</span>
-                  <span>TBL: #{activeReceipt.tableNumber}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>DATE: {new Date(activeReceipt.dateTime).toLocaleDateString()}</span>
-                  <span>TIME: {new Date(activeReceipt.dateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                </div>
-                <div>CASHIER: {user?.fullName || "Staff"}</div>
-              </div>
-
-              {/* Items Table */}
-              <div className="text-left space-y-1 py-1">
-                <div className="flex justify-between font-bold border-b border-neutral-300 pb-1">
-                  <span>ITEM</span>
-                  <span>QTY</span>
-                  <span>PRICE</span>
-                </div>
-                {activeReceipt.items?.map((item: any, idx: number) => (
-                  <div key={idx} className="flex justify-between text-[11px]">
-                    <span className="truncate max-w-[140px]">{item.name}</span>
-                    <span>{item.quantity}</span>
-                    <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                <div className="border-t border-b border-dashed border-neutral-400 py-2 text-[11px] text-left space-y-1">
+                  <div className="flex justify-between">
+                    <span>CASHIER:</span>
+                    <span>{activeReceipt.cashierName}</span>
                   </div>
-                ))}
-              </div>
+                  <div className="flex justify-between">
+                    <span>DATE:</span>
+                    <span>{new Date(activeReceipt.dateTime).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>TIME:</span>
+                    <span>{new Date(activeReceipt.dateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                </div>
 
-              {/* Totals */}
-              <div className="border-t border-dashed border-neutral-400 pt-2 text-left space-y-1">
-                <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>₹{activeReceipt.subtotal.toFixed(2)}</span>
+                <div className="text-left space-y-1 py-1 text-[11px]">
+                  <div className="flex justify-between">
+                    <span>TOTAL SETTLED BILLS:</span>
+                    <span className="font-bold">{activeReceipt.settledBillsCount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>ACTIVE TABLES LOAD:</span>
+                    <span>{activeReceipt.activeTablesCount}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>GST (5%):</span>
-                  <span>₹{activeReceipt.taxAmount.toFixed(2)}</span>
+
+                <div className="border-t border-dashed border-neutral-400 pt-2 text-left space-y-1 text-[11px]">
+                  <div className="flex justify-between">
+                    <span>CASH IN DRAWER:</span>
+                    <span className="font-bold">₹{Number(activeReceipt.cashTotal).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>UPI COLLECTIONS:</span>
+                    <span className="font-bold">₹{Number(activeReceipt.upiTotal).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>CARD VOLUME:</span>
+                    <span className="font-bold">₹{Number(activeReceipt.cardTotal).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-black text-sm border-t border-neutral-400 pt-1">
+                    <span>TOTAL GROSS:</span>
+                    <span>₹{Number(activeReceipt.totalRevenue).toFixed(2)}</span>
+                  </div>
                 </div>
-                {activeReceipt.discount > 0 && (
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Discount:</span>
-                    <span>-₹{activeReceipt.discount.toFixed(2)}</span>
+
+                <div className="border-t border-dashed border-neutral-400 pt-6 space-y-4 text-[10px] text-left">
+                  <div className="border-t border-neutral-400 pt-1 flex justify-between">
+                    <span>Cashier Signature</span>
+                    <span>Manager Verification</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Normal Invoice or Pro-Forma Check Format */
+              <div id="thermal-receipt" className="text-center space-y-2">
+                <div className="text-center">
+                  <h2 className="font-black text-base uppercase tracking-wider">SERVE_SYNC DINING</h2>
+                  <p className="text-[10px] text-neutral-600">Contactless Table & POS System</p>
+                  <p className="text-[10px] text-neutral-600">GSTIN: 29ABCDE1234F1Z5</p>
+                  {activeReceipt.isProforma && (
+                    <div className="mt-1 py-0.5 px-2 bg-neutral-100 border border-neutral-300 font-bold text-[10px] uppercase tracking-wider text-black">
+                      *** PRE-BILL / CHECK - NOT AN INVOICE ***
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-b border-dashed border-neutral-400 py-2 text-[11px] text-left space-y-1">
+                  <div className="flex justify-between">
+                    <span>{activeReceipt.isProforma ? "REF:" : "INV:"} {activeReceipt.invoiceNumber}</span>
+                    <span>TBL: #{activeReceipt.tableNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>DATE: {new Date(activeReceipt.dateTime).toLocaleDateString()}</span>
+                    <span>TIME: {new Date(activeReceipt.dateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                  <div>CASHIER: {user?.fullName || "Staff"}</div>
+                </div>
+
+                {/* Items Table */}
+                <div className="text-left space-y-1 py-1">
+                  <div className="flex justify-between font-bold border-b border-neutral-300 pb-1">
+                    <span>ITEM</span>
+                    <span>QTY</span>
+                    <span>PRICE</span>
+                  </div>
+                  {activeReceipt.items?.map((item: any, idx: number) => (
+                    <div key={idx} className="flex justify-between text-[11px]">
+                      <span className="truncate max-w-[140px]">{item.name}</span>
+                      <span>{item.quantity}</span>
+                      <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Totals */}
+                <div className="border-t border-dashed border-neutral-400 pt-2 text-left space-y-1">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>₹{Number(activeReceipt.subtotal).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>GST (5%):</span>
+                    <span>₹{Number(activeReceipt.taxAmount).toFixed(2)}</span>
+                  </div>
+                  {activeReceipt.discount > 0 && (
+                    <div className="flex justify-between text-neutral-600">
+                      <span>Discount:</span>
+                      <span>-₹{Number(activeReceipt.discount).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-black text-sm border-t border-neutral-400 pt-1">
+                    <span>{activeReceipt.isProforma ? "AMOUNT DUE:" : "NET TOTAL:"}</span>
+                    <span>₹{Number(activeReceipt.grandTotal).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Payment Methods (If Settled) */}
+                {!activeReceipt.isProforma && activeReceipt.payments && activeReceipt.payments.length > 0 && (
+                  <div className="border-t border-b border-dashed border-neutral-400 py-1.5 text-left text-[11px]">
+                    <span className="font-bold block">PAID VIA:</span>
+                    {activeReceipt.payments.map((p: any, idx: number) => (
+                      <div key={idx} className="flex justify-between">
+                        <span>• {p.method}:</span>
+                        <span>₹{Number(p.amount).toFixed(2)}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
-                <div className="flex justify-between font-black text-sm border-t border-neutral-400 pt-1">
-                  <span>NET TOTAL:</span>
-                  <span>₹{activeReceipt.grandTotal.toFixed(2)}</span>
+
+                <div className="text-[10px] text-neutral-600 pt-1">
+                  {activeReceipt.isProforma ? (
+                    <p>Please pay at the cashier counter. Thank you!</p>
+                  ) : (
+                    <>
+                      <p>Thank you for dining with us!</p>
+                      <p>Visit again soon.</p>
+                    </>
+                  )}
                 </div>
               </div>
-
-              {/* Payment Methods */}
-              <div className="border-t border-b border-dashed border-neutral-400 py-1.5 text-left text-[11px]">
-                <span className="font-bold block">PAID VIA:</span>
-                {activeReceipt.payments?.map((p: any, idx: number) => (
-                  <div key={idx} className="flex justify-between">
-                    <span>• {p.method}:</span>
-                    <span>₹{Number(p.amount).toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="text-[10px] text-neutral-600 pt-1">
-                <p>Thank you for dining with us!</p>
-                <p>Visit again soon.</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}

@@ -10,6 +10,8 @@ import {
   createTakeawayBill,
   getSettledBillsHistory,
   getCashierStats,
+  transferTable,
+  addItemsToTableSession,
 } from "../controllers/cashier.controller";
 import { authenticateJWT, authorizeRoles } from "../middleware/auth.middleware";
 
@@ -26,6 +28,8 @@ router.get("/tables", getCashierTables);
 router.patch("/table/:tableNumber/status", updateCashierTableStatus);
 router.post("/table/:tableNumber/approve-access", approveTableAccess);
 router.post("/table/:tableNumber/decline-access", declineTableAccess);
+router.post("/table/transfer", transferTable);
+router.post("/table/:tableNumber/add-items", addItemsToTableSession);
 
 // Billing & POS
 router.get("/session/:sessionId/bill", getSessionBillDetails);
