@@ -18,7 +18,6 @@ import {
   ArrowRightLeft,
   PlusCircle,
   ShoppingBag,
-  FileSpreadsheet,
   Bell,
   Phone,
   ChefHat,
@@ -622,7 +621,6 @@ export default function CashierDashboard() {
   const [pendingRequests, setPendingRequests] = useState<PendingAccessItem[]>([]);
   const [stats, setStats] = useState<ShiftStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
 
   // Floor filtering & search
   const [floorFilter, setFloorFilter] = useState<
@@ -703,11 +701,6 @@ export default function CashierDashboard() {
   const [editOrderNotes, setEditOrderNotes] = useState("");
   const [isSavingTokenEdit, setIsSavingTokenEdit] = useState(false);
 
-  // Live digital clock
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Axios Authorization header config
   const authConfig = useMemo(() => {
@@ -1590,23 +1583,23 @@ export default function CashierDashboard() {
       case "takeaway":
         return {
           icon: ShoppingBag,
-          title: "Takeaway POS & Token Terminal",
+          title: "Takeaway POS",
         };
       case "history":
         return {
           icon: FileText,
-          title: "Settled Invoices & Closed Bills Log",
+          title: "Closed Bills Log",
         };
       case "stats":
         return {
           icon: TrendingUp,
-          title: "Shift Register & Financial Metrics",
+          title: "Shift Metrics",
         };
       case "floor":
       default:
         return {
           icon: Layers,
-          title: "Floor POS & Table Checkout",
+          title: "Floor & Live Bills",
         };
     }
   }, [activeTab]);
@@ -1821,68 +1814,43 @@ export default function CashierDashboard() {
           </div>
 
           {/* Action Pills */}
-          <div className="relative z-10 flex flex-wrap items-center gap-2.5">
-            {activeTab === "takeaway" ? (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTakeawaySubTab("register")}
-                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                    takeawaySubTab === "register"
-                      ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
-                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
-                  }`}
-                >
-                  <ShoppingBag className="h-3.5 w-3.5" />
-                  <span>Counter Register</span>
-                </button>
+          {activeTab === "takeaway" && (
+            <div className="relative z-10 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTakeawaySubTab("register")}
+                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  takeawaySubTab === "register"
+                    ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
+                    : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
+                }`}
+              >
+                <ShoppingBag className="h-3.5 w-3.5" />
+                <span>Counter Register</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTakeawaySubTab("queue");
-                    loadTakeawayOrders();
-                  }}
-                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
-                    takeawaySubTab === "queue"
-                      ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
-                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
-                  }`}
-                >
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>Orders & Pickup Queue</span>
-                  {takeawayActiveCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-black ml-1 shadow-sm">
-                      {takeawayActiveCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.08] border border-white/[0.12] text-neutral-300 backdrop-blur-xl shadow-sm">
-                  <Clock className="h-3.5 w-3.5 text-neutral-400" />
-                  <span>{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
-                </div>
-
-                <button
-                  onClick={handlePrintShiftReport}
-                  className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95 cursor-pointer"
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5 text-neutral-400" />
-                  <span>Shift Register</span>
-                </button>
-
-                <button
-                  onClick={loadFloorData}
-                  className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 cursor-pointer"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  <span>Refresh</span>
-                </button>
-              </>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setTakeawaySubTab("queue");
+                  loadTakeawayOrders();
+                }}
+                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
+                  takeawaySubTab === "queue"
+                    ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
+                    : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
+                }`}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span>Orders & Pickup Queue</span>
+                {takeawayActiveCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-black ml-1 shadow-sm">
+                    {takeawayActiveCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
