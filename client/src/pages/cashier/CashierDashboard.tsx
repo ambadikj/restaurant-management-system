@@ -161,6 +161,13 @@ interface MenuItem {
   price: string | number;
   imageUrl: string;
   isAvailable: boolean;
+  inventory?: {
+    id: number;
+    menuItemId: number;
+    dailyLimit: number;
+    remainingQty: number;
+    isAvailable: boolean;
+  } | null;
 }
 
 interface Category {
@@ -861,11 +868,51 @@ export default function CashierDashboard() {
       }
     };
 
+    // Live inventory stock updates
+    const handleStockUpdate = (data: { menuItemId: number; remainingQty: number; isAvailable: boolean }) => {
+      setCategories((prevCats) =>
+        prevCats.map((cat) => ({
+          ...cat,
+          menuItems: cat.menuItems.map((dish) => {
+            if (dish.id === data.menuItemId) {
+              return {
+                ...dish,
+                isAvailable: data.isAvailable,
+                inventory: dish.inventory
+                  ? { ...dish.inventory, remainingQty: data.remainingQty, isAvailable: data.isAvailable }
+                  : {
+                      id: 0,
+                      menuItemId: data.menuItemId,
+                      dailyLimit: data.remainingQty,
+                      remainingQty: data.remainingQty,
+                      isAvailable: data.isAvailable,
+                    },
+              };
+            }
+            return dish;
+          }),
+        }))
+      );
+
+      setTakeawayCart((prevCart) =>
+        prevCart
+          .map((ci) => {
+            if (ci.item.id === data.menuItemId && ci.quantity > data.remainingQty) {
+              toast.error(`Quantity for "${ci.item.name}" adjusted to available stock (${data.remainingQty}).`);
+              return { ...ci, quantity: data.remainingQty };
+            }
+            return ci;
+          })
+          .filter((ci) => ci.quantity > 0)
+      );
+    };
+
     socket.on("cashier:access_request", handleAccessRequest);
     socket.on("table:update", handleTableUpdate);
     socket.on("service:alert", handleServiceAlert);
     socket.on("order:placed", handleOrderPlaced);
     socket.on("order:status_update", handleOrderStatusUpdate);
+    socket.on("stock:update", handleStockUpdate);
 
     return () => {
       socket.off("cashier:access_request", handleAccessRequest);
@@ -873,6 +920,7 @@ export default function CashierDashboard() {
       socket.off("service:alert", handleServiceAlert);
       socket.off("order:placed", handleOrderPlaced);
       socket.off("order:status_update", handleOrderStatusUpdate);
+      socket.off("stock:update", handleStockUpdate);
     };
   }, [loadTakeawayOrders]);
 
@@ -1175,8 +1223,27 @@ export default function CashierDashboard() {
 
   // Takeaway Cart Operations
   const addToTakeawayCart = (dish: MenuItem) => {
+    const isOutOfStock =
+      !dish.isAvailable ||
+      (dish.inventory !== undefined && dish.inventory !== null && dish.inventory.remainingQty <= 0);
+
+    if (isOutOfStock) {
+      toast.error(`"${dish.name}" is out of stock!`);
+      return;
+    }
+
+    const maxAvailable =
+      dish.inventory !== undefined && dish.inventory !== null ? dish.inventory.remainingQty : 999;
+
     setTakeawayCart((prev) => {
       const existing = prev.find((ci) => ci.item.id === dish.id);
+      const currentQty = existing ? existing.quantity : 0;
+
+      if (currentQty + 1 > maxAvailable) {
+        toast.error(`Only ${maxAvailable} portion(s) left for "${dish.name}".`);
+        return prev;
+      }
+
       if (existing) {
         return prev.map((ci) =>
           ci.item.id === dish.id ? { ...ci, quantity: ci.quantity + 1 } : ci
@@ -1187,11 +1254,36 @@ export default function CashierDashboard() {
   };
 
   const updateTakeawayQty = (dishId: number, delta: number) => {
-    setTakeawayCart((prev) =>
-      prev
+    setTakeawayCart((prev) => {
+      const targetItem = prev.find((ci) => ci.item.id === dishId);
+      if (!targetItem) return prev;
+
+      if (delta > 0) {
+        // Find latest dish info to get remaining quantity
+        let currentDish = targetItem.item;
+        for (const cat of categories) {
+          const found = cat.menuItems.find((d) => d.id === dishId);
+          if (found) {
+            currentDish = found;
+            break;
+          }
+        }
+
+        const maxAvailable =
+          currentDish.inventory !== undefined && currentDish.inventory !== null
+            ? currentDish.inventory.remainingQty
+            : 999;
+
+        if (targetItem.quantity + delta > maxAvailable) {
+          toast.error(`Only ${maxAvailable} portion(s) left for "${targetItem.item.name}".`);
+          return prev;
+        }
+      }
+
+      return prev
         .map((ci) => (ci.item.id === dishId ? { ...ci, quantity: ci.quantity + delta } : ci))
-        .filter((ci) => ci.quantity > 0)
-    );
+        .filter((ci) => ci.quantity > 0);
+    });
   };
 
   // Edit Token Handlers
@@ -1628,6 +1720,7 @@ export default function CashierDashboard() {
       loadFloorData();
       loadTakeawayOrders();
       loadHistoryData();
+      loadMenuData();
 
       if (res.data.receipt) {
         // Automatically pop up Customer Token Slip for 1-click printing
@@ -2259,15 +2352,29 @@ export default function CashierDashboard() {
                   {filteredTakeawayDishes.map((dish) => {
                     const cartEntry = takeawayCart.find((ci) => ci.item.id === dish.id);
                     const isVeg = !/chicken|meat|fish|beef|pork|egg|mutton|prawn|seafood/i.test(dish.name);
+                    const isSoldOut =
+                      !dish.isAvailable ||
+                      (dish.inventory !== undefined && dish.inventory !== null && dish.inventory.remainingQty <= 0);
+                    const remaining =
+                      dish.inventory !== undefined && dish.inventory !== null ? dish.inventory.remainingQty : null;
+                    const isLowStock = remaining !== null && remaining > 0 && remaining <= 5 && !isSoldOut;
 
                     return (
                       <div
                         key={dish.id}
-                        onClick={() => addToTakeawayCart(dish)}
-                        className={`group relative flex flex-col justify-between rounded-3xl p-3.5 bg-[#18181b]/90 hover:bg-[#202026] border transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:-translate-y-1.5 select-none overflow-hidden ${
-                          cartEntry
-                            ? "border-[#FA2D48]/50 ring-1 ring-[#FA2D48]/30 shadow-[#FA2D48]/10"
-                            : "border-white/[0.08] hover:border-white/[0.25]"
+                        onClick={() => {
+                          if (isSoldOut) {
+                            toast.error(`"${dish.name}" is out of stock!`);
+                            return;
+                          }
+                          addToTakeawayCart(dish);
+                        }}
+                        className={`group relative flex flex-col justify-between rounded-3xl p-3.5 bg-[#18181b]/90 hover:bg-[#202026] border transition-all duration-300 select-none overflow-hidden ${
+                          isSoldOut
+                            ? "opacity-60 cursor-not-allowed border-white/[0.05]"
+                            : cartEntry
+                            ? "cursor-pointer border-[#FA2D48]/50 ring-1 ring-[#FA2D48]/30 shadow-[#FA2D48]/10"
+                            : "cursor-pointer border-white/[0.08] hover:border-white/[0.25]"
                         }`}
                       >
                         {/* Artwork Area with gradient overlay and badges */}
@@ -2279,7 +2386,9 @@ export default function CashierDashboard() {
                                 : `${UPLOADS_BASE}/${dish.imageUrl?.replace(/^\/+/, "")}`
                             }
                             alt={dish.name}
-                            className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            className={`h-full w-full object-cover transition-transform duration-500 ${
+                              isSoldOut ? "grayscale" : "group-hover:scale-110"
+                            }`}
                             onError={(e: any) => {
                               e.target.src =
                                 "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80";
@@ -2300,6 +2409,23 @@ export default function CashierDashboard() {
                             </div>
                           </div>
 
+                          {/* Out of Stock Overlay */}
+                          {isSoldOut && (
+                            <div className="absolute inset-0 bg-black/75 backdrop-blur-[2px] flex flex-col items-center justify-center p-2 text-center z-20">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-[#FF4D4D] bg-[#202024]/90 px-3 py-1 rounded-full border border-[#FF0000]/40 shadow-lg">
+                                Out of Stock
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Urgency Low Stock Badge */}
+                          {isLowStock && (
+                            <div className="absolute bottom-2 left-2 bg-black/85 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-amber-400 border border-amber-500/30 flex items-center gap-1 z-10 shadow-md">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                              <span>Only {remaining} left</span>
+                            </div>
+                          )}
+
                           {/* In-Tray Quantity Badge */}
                           {cartEntry && (
                             <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FA2D48] text-white text-[11px] font-black shadow-lg shadow-[#FA2D48]/50 backdrop-blur-md animate-in zoom-in-50 duration-200">
@@ -2308,11 +2434,13 @@ export default function CashierDashboard() {
                           )}
 
                           {/* Apple Music Hover Center Play/Add Button */}
-                          <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
-                            <div className="h-10 w-10 rounded-full bg-[#FA2D48] text-white flex items-center justify-center shadow-2xl shadow-[#FA2D48]/50 transform scale-90 group-hover:scale-100 transition-transform">
-                              <Plus className="h-5 w-5" />
+                          {!isSoldOut && (
+                            <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+                              <div className="h-10 w-10 rounded-full bg-[#FA2D48] text-white flex items-center justify-center shadow-2xl shadow-[#FA2D48]/50 transform scale-90 group-hover:scale-100 transition-transform">
+                                <Plus className="h-5 w-5" />
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
 
                         {/* Dish Details */}
@@ -2333,7 +2461,15 @@ export default function CashierDashboard() {
                               ₹{Number(dish.price).toFixed(2)}
                             </span>
 
-                            {cartEntry ? (
+                            {isSoldOut ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="h-7 px-3 rounded-xl bg-white/[0.04] text-neutral-500 text-xs font-bold flex items-center gap-1 border border-white/5 cursor-not-allowed"
+                              >
+                                <span>Out of Stock</span>
+                              </button>
+                            ) : cartEntry ? (
                               <div
                                 onClick={(e) => e.stopPropagation()}
                                 className="flex items-center gap-1 bg-white/[0.08] p-0.5 rounded-xl border border-white/10"
@@ -2351,7 +2487,12 @@ export default function CashierDashboard() {
                                 <button
                                   type="button"
                                   onClick={() => addToTakeawayCart(dish)}
-                                  className="h-6 w-6 rounded-lg bg-[#FA2D48] hover:bg-[#ff3b56] text-white flex items-center justify-center cursor-pointer transition-colors"
+                                  disabled={remaining !== null && cartEntry.quantity >= remaining}
+                                  className={`h-6 w-6 rounded-lg text-white flex items-center justify-center transition-colors ${
+                                    remaining !== null && cartEntry.quantity >= remaining
+                                      ? "bg-neutral-700/60 opacity-50 cursor-not-allowed"
+                                      : "bg-[#FA2D48] hover:bg-[#ff3b56] cursor-pointer"
+                                  }`}
                                 >
                                   <Plus className="h-3 w-3" />
                                 </button>
@@ -2359,7 +2500,11 @@ export default function CashierDashboard() {
                             ) : (
                               <button
                                 type="button"
-                                className="h-7 px-3 rounded-xl bg-white/[0.08] group-hover:bg-[#FA2D48] group-hover:text-white text-neutral-300 text-xs font-bold flex items-center gap-1 transition-all shadow-sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToTakeawayCart(dish);
+                                }}
+                                className="h-7 px-3 rounded-xl bg-white/[0.08] group-hover:bg-[#FA2D48] group-hover:text-white text-neutral-300 text-xs font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
                               >
                                 <Plus className="h-3 w-3" />
                                 <span>Add</span>
@@ -2439,40 +2584,60 @@ export default function CashierDashboard() {
                         Tray is empty. Tap dishes on the left to add items.
                       </div>
                     ) : (
-                      takeawayCart.map((ci) => (
-                        <div
-                          key={ci.item.id}
-                          className="p-2.5 rounded-2xl bg-white/[0.04] border border-white/5 space-y-1.5"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <h5 className="text-xs font-bold text-white truncate">{ci.item.name}</h5>
-                              <span className="text-[11px] text-neutral-400">
-                                ₹{Number(ci.item.price).toFixed(2)} × {ci.quantity} = ₹
-                                {(Number(ci.item.price) * ci.quantity).toFixed(2)}
-                              </span>
-                            </div>
+                      takeawayCart.map((ci) => {
+                        const liveDish = categories.flatMap((c) => c.menuItems).find((d) => d.id === ci.item.id) || ci.item;
+                        const liveRemaining = liveDish.inventory !== undefined && liveDish.inventory !== null ? liveDish.inventory.remainingQty : null;
+                        const isMaxReached = liveRemaining !== null && ci.quantity >= liveRemaining;
 
-                            <div className="flex items-center gap-1.5">
-                              <button
-                                onClick={() => updateTakeawayQty(ci.item.id, -1)}
-                                className="h-6 w-6 rounded-lg bg-white/[0.08] text-white flex items-center justify-center text-xs active:scale-90 cursor-pointer"
-                              >
-                                <Minus className="h-3 w-3" />
-                              </button>
-                              <span className="w-5 text-center text-xs font-bold text-white font-mono">
-                                {ci.quantity}
-                              </span>
-                              <button
-                                onClick={() => updateTakeawayQty(ci.item.id, 1)}
-                                className="h-6 w-6 rounded-lg bg-[#FA2D48] text-white flex items-center justify-center text-xs active:scale-90 font-bold cursor-pointer"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </button>
+                        return (
+                          <div
+                            key={ci.item.id}
+                            className="p-2.5 rounded-2xl bg-white/[0.04] border border-white/5 space-y-1.5"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <h5 className="text-xs font-bold text-white truncate flex items-center gap-1.5">
+                                  <span className="truncate">{ci.item.name}</span>
+                                  {liveRemaining !== null && liveRemaining <= 5 && (
+                                    <span className="text-[10px] font-bold text-amber-400 font-mono shrink-0">
+                                      (Only {liveRemaining} left)
+                                    </span>
+                                  )}
+                                </h5>
+                                <span className="text-[11px] text-neutral-400">
+                                  ₹{Number(ci.item.price).toFixed(2)} × {ci.quantity} = ₹
+                                  {(Number(ci.item.price) * ci.quantity).toFixed(2)}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => updateTakeawayQty(ci.item.id, -1)}
+                                  className="h-6 w-6 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-white flex items-center justify-center text-xs active:scale-90 cursor-pointer transition-colors"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </button>
+                                <span className="w-5 text-center text-xs font-bold text-white font-mono">
+                                  {ci.quantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateTakeawayQty(ci.item.id, 1)}
+                                  disabled={isMaxReached}
+                                  className={`h-6 w-6 rounded-lg text-white flex items-center justify-center text-xs active:scale-90 font-bold transition-colors ${
+                                    isMaxReached
+                                      ? "bg-neutral-700/60 opacity-50 cursor-not-allowed"
+                                      : "bg-[#FA2D48] hover:bg-[#ff3b56] cursor-pointer"
+                                  }`}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
