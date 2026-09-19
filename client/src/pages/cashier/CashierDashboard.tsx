@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
   Receipt,
+  Layers,
   Plus,
   Minus,
   Search,
@@ -1205,6 +1206,45 @@ export default function CashierDashboard() {
     return max && max.revenue > 0 ? max : null;
   }, [hourlyRevenueData]);
 
+  // Tab Header Information (Badge, Main Heading H1, Description)
+  const tabHeaderInfo = useMemo(() => {
+    switch (activeTab) {
+      case "takeaway":
+        return {
+          icon: ShoppingBag,
+          badge: "Walk-in & Counter Register",
+          title: "Takeaway POS & Token Terminal",
+          description:
+            "Rapid counter order punching, kitchen dispatch, live token pickup queue, and customer handover alerts.",
+        };
+      case "history":
+        return {
+          icon: FileText,
+          badge: "Daily Audit Trail",
+          title: "Settled Invoices & Closed Bills Log",
+          description:
+            "Daily closed bills, hourly revenue trajectory, tender breakdown charts, and receipt reprint audit trail.",
+        };
+      case "stats":
+        return {
+          icon: TrendingUp,
+          badge: "EOD Closeout & Metrics",
+          title: "Shift Register & Financial Metrics",
+          description:
+            "Drawer cash reconciliation, UPI & card volume totals, average order value, and shift closeout reporting.",
+        };
+      case "floor":
+      default:
+        return {
+          icon: Layers,
+          badge: "Point of Sale & Floor Checkout",
+          title: "Floor POS & Table Checkout",
+          description:
+            "Real-time table settlement, split payments, floor status control, dining session inspection, and direct order punching.",
+        };
+    }
+  }, [activeTab]);
+
   // Filtered Queue Orders
   const filteredTakeawayOrders = useMemo(() => {
     return takeawayOrders.filter((ord) => {
@@ -1408,17 +1448,17 @@ export default function CashierDashboard() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] border border-white/[0.1] px-3 py-1 text-[11px] font-semibold text-neutral-300 backdrop-blur-md">
-              <Receipt className="h-3.5 w-3.5 text-[#FA2D48]" />
+              <tabHeaderInfo.icon className="h-3.5 w-3.5 text-[#FA2D48]" />
               <span className="tracking-widest uppercase text-[10px] font-bold text-white/90">
-                Point of Sale & Floor Checkout
+                {tabHeaderInfo.badge}
               </span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
-              Cashier POS & Floor Terminal
+              {tabHeaderInfo.title}
             </h1>
             <p className="text-xs sm:text-sm text-neutral-400 max-w-xl font-normal leading-relaxed">
-              Real-time table settlement, split payments, floor status control, walk-in takeaway counter, and register reports.
+              {tabHeaderInfo.description}
             </p>
           </div>
 
