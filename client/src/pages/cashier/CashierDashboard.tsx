@@ -906,6 +906,18 @@ export default function CashierDashboard() {
           })
           .filter((ci) => ci.quantity > 0)
       );
+
+      setPunchCart((prevCart) =>
+        prevCart
+          .map((ci) => {
+            if (ci.item.id === data.menuItemId && ci.quantity > data.remainingQty) {
+              toast.error(`Quantity for "${ci.item.name}" adjusted to available stock (${data.remainingQty}).`);
+              return { ...ci, quantity: data.remainingQty };
+            }
+            return ci;
+          })
+          .filter((ci) => ci.quantity > 0)
+      );
     };
 
     socket.on("cashier:access_request", handleAccessRequest);
@@ -1134,8 +1146,27 @@ export default function CashierDashboard() {
 
   // Direct Table Order Punching Operations
   const addToPunchCart = (dish: MenuItem) => {
+    const isOutOfStock =
+      !dish.isAvailable ||
+      (dish.inventory !== undefined && dish.inventory !== null && dish.inventory.remainingQty <= 0);
+
+    if (isOutOfStock) {
+      toast.error(`"${dish.name}" is out of stock!`);
+      return;
+    }
+
+    const maxAvailable =
+      dish.inventory !== undefined && dish.inventory !== null ? dish.inventory.remainingQty : 999;
+
     setPunchCart((prev) => {
       const existing = prev.find((ci) => ci.item.id === dish.id);
+      const currentQty = existing ? existing.quantity : 0;
+
+      if (currentQty + 1 > maxAvailable) {
+        toast.error(`Only ${maxAvailable} portion(s) left for "${dish.name}".`);
+        return prev;
+      }
+
       if (existing) {
         return prev.map((ci) =>
           ci.item.id === dish.id ? { ...ci, quantity: ci.quantity + 1 } : ci
@@ -1146,11 +1177,35 @@ export default function CashierDashboard() {
   };
 
   const updatePunchQty = (dishId: number, delta: number) => {
-    setPunchCart((prev) =>
-      prev
+    setPunchCart((prev) => {
+      const targetItem = prev.find((ci) => ci.item.id === dishId);
+      if (!targetItem) return prev;
+
+      if (delta > 0) {
+        let currentDish = targetItem.item;
+        for (const cat of categories) {
+          const found = cat.menuItems.find((d) => d.id === dishId);
+          if (found) {
+            currentDish = found;
+            break;
+          }
+        }
+
+        const maxAvailable =
+          currentDish.inventory !== undefined && currentDish.inventory !== null
+            ? currentDish.inventory.remainingQty
+            : 999;
+
+        if (targetItem.quantity + delta > maxAvailable) {
+          toast.error(`Only ${maxAvailable} portion(s) left for "${targetItem.item.name}".`);
+          return prev;
+        }
+      }
+
+      return prev
         .map((ci) => (ci.item.id === dishId ? { ...ci, quantity: ci.quantity + delta } : ci))
-        .filter((ci) => ci.quantity > 0)
-    );
+        .filter((ci) => ci.quantity > 0);
+    });
   };
 
   const handleExecutePunch = async () => {
@@ -1176,6 +1231,7 @@ export default function CashierDashboard() {
       setPunchNotes("");
       setInspectTable(null);
       loadFloorData();
+      loadMenuData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to add items to table.");
     } finally {
@@ -4259,20 +4315,53 @@ export default function CashierDashboard() {
                 <div className="grid grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1">
                   {filteredPunchDishes.map((dish) => {
                     const cartEntry = punchCart.find((ci) => ci.item.id === dish.id);
+                    const isSoldOut =
+                      !dish.isAvailable ||
+                      (dish.inventory !== undefined && dish.inventory !== null && dish.inventory.remainingQty <= 0);
+                    const remaining =
+                      dish.inventory !== undefined && dish.inventory !== null ? dish.inventory.remainingQty : null;
+                    const isLowStock = remaining !== null && remaining > 0 && remaining <= 5 && !isSoldOut;
+
                     return (
                       <div
                         key={dish.id}
-                        onClick={() => addToPunchCart(dish)}
-                        className="p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 transition-all cursor-pointer flex flex-col justify-between"
+                        onClick={() => {
+                          if (isSoldOut) {
+                            toast.error(`"${dish.name}" is out of stock!`);
+                            return;
+                          }
+                          addToPunchCart(dish);
+                        }}
+                        className={`p-3 rounded-2xl border transition-all flex flex-col justify-between select-none ${
+                          isSoldOut
+                            ? "bg-white/[0.01] border-white/5 opacity-50 cursor-not-allowed"
+                            : cartEntry
+                            ? "bg-[#FA2D48]/10 border-[#FA2D48]/40 cursor-pointer shadow-md shadow-[#FA2D48]/10"
+                            : "bg-white/[0.03] hover:bg-white/[0.08] border-white/5 cursor-pointer"
+                        }`}
                       >
                         <div>
-                          <span className="text-xs font-bold text-white block line-clamp-1">
-                            {dish.name}
-                          </span>
+                          <div className="flex items-start justify-between gap-1">
+                            <span className={`text-xs font-bold block line-clamp-1 ${isSoldOut ? "text-neutral-500" : "text-white"}`}>
+                              {dish.name}
+                            </span>
+                            {isSoldOut ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/30 shrink-0">
+                                Sold Out
+                              </span>
+                            ) : isLowStock ? (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#FA2D48]/15 border border-[#FA2D48]/35 text-[#FA2D48] text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm">
+                                <Flame className="h-2.5 w-2.5 fill-[#FA2D48]" />
+                                {remaining} left
+                              </span>
+                            ) : null}
+                          </div>
+
                           <span className="font-['Outfit'] text-xs font-black text-[#FA2D48] mt-1 block">
                             ₹{Number(dish.price).toFixed(2)}
                           </span>
                         </div>
+
                         {cartEntry && (
                           <div className="mt-2 text-right">
                             <span className="px-2 py-0.5 rounded-full bg-[#FA2D48] text-white text-[10px] font-black">
@@ -4299,45 +4388,69 @@ export default function CashierDashboard() {
                     </button>
                   </div>
 
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  <div
+                    className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-none"
+                    style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.12) transparent" }}
+                  >
                     {punchCart.length === 0 ? (
                       <div className="text-center py-8 text-xs text-neutral-500">
                         No dishes selected. Tap dishes on the left to add.
                       </div>
                     ) : (
-                      punchCart.map((ci) => (
-                        <div
-                          key={ci.item.id}
-                          className="p-2.5 rounded-2xl bg-white/[0.04] flex items-center justify-between gap-2"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-bold text-white block truncate">
-                              {ci.item.name}
-                            </span>
-                            <span className="text-[10px] text-neutral-400">
-                              ₹{Number(ci.item.price).toFixed(2)} × {ci.quantity}
-                            </span>
-                          </div>
+                      punchCart.map((ci) => {
+                        const liveDish = categories.flatMap((c) => c.menuItems).find((d) => d.id === ci.item.id) || ci.item;
+                        const liveRemaining = liveDish.inventory !== undefined && liveDish.inventory !== null ? liveDish.inventory.remainingQty : null;
+                        const isMaxReached = liveRemaining !== null && ci.quantity >= liveRemaining;
 
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => updatePunchQty(ci.item.id, -1)}
-                              className="h-6 w-6 rounded-lg bg-white/10 text-white flex items-center justify-center text-xs cursor-pointer"
-                            >
-                              -
-                            </button>
-                            <span className="w-5 text-center text-xs font-bold text-white font-mono">
-                              {ci.quantity}
-                            </span>
-                            <button
-                              onClick={() => updatePunchQty(ci.item.id, 1)}
-                              className="h-6 w-6 rounded-lg bg-[#FA2D48] text-white flex items-center justify-center text-xs font-bold cursor-pointer"
-                            >
-                              +
-                            </button>
+                        return (
+                          <div
+                            key={ci.item.id}
+                            className="p-2.5 rounded-2xl bg-white/[0.04] flex items-center justify-between gap-2"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs font-bold text-white block truncate">
+                                  {ci.item.name}
+                                </span>
+                                {liveRemaining !== null && liveRemaining <= 5 && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#FA2D48]/15 border border-[#FA2D48]/35 text-[#FA2D48] text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm">
+                                    <Flame className="h-2.5 w-2.5 fill-[#FA2D48]" />
+                                    Only {liveRemaining} left
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-neutral-400 font-mono">
+                                ₹{Number(ci.item.price).toFixed(2)} × {ci.quantity}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => updatePunchQty(ci.item.id, -1)}
+                                className="h-6 w-6 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs active:scale-90 cursor-pointer transition-colors"
+                              >
+                                -
+                              </button>
+                              <span className="w-5 text-center text-xs font-bold text-white font-mono">
+                                {ci.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => updatePunchQty(ci.item.id, 1)}
+                                disabled={isMaxReached}
+                                className={`h-6 w-6 rounded-lg text-white flex items-center justify-center text-xs font-bold transition-colors ${
+                                  isMaxReached
+                                    ? "bg-neutral-700/60 opacity-50 cursor-not-allowed"
+                                    : "bg-[#FA2D48] hover:bg-[#ff3b56] cursor-pointer active:scale-90"
+                                }`}
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
 
