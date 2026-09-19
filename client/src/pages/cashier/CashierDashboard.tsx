@@ -14,7 +14,6 @@ import {
   QrCode,
   Banknote,
   RefreshCw,
-  TrendingUp,
   Clock,
   ArrowRightLeft,
   PlusCircle,
@@ -1137,64 +1136,6 @@ export default function CashierDashboard() {
       {/* ================= TAB 1: FLOOR & LIVE BILLS ================= */}
       {activeTab === "floor" && (
         <div className="space-y-6">
-          {/* Quick Metrics Ribbon - Matching Admin Dashboard Ribbon */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-            <div className="p-4 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] backdrop-blur-2xl flex items-center gap-3.5 shadow-xl">
-              <div className="h-10 w-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                <UtensilsCrossed className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
-                  Occupied Tables
-                </span>
-                <span className="font-['Outfit'] text-lg font-black text-white">
-                  {tables.filter((t) => t.status === "OCCUPIED" || t.status === "BILLING").length} / {tables.length}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] backdrop-blur-2xl flex items-center gap-3.5 shadow-xl">
-              <div className="h-10 w-10 rounded-2xl bg-[#FA2D48]/15 border border-[#FA2D48]/25 flex items-center justify-center text-[#FA2D48] shrink-0">
-                <Receipt className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
-                  Bill Requested
-                </span>
-                <span className="font-['Outfit'] text-lg font-black text-[#FA2D48]">
-                  {tables.filter((t) => t.status === "BILLING").length}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] backdrop-blur-2xl flex items-center gap-3.5 shadow-xl">
-              <div className="h-10 w-10 rounded-2xl bg-sky-500/15 border border-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
-                <QrCode className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
-                  Today's Invoices
-                </span>
-                <span className="font-['Outfit'] text-lg font-black text-white">
-                  {stats?.settledBillsCount || 0}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] backdrop-blur-2xl flex items-center gap-3.5 shadow-xl">
-              <div className="h-10 w-10 rounded-2xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
-                <TrendingUp className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider block">
-                  Shift Sales
-                </span>
-                <span className="font-['Outfit'] text-lg font-black text-white">
-                  ₹{stats?.totalRevenue ? stats.totalRevenue.toFixed(2) : "0.00"}
-                </span>
-              </div>
-            </div>
-          </div>
 
           {/* Controls Bar: Status Filter Tabs (Apple Music Pill Row matching TablesQR.tsx) */}
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
@@ -1935,8 +1876,8 @@ export default function CashierDashboard() {
                           onClick={() => {
                             setTakeawayPaymentMode("SPLIT");
                             setTakeawaySplitAmounts({
-                              CASH: String(Math.floor(takeawayGrandTotal / 2)),
-                              UPI: String(Number((takeawayGrandTotal - Math.floor(takeawayGrandTotal / 2)).toFixed(2))),
+                              CASH: "",
+                              UPI: "",
                               CARD: "",
                             });
                           }}
@@ -2047,15 +1988,18 @@ export default function CashierDashboard() {
                             <button
                               type="button"
                               onClick={() => {
-                                const currentOther =
-                                  takeawaySplitTotal - (Number(takeawaySplitAmounts[method]) || 0);
-                                const remainder = Math.max(0, Number((takeawayGrandTotal - currentOther).toFixed(2)));
-                                setTakeawaySplitAmounts((prev) => ({
-                                  ...prev,
-                                  [method]: String(remainder),
-                                }));
+                                setTakeawaySplitAmounts((prev) => {
+                                  const otherSum = (["CASH", "UPI", "CARD"] as const)
+                                    .filter((m) => m !== method)
+                                    .reduce((sum, m) => sum + (parseFloat(prev[m]) || 0), 0);
+                                  const rem = Math.max(0, parseFloat((takeawayGrandTotal - otherSum).toFixed(2)));
+                                  return {
+                                    ...prev,
+                                    [method]: rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0",
+                                  };
+                                });
                               }}
-                              className="px-2 py-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 hover:text-white transition-all cursor-pointer whitespace-nowrap"
                             >
                               Fill Rem.
                             </button>
@@ -2983,7 +2927,7 @@ export default function CashierDashboard() {
                         <div className="space-y-2 text-xs">
                           {/* Cash Portion */}
                           <div className="flex items-center gap-2">
-                            <div className="w-20 text-neutral-400 flex items-center gap-1 font-bold">
+                            <div className="w-16 text-neutral-400 flex items-center gap-1 font-bold shrink-0">
                               <Banknote className="h-3.5 w-3.5 text-emerald-400" />
                               <span>Cash:</span>
                             </div>
@@ -2994,11 +2938,22 @@ export default function CashierDashboard() {
                               className="flex-1 px-3 py-1.5 rounded-2xl bg-white/[0.05] border border-white/10 text-white font-bold focus:outline-none"
                               placeholder="₹ 0"
                             />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const other = (parseFloat(splitUpi) || 0) + (parseFloat(splitCard) || 0);
+                                const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
+                                setSplitCash(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
+                              }}
+                              className="px-2.5 py-1 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                            >
+                              Fill Rem.
+                            </button>
                           </div>
 
                           {/* UPI Portion */}
                           <div className="flex items-center gap-2">
-                            <div className="w-20 text-neutral-400 flex items-center gap-1 font-bold">
+                            <div className="w-16 text-neutral-400 flex items-center gap-1 font-bold shrink-0">
                               <QrCode className="h-3.5 w-3.5 text-sky-400" />
                               <span>UPI:</span>
                             </div>
@@ -3009,11 +2964,22 @@ export default function CashierDashboard() {
                               className="flex-1 px-3 py-1.5 rounded-2xl bg-white/[0.05] border border-white/10 text-white font-bold focus:outline-none"
                               placeholder="₹ 0"
                             />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const other = (parseFloat(splitCash) || 0) + (parseFloat(splitCard) || 0);
+                                const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
+                                setSplitUpi(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
+                              }}
+                              className="px-2.5 py-1 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                            >
+                              Fill Rem.
+                            </button>
                           </div>
 
                           {/* Card Portion */}
                           <div className="flex items-center gap-2">
-                            <div className="w-20 text-neutral-400 flex items-center gap-1 font-bold">
+                            <div className="w-16 text-neutral-400 flex items-center gap-1 font-bold shrink-0">
                               <CreditCard className="h-3.5 w-3.5 text-violet-400" />
                               <span>Card:</span>
                             </div>
@@ -3024,6 +2990,17 @@ export default function CashierDashboard() {
                               className="flex-1 px-3 py-1.5 rounded-2xl bg-white/[0.05] border border-white/10 text-white font-bold focus:outline-none"
                               placeholder="₹ 0"
                             />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const other = (parseFloat(splitCash) || 0) + (parseFloat(splitUpi) || 0);
+                                const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
+                                setSplitCard(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
+                              }}
+                              className="px-2.5 py-1 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                            >
+                              Fill Rem.
+                            </button>
                           </div>
 
                           {/* Sum check */}
