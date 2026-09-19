@@ -1845,14 +1845,14 @@ export default function CashierDashboard() {
           {/* Action Pills */}
           <div className="relative z-10 flex flex-wrap items-center gap-2.5">
             {activeTab === "takeaway" ? (
-              <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-black/50 border border-white/10 backdrop-blur-2xl shadow-xl">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setTakeawaySubTab("register")}
                   className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     takeawaySubTab === "register"
                       ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
-                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10"
+                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
                   }`}
                 >
                   <ShoppingBag className="h-3.5 w-3.5" />
@@ -1868,7 +1868,7 @@ export default function CashierDashboard() {
                   className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
                     takeawaySubTab === "queue"
                       ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
-                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10"
+                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
                   }`}
                 >
                   <Clock className="h-3.5 w-3.5" />
