@@ -550,9 +550,11 @@ export const createTakeawayBill = async (req: Request, res: Response): Promise<v
   try {
     const {
       customerName,
-      items, // Array<{ menuItemId: number, quantity: number }>
+      customerPhone,
+      items, // Array<{ menuItemId: number, quantity: number, notes?: string }>
       payments, // Array<{ method: "CASH" | "CARD" | "UPI", amount: number }>
       discount = 0,
+      packagingCharge = 0,
       notes,
     } = req.body;
 
@@ -609,7 +611,8 @@ export const createTakeawayBill = async (req: Request, res: Response): Promise<v
     }
 
     const taxAmount = Number((subtotal * 0.05).toFixed(2));
-    const grandTotal = Number((subtotal + taxAmount - Number(discount || 0)).toFixed(2));
+    const pkgCharge = Number(packagingCharge || 0);
+    const grandTotal = Number((subtotal + taxAmount + pkgCharge - Number(discount || 0)).toFixed(2));
 
     const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0);
     if (Math.abs(totalPaid - grandTotal) > 1.0 && totalPaid < grandTotal) {
@@ -623,9 +626,12 @@ export const createTakeawayBill = async (req: Request, res: Response): Promise<v
     const sessionCode = `TAKEAWAY-${Date.now().toString().slice(-6)}`;
     const orderNumber = `TK-${Math.floor(1000 + Math.random() * 9000)}`;
 
+    const phonePart = customerPhone ? ` | Ph: ${customerPhone}` : "";
+    const headerPart = `[Takeaway: ${customerName || "Customer"}${phonePart}]`;
+    const fullNotes = notes ? `${headerPart} ${notes}` : headerPart;
+
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create Takeaway Table or virtual session (tableId: 1 or dedicated)
-      // Find or create virtual takeaway table
       let takeawayTable = await tx.restaurantTable.findFirst({
         where: { tableNumber: 999 },
       });
@@ -659,7 +665,7 @@ export const createTakeawayBill = async (req: Request, res: Response): Promise<v
           diningSessionId: session.id,
           orderNumber,
           status: "PREPARING", // Send directly to kitchen!
-          notes: notes ? `[Takeaway: ${customerName || "Customer"}] ${notes}` : `[Takeaway: ${customerName || "Customer"}]`,
+          notes: fullNotes,
           orderedAt: new Date(),
         },
       });
@@ -723,16 +729,20 @@ export const createTakeawayBill = async (req: Request, res: Response): Promise<v
       message: "Takeaway order created, paid, and dispatched to kitchen!",
       receipt: {
         invoiceNumber: `INV-${sessionCode}`,
+        orderId: result.order.id,
         orderNumber,
         customerName: customerName || "Guest",
+        customerPhone: customerPhone || "",
         tableNumber: "Takeaway",
         dateTime: new Date(),
         subtotal,
         taxAmount,
+        packagingCharge: pkgCharge,
         discount: Number(discount || 0),
         grandTotal,
         payments,
         items: validatedItems,
+        notes: fullNotes,
       },
     });
   } catch (error) {
@@ -1140,3 +1150,162 @@ export const addItemsToTableSession = async (req: Request, res: Response): Promi
     res.status(500).json({ message: "Failed to add items to table" });
   }
 };
+
+/**
+ * GET /api/cashier/takeaway/orders
+ * Returns today's active & completed takeaway orders for queue management
+ */
+export const getTakeawayOrders = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const orders = await prisma.order.findMany({
+      where: {
+        OR: [
+          { diningSession: { table: { tableNumber: 999 } } },
+          { diningSession: { sessionCode: { startsWith: "TAKEAWAY-" } } },
+        ],
+        createdAt: { gte: startOfDay },
+      },
+      include: {
+        diningSession: {
+          include: {
+            payments: true,
+          },
+        },
+        orderItems: {
+          include: {
+            menuItem: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                imageUrl: true,
+                category: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const formattedOrders = orders.map((ord) => {
+      let customerName = "Walk-in Guest";
+      let customerPhone = "";
+      let orderNotes = ord.notes || "";
+
+      const match = ord.notes?.match(/\[Takeaway:\s*([^\]|]+)(?:\|\s*Ph:\s*([^\]]+))?\]/);
+      if (match) {
+        customerName = match[1]?.trim() || "Walk-in Guest";
+        customerPhone = match[2]?.trim() || "";
+        orderNotes = ord.notes ? ord.notes.replace(/\[Takeaway:[^\]]+\]\s*/, "").trim() : "";
+      }
+
+      return {
+        id: ord.id,
+        orderNumber: ord.orderNumber,
+        status: ord.status, // PENDING | PREPARING | READY | SERVED | CANCELLED
+        createdAt: ord.createdAt,
+        orderedAt: ord.orderedAt,
+        notes: orderNotes,
+        rawNotes: ord.notes,
+        customerName,
+        customerPhone,
+        totalAmount: Number(ord.diningSession.totalAmount),
+        sessionCode: ord.diningSession.sessionCode,
+        payments: ord.diningSession.payments.map((p) => ({
+          id: p.id,
+          method: p.paymentMethod,
+          amount: Number(p.amount),
+          status: p.paymentStatus,
+          paidAt: p.paidAt,
+        })),
+        items: ord.orderItems.map((oi) => ({
+          id: oi.id,
+          menuItemId: oi.menuItemId,
+          name: oi.menuItem.name,
+          quantity: oi.quantity,
+          price: Number(oi.price),
+          subtotal: Number(oi.subtotal),
+          imageUrl: oi.menuItem.imageUrl,
+          categoryName: oi.menuItem.category?.name,
+        })),
+      };
+    });
+
+    res.json({
+      success: true,
+      orders: formattedOrders,
+    });
+  } catch (error) {
+    console.error("Error fetching takeaway orders:", error);
+    res.status(500).json({ message: "Failed to fetch takeaway orders" });
+  }
+};
+
+/**
+ * PATCH /api/cashier/takeaway/order/:orderId/status
+ * Updates status of a takeaway order (e.g. PREPARING -> READY -> SERVED / CANCELLED)
+ */
+export const updateTakeawayOrderStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const orderId = Number(req.params.orderId);
+    const { status } = req.body;
+
+    if (!orderId || isNaN(orderId)) {
+      res.status(400).json({ message: "Valid Order ID required." });
+      return;
+    }
+
+    const validStatuses = ["PENDING", "PREPARING", "READY", "SERVED", "CANCELLED"];
+    if (!status || !validStatuses.includes(status)) {
+      res.status(400).json({ message: `Status must be one of: ${validStatuses.join(", ")}` });
+      return;
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: orderId },
+      data: { status },
+      include: {
+        diningSession: {
+          include: {
+            table: true,
+            payments: true,
+          },
+        },
+        orderItems: {
+          include: {
+            menuItem: true,
+          },
+        },
+      },
+    });
+
+    // Notify kitchen and staff channels
+    emitToStaff("order:status_update", {
+      orderId: updated.id,
+      orderNumber: updated.orderNumber,
+      status: updated.status,
+      tableNumber: "Takeaway",
+      order: updated,
+    });
+
+    emitToTable("Takeaway", "order:status_update", {
+      orderId: updated.id,
+      orderNumber: updated.orderNumber,
+      status: updated.status,
+    });
+
+    res.json({
+      success: true,
+      message: `Takeaway order #${updated.orderNumber} status changed to ${updated.status}`,
+      order: updated,
+    });
+  } catch (error) {
+    console.error("Error updating takeaway order status:", error);
+    res.status(500).json({ message: "Failed to update order status" });
+  }
+};
+

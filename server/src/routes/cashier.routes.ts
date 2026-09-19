@@ -8,6 +8,8 @@ import {
   getSessionBillDetails,
   settleBill,
   createTakeawayBill,
+  getTakeawayOrders,
+  updateTakeawayOrderStatus,
   getSettledBillsHistory,
   getCashierStats,
   transferTable,
@@ -34,7 +36,11 @@ router.post("/table/:tableNumber/add-items", addItemsToTableSession);
 // Billing & POS
 router.get("/session/:sessionId/bill", getSessionBillDetails);
 router.post("/settle", settleBill);
+
+// Takeaway POS & Orders Queue
 router.post("/takeaway", createTakeawayBill);
+router.get("/takeaway/orders", getTakeawayOrders);
+router.patch("/takeaway/order/:orderId/status", updateTakeawayOrderStatus);
 
 // History & Metrics
 router.get("/history", getSettledBillsHistory);
