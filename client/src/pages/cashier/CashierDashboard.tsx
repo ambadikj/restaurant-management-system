@@ -666,7 +666,6 @@ export default function CashierDashboard() {
 
   // History Tab state
   const [history, setHistory] = useState<SettledBill[]>([]);
-  const [historySearch, setHistorySearch] = useState("");
 
   // Takeaway POS state
   const [takeawaySubTab, setTakeawaySubTab] = useState<"register" | "queue">("register");
@@ -3330,17 +3329,6 @@ export default function CashierDashboard() {
                 Closed audit trail eligible for reprint, receipt verification, and tax summary
               </span>
             </div>
-
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
-              <input
-                type="text"
-                value={historySearch}
-                onChange={(e) => setHistorySearch(e.target.value)}
-                placeholder="Search table, invoice, or payment..."
-                className="w-full pl-9 pr-3 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
-              />
-            </div>
           </div>
 
           {/* Visual Analytics Graphs & Donut Chart */}
@@ -3374,16 +3362,7 @@ export default function CashierDashboard() {
                       </td>
                     </tr>
                   ) : (
-                    history
-                      .filter((h) => {
-                        if (!historySearch.trim()) return true;
-                        const q = historySearch.toLowerCase().trim();
-                        const matchesInvoice = h.invoiceNumber.toLowerCase().includes(q);
-                        const matchesTable = String(h.tableNumber).toLowerCase().includes(q);
-                        const matchesPayment = h.payments.some((p) => p.method.toLowerCase().includes(q));
-                        return matchesInvoice || matchesTable || matchesPayment;
-                      })
-                      .map((bill) => (
+                    history.map((bill) => (
                         <tr key={bill.id} className="hover:bg-white/[0.02] transition-colors">
                           <td className="py-4 px-5 font-mono font-bold text-white">
                             {bill.invoiceNumber}
