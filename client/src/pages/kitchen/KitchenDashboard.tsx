@@ -184,49 +184,40 @@ export default function KitchenDashboard() {
     }
 
     // New order arrives
-    socket.on("order:new", (data: { order: KitchenOrder; tableNumber: number | string; tableName?: string }) => {
-      setOrders((prev) => {
-        const exists = prev.some((o) => o.id === data.order.id);
-        if (exists) return prev;
-
-        const enrichedOrder: KitchenOrder = {
-          ...data.order,
-          diningSession: data.order.diningSession || {
-            id: 0,
-            table: {
-              tableNumber: typeof data.tableNumber === "string"
-                ? (data.tableNumber === "Takeaway" ? 999 : parseInt(data.tableNumber) || 0)
-                : data.tableNumber,
-            },
-          },
-        };
-
-        return [...prev, enrichedOrder];
-      });
+    const handleNewOrder = () => {
+      fetchOrders();
       playNotificationSound();
-    });
+    };
 
-    // Order status updated
-    socket.on("order:status_update", (data: { orderId: number; status: string; order?: KitchenOrder }) => {
-      if (data.status === "SERVED") {
-        setOrders((prev) => prev.filter((o) => o.id !== data.orderId));
-        fetchHistory();
-      } else {
-        setOrders((prev) =>
-          prev.map((o) =>
-            o.id === data.orderId ? { ...o, status: data.status as KitchenOrder["status"] } : o
-          )
-        );
-      }
+    socket.on("order:new", handleNewOrder);
+    socket.on("order:placed", handleNewOrder);
+
+    // Order status updated (e.g. Cooking -> Ready -> Served/Collected)
+    const handleStatusUpdate = () => {
+      fetchOrders();
+      fetchHistory();
+    };
+
+    socket.on("order:status_update", handleStatusUpdate);
+    socket.on("order:served", () => {
+      fetchOrders();
+      fetchHistory();
+    });
+    socket.on("order:completed", () => {
+      fetchOrders();
+      fetchHistory();
     });
 
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
-      socket.off("order:new");
-      socket.off("order:status_update");
+      socket.off("order:new", handleNewOrder);
+      socket.off("order:placed", handleNewOrder);
+      socket.off("order:status_update", handleStatusUpdate);
+      socket.off("order:served");
+      socket.off("order:completed");
     };
-  }, [playNotificationSound, fetchHistory]);
+  }, [playNotificationSound, fetchOrders, fetchHistory]);
 
   /* ── Status Progression Handler (Bump) ── */
   const handleProgressStatus = async (order: KitchenOrder) => {

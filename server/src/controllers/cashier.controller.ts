@@ -714,7 +714,39 @@ export const createTakeawayBill = async (req: Request, res: Response): Promise<v
       return { session, order };
     });
 
-    // Broadcast new order to Kitchen Display System!
+    // Query full order with relations for seamless KDS real-time display
+    const fullOrder = await prisma.order.findUnique({
+      where: { id: result.order.id },
+      include: {
+        diningSession: {
+          include: {
+            table: true,
+            payments: true,
+          },
+        },
+        orderItems: {
+          include: {
+            menuItem: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                imageUrl: true,
+                category: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Broadcast new order to Kitchen Display System & Staff channels
+    emitToStaff("order:new", {
+      order: fullOrder || result.order,
+      tableNumber: 999,
+      tableName: "Takeaway",
+    });
+
     emitToStaff("order:placed", {
       orderId: result.order.id,
       orderNumber: result.order.orderNumber,
@@ -722,6 +754,7 @@ export const createTakeawayBill = async (req: Request, res: Response): Promise<v
       status: "PREPARING",
       notes: result.order.notes,
       items: validatedItems,
+      order: fullOrder,
     });
 
     res.status(201).json({
@@ -1292,6 +1325,14 @@ export const updateTakeawayOrderStatus = async (req: Request, res: Response): Pr
       order: updated,
     });
 
+    if (updated.status === "SERVED") {
+      emitToStaff("order:served", {
+        orderId: updated.id,
+        orderNumber: updated.orderNumber,
+        tableNumber: "Takeaway",
+      });
+    }
+
     emitToTable("Takeaway", "order:status_update", {
       orderId: updated.id,
       orderNumber: updated.orderNumber,
@@ -1308,4 +1349,72 @@ export const updateTakeawayOrderStatus = async (req: Request, res: Response): Pr
     res.status(500).json({ message: "Failed to update order status" });
   }
 };
+
+/**
+ * PATCH /api/cashier/takeaway/order/:orderId
+ * Updates customer details and notes on an active takeaway order
+ */
+export const updateTakeawayOrderDetails = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const orderId = Number(req.params.orderId);
+    const { customerName, customerPhone, notes } = req.body;
+
+    if (!orderId || isNaN(orderId)) {
+      res.status(400).json({ message: "Valid Order ID required." });
+      return;
+    }
+
+    const existing = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { diningSession: true },
+    });
+
+    if (!existing) {
+      res.status(404).json({ message: "Takeaway order not found." });
+      return;
+    }
+
+    // Format notes string with customer name and phone
+    const phonePart = customerPhone ? ` | Ph: ${customerPhone}` : "";
+    const headerPart = `[Takeaway: ${customerName || "Customer"}${phonePart}]`;
+    const fullNotes = notes ? `${headerPart} ${notes}` : headerPart;
+
+    const updated = await prisma.order.update({
+      where: { id: orderId },
+      data: { notes: fullNotes },
+      include: {
+        diningSession: {
+          include: {
+            table: true,
+            payments: true,
+          },
+        },
+        orderItems: {
+          include: {
+            menuItem: true,
+          },
+        },
+      },
+    });
+
+    // Broadcast updated order details to Kitchen Display System & Staff channels
+    emitToStaff("order:status_update", {
+      orderId: updated.id,
+      orderNumber: updated.orderNumber,
+      status: updated.status,
+      tableNumber: "Takeaway",
+      order: updated,
+    });
+
+    res.json({
+      success: true,
+      message: `Takeaway token #${updated.orderNumber} updated successfully`,
+      order: updated,
+    });
+  } catch (error) {
+    console.error("Error updating takeaway order details:", error);
+    res.status(500).json({ message: "Failed to update order details" });
+  }
+};
+
 

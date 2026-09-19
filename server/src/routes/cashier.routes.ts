@@ -10,6 +10,7 @@ import {
   createTakeawayBill,
   getTakeawayOrders,
   updateTakeawayOrderStatus,
+  updateTakeawayOrderDetails,
   getSettledBillsHistory,
   getCashierStats,
   transferTable,
@@ -41,6 +42,7 @@ router.post("/settle", settleBill);
 router.post("/takeaway", createTakeawayBill);
 router.get("/takeaway/orders", getTakeawayOrders);
 router.patch("/takeaway/order/:orderId/status", updateTakeawayOrderStatus);
+router.patch("/takeaway/order/:orderId", updateTakeawayOrderDetails);
 
 // History & Metrics
 router.get("/history", getSettledBillsHistory);

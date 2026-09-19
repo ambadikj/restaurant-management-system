@@ -283,8 +283,12 @@ export default function CashierDashboard() {
   const [takeawayActiveCat, setTakeawayActiveCat] = useState<number | "ALL">("ALL");
   const [takeawaySearch, setTakeawaySearch] = useState("");
   const [isSubmittingTakeaway, setIsSubmittingTakeaway] = useState(false);
-  const [editingCartItemNoteId, setEditingCartItemNoteId] = useState<number | null>(null);
-  const [tempCartItemNote, setTempCartItemNote] = useState("");
+  // Edit Token Modal state
+  const [editingTokenOrder, setEditingTokenOrder] = useState<TakeawayOrder | null>(null);
+  const [editCustomerName, setEditCustomerName] = useState("");
+  const [editCustomerPhone, setEditCustomerPhone] = useState("");
+  const [editOrderNotes, setEditOrderNotes] = useState("");
+  const [isSavingTokenEdit, setIsSavingTokenEdit] = useState(false);
 
   // Live digital clock
   useEffect(() => {
@@ -777,10 +781,44 @@ export default function CashierDashboard() {
     );
   };
 
-  const updateTakeawayItemNote = (dishId: number, notes: string) => {
-    setTakeawayCart((prev) =>
-      prev.map((ci) => (ci.item.id === dishId ? { ...ci, notes } : ci))
-    );
+  // Edit Token Handlers
+  const handleOpenEditTokenModal = (ord: TakeawayOrder) => {
+    setEditingTokenOrder(ord);
+    setEditCustomerName(ord.customerName || "");
+    setEditCustomerPhone(ord.customerPhone || "");
+    setEditOrderNotes(ord.notes || "");
+  };
+
+  const handleSaveTokenEdit = async () => {
+    if (!editingTokenOrder) return;
+    try {
+      setIsSavingTokenEdit(true);
+      await axios.patch(
+        `${API_BASE}/takeaway/order/${editingTokenOrder.id}`,
+        {
+          customerName: editCustomerName.trim(),
+          customerPhone: editCustomerPhone.trim(),
+          notes: editOrderNotes.trim(),
+        },
+        authConfig
+      );
+      toast.success(`Token #${editingTokenOrder.orderNumber} updated!`);
+      // Update active receipt if currently open
+      if (activeReceipt?.orderNumber === editingTokenOrder.orderNumber) {
+        setActiveReceipt((prev: any) => ({
+          ...prev,
+          customerName: editCustomerName.trim() || "Customer",
+          customerPhone: editCustomerPhone.trim(),
+          notes: editOrderNotes.trim(),
+        }));
+      }
+      setEditingTokenOrder(null);
+      await loadTakeawayOrders();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update token");
+    } finally {
+      setIsSavingTokenEdit(false);
+    }
   };
 
   // Financial calculations
@@ -1861,46 +1899,6 @@ export default function CashierDashboard() {
                               </button>
                             </div>
                           </div>
-
-                          {/* Item-level instruction note */}
-                          <div className="flex items-center gap-1.5 pt-0.5">
-                            {editingCartItemNoteId === ci.item.id ? (
-                              <div className="flex items-center gap-1 w-full">
-                                <input
-                                  type="text"
-                                  value={tempCartItemNote}
-                                  onChange={(e) => setTempCartItemNote(e.target.value)}
-                                  placeholder="e.g. Mild, less oil..."
-                                  className="flex-1 px-2 py-0.5 rounded-lg bg-black/40 border border-white/20 text-[11px] text-white focus:outline-none"
-                                />
-                                <button
-                                  onClick={() => {
-                                    updateTakeawayItemNote(ci.item.id, tempCartItemNote);
-                                    setEditingCartItemNoteId(null);
-                                  }}
-                                  className="px-2 py-0.5 rounded-lg bg-[#FA2D48] text-white text-[10px] font-bold cursor-pointer"
-                                >
-                                  Save
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-between w-full text-[10px] text-neutral-400">
-                                <span className="italic truncate max-w-[170px]">
-                                  {ci.notes ? `Note: ${ci.notes}` : "No item notes"}
-                                </span>
-                                <button
-                                  onClick={() => {
-                                    setEditingCartItemNoteId(ci.item.id);
-                                    setTempCartItemNote(ci.notes || "");
-                                  }}
-                                  className="text-[#FA2D48] hover:underline cursor-pointer flex items-center gap-0.5 font-semibold"
-                                >
-                                  <Edit3 className="h-2.5 w-2.5" />
-                                  <span>{ci.notes ? "Edit" : "+ Note"}</span>
-                                </button>
-                              </div>
-                            )}
-                          </div>
                         </div>
                       ))
                     )}
@@ -2122,14 +2120,16 @@ export default function CashierDashboard() {
                       </div>
                     ) : (
                       /* Split Mode: Multiple Currencies Inputs */
-                      <div className="p-4 rounded-3xl bg-black/60 border border-white/10 space-y-3 shadow-inner">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                          <span className="text-xs font-bold text-neutral-300 flex items-center gap-1.5">
-                            <ArrowRightLeft className="h-3.5 w-3.5 text-[#FA2D48]" />
+                      <div className="p-4 rounded-3xl bg-[#1c1c1f]/90 border border-white/[0.08] backdrop-blur-2xl space-y-3.5 shadow-2xl">
+                        <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08]">
+                          <span className="text-xs font-bold text-neutral-200 flex items-center gap-2">
+                            <span className="p-1 rounded-lg bg-[#FA2D48]/10 text-[#FA2D48] border border-[#FA2D48]/20">
+                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                            </span>
                             <span>Split Allocation</span>
                           </span>
-                          <span className="font-mono text-xs font-bold text-white bg-white/[0.08] px-2.5 py-0.5 rounded-full border border-white/10">
-                            Target: ₹{takeawayGrandTotal.toFixed(2)}
+                          <span className="font-mono text-xs font-bold text-neutral-200 bg-white/[0.06] px-3 py-1 rounded-full border border-white/[0.08]">
+                            Target: <span className="text-white">₹{takeawayGrandTotal.toFixed(2)}</span>
                           </span>
                         </div>
 
@@ -2152,10 +2152,10 @@ export default function CashierDashboard() {
                           return (
                             <div
                               key={method}
-                              className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.15] transition-all"
+                              className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all"
                             >
                               <div
-                                className={`w-20 px-2 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold shrink-0 ${bgTint}`}
+                                className={`w-20 px-2.5 py-2 rounded-xl border flex items-center gap-1.5 text-xs font-bold shrink-0 ${bgTint}`}
                               >
                                 {icon}
                                 <span>{method}</span>
@@ -2174,7 +2174,7 @@ export default function CashierDashboard() {
                                     }))
                                   }
                                   placeholder="0.00"
-                                  className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/50 border border-white/10 focus:border-white/30 text-sm font-mono font-bold text-white focus:outline-none transition-all"
+                                  className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 />
                               </div>
                               <button
@@ -2191,7 +2191,7 @@ export default function CashierDashboard() {
                                     };
                                   });
                                 }}
-                                className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                                className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                               >
                                 Fill Rem.
                               </button>
@@ -2199,61 +2199,26 @@ export default function CashierDashboard() {
                           );
                         })}
 
-                        {/* Real-time 3-color Segmented Progress Bar */}
-                        {takeawayGrandTotal > 0 && (
-                          <div className="space-y-1.5 pt-2">
-                            <div className="h-2 w-full bg-white/[0.08] rounded-full overflow-hidden flex gap-0.5 p-0.5">
-                              <div
-                                style={{
-                                  width: `${Math.min(
-                                    100,
-                                    ((Number(takeawaySplitAmounts.CASH) || 0) / takeawayGrandTotal) * 100
-                                  )}%`,
-                                }}
-                                className="bg-emerald-400 rounded-full transition-all duration-300"
-                                title="Cash"
-                              />
-                              <div
-                                style={{
-                                  width: `${Math.min(
-                                    100,
-                                    ((Number(takeawaySplitAmounts.UPI) || 0) / takeawayGrandTotal) * 100
-                                  )}%`,
-                                }}
-                                className="bg-sky-400 rounded-full transition-all duration-300"
-                                title="UPI"
-                              />
-                              <div
-                                style={{
-                                  width: `${Math.min(
-                                    100,
-                                    ((Number(takeawaySplitAmounts.CARD) || 0) / takeawayGrandTotal) * 100
-                                  )}%`,
-                                }}
-                                className="bg-violet-400 rounded-full transition-all duration-300"
-                                title="Card"
-                              />
-                            </div>
-                            <div className="flex items-center justify-between text-xs font-mono pt-1">
-                              <span className="text-neutral-400">
-                                Allocated: <b className="text-white">₹{takeawaySplitTotal.toFixed(2)}</b>
-                              </span>
-                              {Math.abs(takeawaySplitRemaining) <= 0.05 ? (
-                                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                                  <Check className="h-3.5 w-3.5" /> Fully Allocated
-                                </span>
-                              ) : takeawaySplitRemaining > 0 ? (
-                                <span className="text-amber-400 font-bold">
-                                  ₹{takeawaySplitRemaining.toFixed(2)} remaining
-                                </span>
-                              ) : (
-                                <span className="text-rose-400 font-bold">
-                                  ₹{Math.abs(takeawaySplitRemaining).toFixed(2)} over
-                                </span>
-                              )}
-                            </div>
+                        {/* Status Footer: No bar, clean Apple badge */}
+                        <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs font-mono">
+                          <div className="flex items-center gap-1.5 text-neutral-400">
+                            <span>Allocated:</span>
+                            <span className="text-white font-bold text-sm">₹{takeawaySplitTotal.toFixed(2)}</span>
                           </div>
-                        )}
+                          {Math.abs(takeawaySplitRemaining) <= 0.05 ? (
+                            <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                              <Check className="h-3.5 w-3.5" /> Fully Allocated
+                            </span>
+                          ) : takeawaySplitRemaining > 0 ? (
+                            <span className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-xs">
+                              ₹{takeawaySplitRemaining.toFixed(2)} remaining
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold text-xs">
+                              ₹{Math.abs(takeawaySplitRemaining).toFixed(2)} over
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2402,7 +2367,16 @@ export default function CashierDashboard() {
 
                           {/* Customer & Phone info */}
                           <div className="pt-2.5 flex items-center justify-between text-xs">
-                            <span className="font-bold text-white truncate">{ord.customerName}</span>
+                            <div className="flex items-center gap-1.5 truncate max-w-[200px]">
+                              <span className="font-bold text-white truncate">{ord.customerName}</span>
+                              <button
+                                onClick={() => handleOpenEditTokenModal(ord)}
+                                title="Edit Customer or Notes"
+                                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                              >
+                                <Edit3 className="h-3 w-3" />
+                              </button>
+                            </div>
                             {ord.customerPhone && (
                               <span className="font-mono text-[11px] text-neutral-400 flex items-center gap-1">
                                 <Phone className="h-3 w-3 text-[#FA2D48]" />
@@ -2488,8 +2462,17 @@ export default function CashierDashboard() {
                             </button>
                           )}
 
-                          {/* Print Actions */}
-                          <div className="grid grid-cols-3 gap-1.5">
+                          {/* Print Actions & Edit Token */}
+                          <div className="grid grid-cols-4 gap-1.5">
+                            <button
+                              onClick={() => handleOpenEditTokenModal(ord)}
+                              className="py-1.5 px-2 rounded-xl bg-white/[0.05] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent flex items-center justify-center gap-1 text-[10px] font-bold transition-all cursor-pointer"
+                              title="Edit Customer Info or Cooking Notes"
+                            >
+                              <Edit3 className="h-3 w-3" />
+                              <span>Edit</span>
+                            </button>
+
                             <button
                               onClick={() => handlePrintTakeawayToken(ord)}
                               className="py-1.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 text-[10px] font-bold transition-all cursor-pointer"
@@ -3202,10 +3185,23 @@ export default function CashierDashboard() {
                           </span>
                         </div>
 
+                      <div className="p-4 rounded-3xl bg-[#1c1c1f]/90 border border-white/[0.08] backdrop-blur-2xl space-y-3.5 shadow-2xl">
+                        <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08]">
+                          <span className="text-xs font-bold text-neutral-200 flex items-center gap-2">
+                            <span className="p-1 rounded-lg bg-[#FA2D48]/10 text-[#FA2D48] border border-[#FA2D48]/20">
+                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                            </span>
+                            <span>Split Allocation</span>
+                          </span>
+                          <span className="font-mono text-xs font-bold text-neutral-200 bg-white/[0.06] px-3 py-1 rounded-full border border-white/[0.08]">
+                            Target: <span className="text-white">₹{currentNetTotal.toFixed(2)}</span>
+                          </span>
+                        </div>
+
                         <div className="space-y-2">
                           {/* Cash Portion */}
-                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-                            <div className="w-20 px-2 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                            <div className="w-20 px-2.5 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
                               <Banknote className="h-3.5 w-3.5" />
                               <span>Cash</span>
                             </div>
@@ -3217,7 +3213,7 @@ export default function CashierDashboard() {
                                 type="number"
                                 value={splitCash}
                                 onChange={(e) => setSplitCash(e.target.value)}
-                                className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-sm font-mono font-bold text-white focus:outline-none focus:border-white/30"
+                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 placeholder="0.00"
                               />
                             </div>
@@ -3228,15 +3224,15 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitCash(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                             >
                               Fill Rem.
                             </button>
                           </div>
 
                           {/* UPI Portion */}
-                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-                            <div className="w-20 px-2 py-1.5 rounded-xl border border-sky-500/20 bg-sky-500/10 text-sky-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                            <div className="w-20 px-2.5 py-2 rounded-xl border border-sky-500/20 bg-sky-500/10 text-sky-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
                               <QrCode className="h-3.5 w-3.5" />
                               <span>UPI</span>
                             </div>
@@ -3248,7 +3244,7 @@ export default function CashierDashboard() {
                                 type="number"
                                 value={splitUpi}
                                 onChange={(e) => setSplitUpi(e.target.value)}
-                                className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-sm font-mono font-bold text-white focus:outline-none focus:border-white/30"
+                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 placeholder="0.00"
                               />
                             </div>
@@ -3259,15 +3255,15 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitUpi(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                             >
                               Fill Rem.
                             </button>
                           </div>
 
                           {/* Card Portion */}
-                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-                            <div className="w-20 px-2 py-1.5 rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                            <div className="w-20 px-2.5 py-2 rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
                               <CreditCard className="h-3.5 w-3.5" />
                               <span>Card</span>
                             </div>
@@ -3279,7 +3275,7 @@ export default function CashierDashboard() {
                                 type="number"
                                 value={splitCard}
                                 onChange={(e) => setSplitCard(e.target.value)}
-                                className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-sm font-mono font-bold text-white focus:outline-none focus:border-white/30"
+                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 placeholder="0.00"
                               />
                             </div>
@@ -3290,64 +3286,44 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitCard(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                             >
                               Fill Rem.
                             </button>
                           </div>
                         </div>
 
-                        {/* Segmented Dynamic Bar */}
+                        {/* Status Footer: No bar, clean Apple badge */}
                         {(() => {
                           const cashVal = Number(splitCash) || 0;
                           const upiVal = Number(splitUpi) || 0;
                           const cardVal = Number(splitCard) || 0;
                           const sum = cashVal + upiVal + cardVal;
                           const diff = currentNetTotal - sum;
-                          const cashPct = currentNetTotal > 0 ? (cashVal / currentNetTotal) * 100 : 0;
-                          const upiPct = currentNetTotal > 0 ? (upiVal / currentNetTotal) * 100 : 0;
-                          const cardPct = currentNetTotal > 0 ? (cardVal / currentNetTotal) * 100 : 0;
 
                           return (
-                            <div className="space-y-1.5 pt-2">
-                              {currentNetTotal > 0 && (
-                                <div className="h-2 w-full bg-white/[0.08] rounded-full overflow-hidden flex gap-0.5 p-0.5">
-                                  <div
-                                    style={{ width: `${Math.min(100, cashPct)}%` }}
-                                    className="bg-emerald-400 rounded-full transition-all duration-300"
-                                  />
-                                  <div
-                                    style={{ width: `${Math.min(100, upiPct)}%` }}
-                                    className="bg-sky-400 rounded-full transition-all duration-300"
-                                  />
-                                  <div
-                                    style={{ width: `${Math.min(100, cardPct)}%` }}
-                                    className="bg-violet-400 rounded-full transition-all duration-300"
-                                  />
-                                </div>
-                              )}
-
-                              <div className="flex justify-between items-center text-xs font-mono pt-1">
-                                <span className="text-neutral-400">
-                                  Allocated: <b className="text-white font-bold">₹{sum.toFixed(2)}</b>
-                                </span>
-                                {Math.abs(diff) <= 0.05 ? (
-                                  <span className="text-emerald-400 font-bold flex items-center gap-1">
-                                    <Check className="h-3.5 w-3.5" /> Fully Balanced
-                                  </span>
-                                ) : diff > 0 ? (
-                                  <span className="text-amber-400 font-bold">
-                                    ₹{diff.toFixed(2)} remaining
-                                  </span>
-                                ) : (
-                                  <span className="text-rose-400 font-bold">
-                                    ₹{Math.abs(diff).toFixed(2)} over
-                                  </span>
-                                )}
+                            <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs font-mono">
+                              <div className="flex items-center gap-1.5 text-neutral-400">
+                                <span>Allocated:</span>
+                                <span className="text-white font-bold text-sm">₹{sum.toFixed(2)}</span>
                               </div>
+                              {Math.abs(diff) <= 0.05 ? (
+                                <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                                  <Check className="h-3.5 w-3.5" /> Fully Balanced
+                                </span>
+                              ) : diff > 0 ? (
+                                <span className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-xs">
+                                  ₹{diff.toFixed(2)} remaining
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold text-xs">
+                                  ₹{Math.abs(diff).toFixed(2)} over
+                                </span>
+                              )}
                             </div>
                           );
                         })()}
+                      </div>
                       </div>
                     )}
 
@@ -3622,13 +3598,127 @@ export default function CashierDashboard() {
         </div>
       )}
 
-      {/* ================= MODAL 4: THERMAL RECEIPT / TOKEN SLIP / KOT / SHIFT REPORT ================= */}
+      {/* ================= MODAL 4: EDIT TAKEAWAY TOKEN / ORDER DETAILS ================= */}
+      {editingTokenOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#1c1c1f]/95 text-white p-6 rounded-3xl border border-white/[0.08] backdrop-blur-2xl shadow-2xl space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-2xl bg-[#FA2D48]/10 text-[#FA2D48] border border-[#FA2D48]/20">
+                  <Edit3 className="h-4 w-4" />
+                </span>
+                <div>
+                  <h3 className="font-bold text-base text-white flex items-center gap-2">
+                    <span>Edit Token</span>
+                    <span className="font-mono px-2 py-0.5 rounded-lg bg-white text-black text-xs font-black">
+                      {editingTokenOrder.orderNumber}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-neutral-400">Update guest info & cooking instructions</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingTokenOrder(null)}
+                className="p-1 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form Fields */}
+            <div className="space-y-3.5">
+              <div>
+                <label className="text-[11px] text-neutral-300 font-semibold uppercase tracking-wider block mb-1.5">
+                  Customer Name
+                </label>
+                <input
+                  type="text"
+                  value={editCustomerName}
+                  onChange={(e) => setEditCustomerName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] text-neutral-300 font-semibold uppercase tracking-wider block mb-1.5">
+                  Phone (For Token Alert)
+                </label>
+                <input
+                  type="tel"
+                  value={editCustomerPhone}
+                  onChange={(e) => setEditCustomerPhone(e.target.value)}
+                  placeholder="e.g. 9876543210"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] text-neutral-300 font-semibold uppercase tracking-wider block mb-1.5">
+                  Kitchen Instruction Note (All Items)
+                </label>
+                <textarea
+                  rows={3}
+                  value={editOrderNotes}
+                  onChange={(e) => setEditOrderNotes(e.target.value)}
+                  placeholder="e.g. Extra spicy, pack separately, extra napkins..."
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 transition-all resize-none"
+                />
+              </div>
+
+              {/* Items in Token summary */}
+              <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-1">
+                <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider block">
+                  Items in Token ({editingTokenOrder.items?.length || 0})
+                </span>
+                <div className="max-h-24 overflow-y-auto space-y-1">
+                  {editingTokenOrder.items?.map((it) => (
+                    <div key={it.id} className="flex justify-between text-xs text-neutral-300">
+                      <span>{it.quantity}× {it.name}</span>
+                      <span className="font-mono text-neutral-400">₹{Number(it.subtotal).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setEditingTokenOrder(null)}
+                className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-neutral-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSavingTokenEdit}
+                onClick={handleSaveTokenEdit}
+                className="px-5 py-2 rounded-xl bg-[#FA2D48] hover:bg-[#ff3b56] text-white text-xs font-bold transition-all shadow-md shadow-[#FA2D48]/30 active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isSavingTokenEdit ? (
+                  <span>Saving...</span>
+                ) : (
+                  <>
+                    <Check className="h-3.5 w-3.5" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL 5: THERMAL RECEIPT / TOKEN SLIP / KOT / SHIFT REPORT ================= */}
       {activeReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white text-black p-6 rounded-3xl shadow-2xl space-y-4 font-mono text-xs">
+          <div className="w-full max-w-sm bg-[#161618] text-white p-6 rounded-3xl border border-white/[0.08] shadow-2xl space-y-4 font-mono text-xs print:bg-white print:text-black print:p-0 print:border-none print:shadow-none">
             {/* Action Bar (Hidden when printing) */}
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-300 print:hidden">
-              <span className="font-bold text-neutral-600 uppercase text-[10px]">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 print:hidden">
+              <span className="font-bold text-neutral-400 uppercase text-[10px]">
                 {activeReceipt.isShiftReport
                   ? "Shift Closeout Report"
                   : activeReceipt.isTokenSlip
@@ -3640,18 +3730,50 @@ export default function CashierDashboard() {
                   : "Tax Invoice Preview"}
               </span>
               <div className="flex items-center gap-2">
+                {activeReceipt.isTokenSlip && activeReceipt.orderNumber && (
+                  <button
+                    onClick={() => {
+                      const found = takeawayOrders.find(
+                        (o) => o.orderNumber === activeReceipt.orderNumber
+                      );
+                      if (found) {
+                        handleOpenEditTokenModal(found);
+                      } else {
+                        handleOpenEditTokenModal({
+                          id: activeReceipt.orderId || 0,
+                          orderNumber: activeReceipt.orderNumber,
+                          status: "PREPARING",
+                          customerName: activeReceipt.customerName || "",
+                          customerPhone: activeReceipt.customerPhone || "",
+                          notes: activeReceipt.notes || "",
+                          totalAmount: activeReceipt.grandTotal || 0,
+                          items: activeReceipt.items || [],
+                          payments: activeReceipt.payments || [],
+                          sessionCode: activeReceipt.invoiceNumber || "",
+                          createdAt: activeReceipt.dateTime || new Date().toISOString(),
+                          orderedAt: activeReceipt.dateTime || new Date().toISOString(),
+                        });
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                    title="Edit Customer Info or Cooking Notes"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    <span>Edit</span>
+                  </button>
+                )}
                 <button
                   onClick={() => window.print()}
-                  className="px-3.5 py-1.5 rounded-full bg-black text-white font-bold flex items-center gap-1.5 active:scale-95 cursor-pointer text-xs"
+                  className="px-3.5 py-1.5 rounded-full bg-white text-black hover:bg-neutral-200 font-bold flex items-center gap-1.5 active:scale-95 cursor-pointer text-xs transition-all"
                 >
                   <Printer className="h-3.5 w-3.5" />
                   <span>Print</span>
                 </button>
                 <button
                   onClick={() => setActiveReceipt(null)}
-                  className="p-1 rounded-full hover:bg-neutral-200 cursor-pointer"
+                  className="p-1 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer transition-all"
                 >
-                  <X className="h-4 w-4 text-black" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -3659,7 +3781,7 @@ export default function CashierDashboard() {
             {/* If Takeaway Order: Format Switcher Tabs (Hidden when printing) */}
             {(activeReceipt.orderNumber?.startsWith("TK-") || activeReceipt.tableNumber === "Takeaway") &&
               !activeReceipt.isShiftReport && (
-                <div className="flex items-center justify-center gap-1 bg-neutral-100 p-1 rounded-xl border border-neutral-200 print:hidden">
+                <div className="flex items-center justify-center gap-1 bg-white/[0.04] p-1 rounded-2xl border border-white/10 print:hidden">
                   <button
                     type="button"
                     onClick={() =>
@@ -3670,10 +3792,10 @@ export default function CashierDashboard() {
                         isProforma: false,
                       }))
                     }
-                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                       activeReceipt.isTokenSlip
-                        ? "bg-black text-white shadow-sm"
-                        : "text-neutral-600 hover:text-black"
+                        ? "bg-white text-black shadow-sm"
+                        : "text-neutral-400 hover:text-white"
                     }`}
                   >
                     Token Slip
@@ -3688,10 +3810,10 @@ export default function CashierDashboard() {
                         isProforma: false,
                       }))
                     }
-                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                       activeReceipt.isKOT
-                        ? "bg-black text-white shadow-sm"
-                        : "text-neutral-600 hover:text-black"
+                        ? "bg-white text-black shadow-sm"
+                        : "text-neutral-400 hover:text-white"
                     }`}
                   >
                     Kitchen KOT
@@ -3706,10 +3828,10 @@ export default function CashierDashboard() {
                         isProforma: false,
                       }))
                     }
-                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                       !activeReceipt.isTokenSlip && !activeReceipt.isKOT
-                        ? "bg-black text-white shadow-sm"
-                        : "text-neutral-600 hover:text-black"
+                        ? "bg-white text-black shadow-sm"
+                        : "text-neutral-400 hover:text-white"
                     }`}
                   >
                     Tax Invoice
@@ -3719,23 +3841,23 @@ export default function CashierDashboard() {
 
             {/* FORMAT 1: Shift Closeout Report */}
             {activeReceipt.isShiftReport ? (
-              <div id="thermal-receipt" className="text-center space-y-2">
+              <div id="thermal-receipt" className="text-center space-y-2 text-white print:text-black">
                 <div>
                   <h2 className="font-black text-base uppercase tracking-wider">SERVE_SYNC POS</h2>
-                  <p className="text-[10px] text-neutral-600">DAILY REGISTER SHIFT REPORT</p>
+                  <p className="text-[10px] text-neutral-400 print:text-neutral-600">DAILY REGISTER SHIFT REPORT</p>
                 </div>
 
-                <div className="border-t border-b border-dashed border-neutral-400 py-2 text-[11px] text-left space-y-1">
+                <div className="border-t border-b border-dashed border-white/15 print:border-neutral-400 py-2 text-[11px] text-left space-y-1">
                   <div className="flex justify-between">
-                    <span>CASHIER:</span>
-                    <span>{activeReceipt.cashierName}</span>
+                    <span className="text-neutral-400 print:text-neutral-600">CASHIER:</span>
+                    <span className="font-bold">{activeReceipt.cashierName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>DATE:</span>
+                    <span className="text-neutral-400 print:text-neutral-600">DATE:</span>
                     <span>{new Date(activeReceipt.dateTime).toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>TIME:</span>
+                    <span className="text-neutral-400 print:text-neutral-600">TIME:</span>
                     <span>
                       {new Date(activeReceipt.dateTime).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -3747,36 +3869,36 @@ export default function CashierDashboard() {
 
                 <div className="text-left space-y-1 py-1 text-[11px]">
                   <div className="flex justify-between">
-                    <span>TOTAL SETTLED BILLS:</span>
+                    <span className="text-neutral-400 print:text-neutral-600">TOTAL SETTLED BILLS:</span>
                     <span className="font-bold">{activeReceipt.settledBillsCount}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>ACTIVE TABLES LOAD:</span>
+                    <span className="text-neutral-400 print:text-neutral-600">ACTIVE TABLES LOAD:</span>
                     <span>{activeReceipt.activeTablesCount}</span>
                   </div>
                 </div>
 
-                <div className="border-t border-dashed border-neutral-400 pt-2 text-left space-y-1 text-[11px]">
+                <div className="border-t border-dashed border-white/15 print:border-neutral-400 pt-2 text-left space-y-1 text-[11px]">
                   <div className="flex justify-between">
-                    <span>CASH IN DRAWER:</span>
-                    <span className="font-bold">₹{Number(activeReceipt.cashTotal).toFixed(2)}</span>
+                    <span className="text-neutral-400 print:text-neutral-600">CASH IN DRAWER:</span>
+                    <span className="font-bold text-emerald-400 print:text-black">₹{Number(activeReceipt.cashTotal).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>UPI COLLECTIONS:</span>
-                    <span className="font-bold">₹{Number(activeReceipt.upiTotal).toFixed(2)}</span>
+                    <span className="text-neutral-400 print:text-neutral-600">UPI COLLECTIONS:</span>
+                    <span className="font-bold text-sky-400 print:text-black">₹{Number(activeReceipt.upiTotal).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>CARD VOLUME:</span>
-                    <span className="font-bold">₹{Number(activeReceipt.cardTotal).toFixed(2)}</span>
+                    <span className="text-neutral-400 print:text-neutral-600">CARD VOLUME:</span>
+                    <span className="font-bold text-violet-400 print:text-black">₹{Number(activeReceipt.cardTotal).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between font-black text-sm border-t border-neutral-400 pt-1">
+                  <div className="flex justify-between font-black text-sm border-t border-white/15 print:border-neutral-400 pt-1">
                     <span>TOTAL GROSS:</span>
-                    <span>₹{Number(activeReceipt.totalRevenue).toFixed(2)}</span>
+                    <span className="font-bold text-white print:text-black">₹{Number(activeReceipt.totalRevenue).toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="border-t border-dashed border-neutral-400 pt-6 space-y-4 text-[10px] text-left">
-                  <div className="border-t border-neutral-400 pt-1 flex justify-between">
+                <div className="border-t border-dashed border-white/15 print:border-neutral-400 pt-6 space-y-4 text-[10px] text-left text-neutral-400 print:text-neutral-600">
+                  <div className="border-t border-white/15 print:border-neutral-400 pt-1 flex justify-between">
                     <span>Cashier Signature</span>
                     <span>Manager Verification</span>
                   </div>
@@ -3784,29 +3906,29 @@ export default function CashierDashboard() {
               </div>
             ) : activeReceipt.isTokenSlip ? (
               /* FORMAT 2: Customer Takeaway Token Slip */
-              <div id="thermal-receipt" className="text-center space-y-2.5">
+              <div id="thermal-receipt" className="text-center space-y-3 text-white print:text-black">
                 <div className="text-center">
-                  <h2 className="font-black text-base uppercase tracking-wider">SERVE_SYNC DINING</h2>
-                  <p className="text-[10px] text-neutral-600 uppercase font-semibold tracking-wider">
+                  <h2 className="font-black text-base uppercase tracking-wider text-white print:text-black">SERVE_SYNC DINING</h2>
+                  <p className="text-[10px] text-neutral-400 print:text-neutral-600 uppercase font-semibold tracking-wider">
                     Customer Takeaway Token
                   </p>
                 </div>
 
-                {/* Massive Token Box */}
-                <div className="py-3 px-2 bg-black text-white text-center rounded-2xl border border-neutral-800">
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 block">
+                {/* Massive Token Box: Apple Wallet Ticket on screen, Solid Black on print */}
+                <div className="py-4 px-3 bg-gradient-to-b from-[#222226] to-[#121214] text-white text-center rounded-2xl border border-white/10 shadow-lg print:bg-black print:text-white print:border-neutral-800">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 print:text-neutral-400 block">
                     YOUR PICKUP TOKEN
                   </span>
-                  <span className="text-4xl font-black font-mono tracking-widest text-[#FA2D48] block my-1">
+                  <span className="text-4xl font-black font-mono tracking-widest text-[#FA2D48] print:text-white block my-1 drop-shadow-[0_0_12px_rgba(250,45,72,0.35)] print:drop-shadow-none">
                     {activeReceipt.orderNumber || "TK-0000"}
                   </span>
-                  <span className="text-[11px] text-neutral-300 block font-semibold">
-                    {activeReceipt.customerName || "Customer"}{" "}
+                  <span className="text-xs text-neutral-200 print:text-neutral-300 block font-semibold">
+                    {activeReceipt.customerName || "Walk-in Guest"}{" "}
                     {activeReceipt.customerPhone ? `• ${activeReceipt.customerPhone}` : ""}
                   </span>
                 </div>
 
-                <div className="border-t border-b border-dashed border-neutral-400 py-1.5 text-[10px] text-left flex justify-between text-neutral-600">
+                <div className="border-t border-b border-dashed border-white/15 print:border-neutral-400 py-1.5 text-[10px] text-left flex justify-between text-neutral-400 print:text-neutral-600">
                   <span>DATE: {new Date(activeReceipt.dateTime).toLocaleDateString()}</span>
                   <span>
                     TIME:{" "}
@@ -3819,12 +3941,12 @@ export default function CashierDashboard() {
 
                 {/* Items Summary */}
                 <div className="text-left space-y-1 py-1">
-                  <div className="flex justify-between font-bold border-b border-neutral-300 pb-1 text-[11px]">
+                  <div className="flex justify-between font-bold border-b border-white/15 print:border-neutral-300 pb-1 text-[11px] text-neutral-300 print:text-black">
                     <span>ITEM</span>
                     <span>QTY</span>
                   </div>
                   {activeReceipt.items?.map((item: any, idx: number) => (
-                    <div key={idx} className="flex justify-between text-xs py-0.5">
+                    <div key={idx} className="flex justify-between text-xs py-0.5 text-neutral-200 print:text-black">
                       <span className="truncate max-w-[200px] font-semibold">{item.name}</span>
                       <span className="font-mono font-bold">× {item.quantity}</span>
                     </div>
@@ -3832,38 +3954,38 @@ export default function CashierDashboard() {
                 </div>
 
                 {activeReceipt.notes && (
-                  <div className="text-[10px] text-left p-1.5 bg-neutral-100 border border-neutral-200 rounded-lg">
-                    <span className="font-bold block text-neutral-600">NOTE:</span>
+                  <div className="text-[10px] text-left p-2 bg-white/[0.04] border border-white/10 rounded-xl text-neutral-300 print:bg-neutral-100 print:border-neutral-200 print:text-black">
+                    <span className="font-bold block text-[#FA2D48] print:text-neutral-600">NOTE:</span>
                     <span>{activeReceipt.notes}</span>
                   </div>
                 )}
 
-                <div className="border-t border-dashed border-neutral-400 pt-2 flex justify-between font-bold text-xs">
+                <div className="border-t border-dashed border-white/15 print:border-neutral-400 pt-2 flex justify-between font-bold text-xs text-white print:text-black">
                   <span>TOTAL PAID:</span>
-                  <span>₹{Number(activeReceipt.grandTotal).toFixed(2)}</span>
+                  <span className="font-mono text-sm">₹{Number(activeReceipt.grandTotal).toFixed(2)}</span>
                 </div>
 
-                <div className="text-[10px] text-neutral-600 pt-2 border-t border-dashed border-neutral-300 space-y-0.5">
-                  <p className="font-bold">Please retain this slip.</p>
+                <div className="text-[10px] text-neutral-400 print:text-neutral-600 pt-2 border-t border-dashed border-white/15 print:border-neutral-300 space-y-0.5">
+                  <p className="font-bold text-neutral-300 print:text-black">Please retain this slip.</p>
                   <p>Wait for your token number to be announced at the counter.</p>
                   <p>Estimated prep time: 10 - 15 minutes.</p>
                 </div>
               </div>
             ) : activeReceipt.isKOT ? (
               /* FORMAT 3: Kitchen Order Ticket (KOT) */
-              <div id="thermal-receipt" className="text-center space-y-2">
-                <div className="py-1 bg-black text-white font-black text-xs uppercase tracking-widest rounded-lg">
+              <div id="thermal-receipt" className="text-center space-y-2 text-white print:text-black">
+                <div className="py-1 bg-white/[0.08] text-white print:bg-black print:text-white font-black text-xs uppercase tracking-widest rounded-lg">
                   *** KITCHEN ORDER TICKET (KOT) ***
                 </div>
 
-                <div className="border-b border-dashed border-neutral-400 py-1.5 text-left text-xs space-y-0.5">
+                <div className="border-b border-dashed border-white/15 print:border-neutral-400 py-1.5 text-left text-xs space-y-0.5">
                   <div className="flex justify-between font-bold">
                     <span>STATION: TAKEAWAY</span>
-                    <span className="text-sm font-black font-mono">
+                    <span className="text-sm font-black font-mono text-[#FA2D48] print:text-black">
                       TOKEN: {activeReceipt.orderNumber}
                     </span>
                   </div>
-                  <div className="flex justify-between text-[11px] text-neutral-600">
+                  <div className="flex justify-between text-[11px] text-neutral-400 print:text-neutral-600">
                     <span>GUEST: {activeReceipt.customerName || "Takeaway"}</span>
                     <span>
                       {new Date(activeReceipt.dateTime).toLocaleTimeString([], {
@@ -3876,18 +3998,18 @@ export default function CashierDashboard() {
 
                 {/* Items Big List */}
                 <div className="text-left space-y-1.5 py-1">
-                  <div className="flex justify-between font-bold border-b border-neutral-400 pb-1 text-xs">
+                  <div className="flex justify-between font-bold border-b border-white/15 print:border-neutral-400 pb-1 text-xs text-neutral-300 print:text-black">
                     <span>QTY</span>
                     <span>DISH NAME & INSTRUCTIONS</span>
                   </div>
                   {activeReceipt.items?.map((item: any, idx: number) => (
-                    <div key={idx} className="border-b border-neutral-200 pb-1">
+                    <div key={idx} className="border-b border-white/5 print:border-neutral-200 pb-1">
                       <div className="flex items-baseline gap-2 text-sm font-black">
-                        <span className="font-mono text-base">{item.quantity}×</span>
-                        <span>{item.name}</span>
+                        <span className="font-mono text-base text-white print:text-black">{item.quantity}×</span>
+                        <span className="text-neutral-200 print:text-black">{item.name}</span>
                       </div>
                       {item.notes && (
-                        <span className="text-[11px] text-neutral-600 italic block pl-6">
+                        <span className="text-[11px] text-amber-400 print:text-neutral-600 italic block pl-6">
                           * {item.notes}
                         </span>
                       )}
@@ -3896,36 +4018,36 @@ export default function CashierDashboard() {
                 </div>
 
                 {activeReceipt.notes && (
-                  <div className="text-left p-1.5 bg-neutral-100 border border-neutral-300 text-xs font-bold">
+                  <div className="text-left p-2 bg-white/[0.04] border border-white/10 rounded-xl text-xs font-bold text-neutral-200 print:bg-neutral-100 print:border-neutral-300 print:text-black">
                     INSTRUCTION: {activeReceipt.notes}
                   </div>
                 )}
               </div>
             ) : (
               /* FORMAT 4: Standard Tax Invoice or Pre-Bill Check */
-              <div id="thermal-receipt" className="text-center space-y-2">
+              <div id="thermal-receipt" className="text-center space-y-2 text-white print:text-black">
                 <div className="text-center">
-                  <h2 className="font-black text-base uppercase tracking-wider">SERVE_SYNC DINING</h2>
-                  <p className="text-[10px] text-neutral-600">Contactless Table & POS System</p>
-                  <p className="text-[10px] text-neutral-600">GSTIN: 29ABCDE1234F1Z5</p>
+                  <h2 className="font-black text-base uppercase tracking-wider text-white print:text-black">SERVE_SYNC DINING</h2>
+                  <p className="text-[10px] text-neutral-400 print:text-neutral-600">Contactless Table & POS System</p>
+                  <p className="text-[10px] text-neutral-400 print:text-neutral-600">GSTIN: 29ABCDE1234F1Z5</p>
                   {activeReceipt.isProforma && (
-                    <div className="mt-1 py-0.5 px-2 bg-neutral-100 border border-neutral-300 font-bold text-[10px] uppercase tracking-wider text-black">
+                    <div className="mt-1 py-0.5 px-2 bg-amber-500/20 border border-amber-500/30 text-amber-300 print:bg-neutral-100 print:border-neutral-300 font-bold text-[10px] uppercase tracking-wider print:text-black rounded-lg">
                       *** PRE-BILL / CHECK - NOT AN INVOICE ***
                     </div>
                   )}
                   {activeReceipt.orderNumber && (
-                    <div className="mt-1 font-mono font-bold text-xs bg-neutral-100 py-1 rounded">
+                    <div className="mt-1 font-mono font-bold text-xs bg-white/[0.06] text-white print:bg-neutral-100 print:text-black py-1 rounded-xl">
                       TOKEN #{activeReceipt.orderNumber}
                     </div>
                   )}
                 </div>
 
-                <div className="border-t border-b border-dashed border-neutral-400 py-2 text-[11px] text-left space-y-1">
-                  <div className="flex justify-between">
+                <div className="border-t border-b border-dashed border-white/15 print:border-neutral-400 py-2 text-[11px] text-left space-y-1">
+                  <div className="flex justify-between text-neutral-300 print:text-black">
                     <span>{activeReceipt.isProforma ? "REF:" : "INV:"} {activeReceipt.invoiceNumber}</span>
                     <span>TBL: #{activeReceipt.tableNumber}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-neutral-400 print:text-neutral-600">
                     <span>DATE: {new Date(activeReceipt.dateTime).toLocaleDateString()}</span>
                     <span>
                       TIME:{" "}
@@ -3935,10 +4057,10 @@ export default function CashierDashboard() {
                       })}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-neutral-400 print:text-neutral-600">
                     <span>CASHIER: {user?.fullName || "Staff"}</span>
                     {activeReceipt.customerName && (
-                      <span className="truncate max-w-[140px]">
+                      <span className="truncate max-w-[140px] text-neutral-200 print:text-black">
                         CUST: {activeReceipt.customerName}
                       </span>
                     )}
@@ -3947,62 +4069,62 @@ export default function CashierDashboard() {
 
                 {/* Items Table */}
                 <div className="text-left space-y-1 py-1">
-                  <div className="flex justify-between font-bold border-b border-neutral-300 pb-1">
+                  <div className="flex justify-between font-bold border-b border-white/15 print:border-neutral-300 pb-1 text-neutral-300 print:text-black">
                     <span>ITEM</span>
                     <span>QTY</span>
                     <span>PRICE</span>
                   </div>
                   {activeReceipt.items?.map((item: any, idx: number) => (
-                    <div key={idx} className="flex justify-between text-[11px]">
+                    <div key={idx} className="flex justify-between text-[11px] text-neutral-200 print:text-black">
                       <span className="truncate max-w-[140px]">{item.name}</span>
-                      <span>{item.quantity}</span>
-                      <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-mono">× {item.quantity}</span>
+                      <span className="font-mono">₹{(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Totals */}
-                <div className="border-t border-dashed border-neutral-400 pt-2 text-left space-y-1">
-                  <div className="flex justify-between">
+                <div className="border-t border-dashed border-white/15 print:border-neutral-400 pt-2 text-left space-y-1">
+                  <div className="flex justify-between text-neutral-400 print:text-neutral-600">
                     <span>Subtotal:</span>
-                    <span>₹{Number(activeReceipt.subtotal).toFixed(2)}</span>
+                    <span className="text-white print:text-black">₹{Number(activeReceipt.subtotal).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-neutral-400 print:text-neutral-600">
                     <span>GST (5%):</span>
-                    <span>₹{Number(activeReceipt.taxAmount).toFixed(2)}</span>
+                    <span className="text-white print:text-black">₹{Number(activeReceipt.taxAmount).toFixed(2)}</span>
                   </div>
                   {activeReceipt.packagingCharge > 0 && (
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-neutral-400 print:text-neutral-600">
                       <span>Packaging Fee:</span>
-                      <span>₹{Number(activeReceipt.packagingCharge).toFixed(2)}</span>
+                      <span className="text-white print:text-black">₹{Number(activeReceipt.packagingCharge).toFixed(2)}</span>
                     </div>
                   )}
                   {activeReceipt.discount > 0 && (
-                    <div className="flex justify-between text-neutral-600">
+                    <div className="flex justify-between text-emerald-400 print:text-neutral-600">
                       <span>Discount:</span>
                       <span>-₹{Number(activeReceipt.discount).toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-black text-sm border-t border-neutral-400 pt-1">
+                  <div className="flex justify-between font-black text-sm border-t border-white/15 print:border-neutral-400 pt-1 text-white print:text-black">
                     <span>{activeReceipt.isProforma ? "AMOUNT DUE:" : "NET TOTAL:"}</span>
-                    <span>₹{Number(activeReceipt.grandTotal).toFixed(2)}</span>
+                    <span className="font-mono">₹{Number(activeReceipt.grandTotal).toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Payment Methods (If Settled) */}
                 {!activeReceipt.isProforma && activeReceipt.payments && activeReceipt.payments.length > 0 && (
-                  <div className="border-t border-b border-dashed border-neutral-400 py-1.5 text-left text-[11px]">
-                    <span className="font-bold block">PAID VIA:</span>
+                  <div className="border-t border-b border-dashed border-white/15 print:border-neutral-400 py-1.5 text-left text-[11px]">
+                    <span className="font-bold block text-neutral-300 print:text-black">PAID VIA:</span>
                     {activeReceipt.payments.map((p: any, idx: number) => (
-                      <div key={idx} className="flex justify-between">
+                      <div key={idx} className="flex justify-between text-neutral-300 print:text-black">
                         <span>• {p.method}:</span>
-                        <span>₹{Number(p.amount).toFixed(2)}</span>
+                        <span className="font-mono">₹{Number(p.amount).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
                 )}
 
-                <div className="text-[10px] text-neutral-600 pt-1">
+                <div className="text-[10px] text-neutral-400 print:text-neutral-600 pt-1">
                   {activeReceipt.isProforma ? (
                     <p>Please pay at the cashier counter. Thank you!</p>
                   ) : (
