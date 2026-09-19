@@ -260,12 +260,6 @@ const ShiftAnalyticsCharts = ({
   const cashAmt = Number(stats?.cashTotal || cashItem?.value || 0);
   const upiAmt = Number(stats?.upiTotal || upiItem?.value || 0);
   const cardAmt = Number(stats?.cardTotal || cardItem?.value || 0);
-  const digitalTotal = upiAmt + cardAmt;
-
-  const topMethod = useMemo(() => {
-    if (!paymentPieData || paymentPieData.length === 0) return null;
-    return [...paymentPieData].sort((a, b) => b.value - a.value)[0];
-  }, [paymentPieData]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6">
@@ -408,41 +402,6 @@ const ShiftAnalyticsCharts = ({
             </div>
           )}
         </div>
-
-        {/* Payment Bottom Highlights */}
-        <div className="relative z-10 grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.08]">
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
-              Top Tender
-            </span>
-            <span className="font-['Outfit'] text-xs font-black text-sky-400 block truncate tracking-tight">
-              {topMethod ? `${topMethod.name}` : "N/A"}
-            </span>
-            <span className="text-[9px] font-mono text-neutral-400 block">
-              {topMethod ? `${topMethod.percent}% of gross` : "0%"}
-            </span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
-              Cash in Till
-            </span>
-            <span className="font-['Outfit'] text-base font-black text-emerald-400 block tracking-tight">
-              ₹{cashAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-            </span>
-            <span className="text-[9px] font-mono text-neutral-400 block">Physical drawer</span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
-              Digital Volume
-            </span>
-            <span className="font-['Outfit'] text-base font-black text-white block tracking-tight">
-              ₹{digitalTotal.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-            </span>
-            <span className="text-[9px] font-mono text-neutral-400 block">UPI + Card</span>
-          </div>
-        </div>
       </div>
 
       {/* 6 cols: Hourly Revenue Curve / Area Chart (Redesigned) */}
@@ -468,28 +427,34 @@ const ShiftAnalyticsCharts = ({
               </div>
             </div>
 
-            {peakHour && peakHour.revenue > 0 ? (
-              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.1] shadow-lg backdrop-blur-xl">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                  Peak Hour
-                </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/10 text-[11px] font-mono text-neutral-300">
+                AOV: <span className="font-bold text-emerald-400">₹{aov}</span>
+              </span>
 
-                <div className="h-3 w-[1px] bg-white/15" />
+              {peakHour && peakHour.revenue > 0 ? (
+                <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/[0.04] border border-white/[0.1] shadow-lg backdrop-blur-xl">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                    Peak Hour
+                  </span>
 
-                <span className="text-xs font-['Outfit'] font-extrabold text-white">
-                  {peakHour.time}
-                </span>
+                  <div className="h-3 w-[1px] bg-white/15" />
 
-                <span className="px-2 py-0.5 rounded-lg bg-[#FA2D48]/15 border border-[#FA2D48]/30 font-['Outfit'] text-xs font-black text-[#FA2D48] tracking-tight">
-                  ₹{Number(peakHour.revenue).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono backdrop-blur-xl">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#FA2D48] animate-pulse" />
-                <span>Live Audit</span>
-              </div>
-            )}
+                  <span className="text-xs font-['Outfit'] font-extrabold text-white">
+                    {peakHour.time}
+                  </span>
+
+                  <span className="px-2 py-0.5 rounded-lg bg-[#FA2D48]/15 border border-[#FA2D48]/30 font-['Outfit'] text-xs font-black text-[#FA2D48] tracking-tight">
+                    ₹{Number(peakHour.revenue).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono backdrop-blur-xl">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#FA2D48] animate-pulse" />
+                  <span>Live Audit</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {hourlyRevenueData.length === 0 || hourlyRevenueData.every((d) => d.revenue === 0) ? (
@@ -567,36 +532,6 @@ const ShiftAnalyticsCharts = ({
               </ResponsiveContainer>
             </div>
           )}
-        </div>
-
-        {/* Chart Bottom Highlights: Apple Glass Cards */}
-        <div className="relative z-10 grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.08]">
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
-              Shift Gross
-            </span>
-            <span className="font-['Outfit'] text-base font-black text-white block tracking-tight">
-              ₹{Number(totalRevenue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
-              Average Order (AOV)
-            </span>
-            <span className="font-['Outfit'] text-base font-black text-emerald-400 block tracking-tight">
-              ₹{aov}
-            </span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
-              Total Receipts
-            </span>
-            <span className="font-['Outfit'] text-base font-black text-white block tracking-tight">
-              {totalBills} bills
-            </span>
-          </div>
         </div>
       </div>
     </div>
