@@ -31,8 +31,8 @@ import {
 } from "lucide-react";
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   PieChart,
   Pie,
   Cell,
@@ -204,11 +204,12 @@ interface TakeawayOrder {
 const ChartCustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
+    const val = Number(data.value) || 0;
     return (
       <div className="px-3.5 py-2.5 rounded-2xl bg-[#1c1c1f]/95 border border-white/10 shadow-2xl backdrop-blur-xl text-xs font-mono space-y-1">
         <p className="text-neutral-400 font-bold text-[11px]">{label || data.name}</p>
         <p className="text-white font-black text-sm">
-          ₹{Number(data.value).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          ₹{val.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
         </p>
         {data.payload?.percent && (
           <p className="text-[10px] text-neutral-400">
@@ -218,6 +219,11 @@ const ChartCustomTooltip = ({ active, payload, label }: any) => {
         {data.payload?.bills !== undefined && (
           <p className="text-[10px] text-neutral-400">
             Orders Settled: <span className="text-white font-bold">{data.payload.bills}</span>
+          </p>
+        )}
+        {data.payload?.bills > 0 && val > 0 && (
+          <p className="text-[10px] text-neutral-400">
+            Avg / Bill: <span className="text-purple-300 font-bold">₹{(val / data.payload.bills).toFixed(2)}</span>
           </p>
         )}
       </div>
@@ -370,7 +376,7 @@ const ShiftAnalyticsCharts = ({
                 <div className="flex items-center gap-2">
                   <h3 className="font-sans font-bold text-white text-sm tracking-tight">Revenue Trajectory</h3>
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-white/[0.06] text-neutral-400 border border-white/10">
-                    Shift Curve
+                    Hourly Volume
                   </span>
                 </div>
                 <p className="text-[11px] text-neutral-400 mt-0.5">Hourly transaction volume & collection momentum</p>
@@ -378,15 +384,10 @@ const ShiftAnalyticsCharts = ({
             </div>
 
             {peakHour && peakHour.revenue > 0 ? (
-              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.1] shadow-lg backdrop-blur-xl transition-all">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-5 w-5 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400">
-                    <Sparkles className="h-3 w-3" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                    Peak Hour
-                  </span>
-                </div>
+              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.1] shadow-lg backdrop-blur-xl">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                  Peak Hour
+                </span>
 
                 <div className="h-3 w-[1px] bg-white/15" />
 
@@ -418,22 +419,29 @@ const ShiftAnalyticsCharts = ({
               <div className="space-y-1">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider">Awaiting Shift Settlement Data</h4>
                 <p className="text-[11px] text-neutral-400 max-w-xs mx-auto leading-relaxed">
-                  Revenue curve will plot your hourly volume dynamically as tables and takeaway orders are paid.
+                  Hourly revenue bars will plot dynamically as tables and takeaway orders are paid.
                 </p>
               </div>
             </div>
           ) : (
             <div className="h-56 my-2 -ml-2 w-full">
               <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={hourlyRevenueData} margin={{ top: 12, right: 12, left: -15, bottom: 4 }}>
+                <BarChart
+                  data={hourlyRevenueData}
+                  margin={{ top: 14, right: 12, left: -15, bottom: 4 }}
+                  barCategoryGap={hourlyRevenueData.length > 8 ? "20%" : "28%"}
+                >
                   <defs>
-                    <linearGradient id="cashierRevenueGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FA2D48" stopOpacity={0.5} />
-                      <stop offset="60%" stopColor="#FA2D48" stopOpacity={0.12} />
-                      <stop offset="100%" stopColor="#FA2D48" stopOpacity={0.0} />
+                    <linearGradient id="cashierBarGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#FA2D48" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#FA2D48" stopOpacity={0.25} />
+                    </linearGradient>
+                    <linearGradient id="cashierPeakBarGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#FF6B81" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#FA2D48" stopOpacity={0.65} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                   <XAxis
                     dataKey="time"
                     stroke="#71717a"
@@ -450,18 +458,27 @@ const ShiftAnalyticsCharts = ({
                     dx={-4}
                     tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}`}
                   />
-                  <RechartsTooltip content={<ChartCustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#FA2D48"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#cashierRevenueGlow)"
-                    dot={{ r: 3, fill: "#FA2D48", stroke: "#1c1c1f", strokeWidth: 2 }}
-                    activeDot={{ r: 6, fill: "#FA2D48", stroke: "#ffffff", strokeWidth: 2.5 }}
+                  <RechartsTooltip
+                    content={<ChartCustomTooltip />}
+                    cursor={{ fill: "rgba(255,255,255,0.04)", radius: 8 }}
                   />
-                </AreaChart>
+                  <Bar
+                    dataKey="revenue"
+                    radius={[6, 6, 2, 2]}
+                    background={{ fill: "rgba(255,255,255,0.03)", radius: 6 }}
+                    maxBarSize={44}
+                  >
+                    {hourlyRevenueData.map((entry, index) => {
+                      const isPeak = peakHour && entry.time === peakHour.time && entry.revenue > 0;
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={isPeak ? "url(#cashierPeakBarGlow)" : "url(#cashierBarGlow)"}
+                        />
+                      );
+                    })}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           )}
@@ -1271,7 +1288,7 @@ export default function CashierDashboard() {
     const entries = Object.values(buckets).sort((a, b) => a.timestamp - b.timestamp);
     if (entries.length === 0) return [];
 
-    // If only 1 hour has transactions, pad previous and next hour so the curve renders beautifully
+    // If only 1 hour has transactions, pad previous and next hour so the chart renders with context
     if (entries.length === 1) {
       const single = entries[0];
       const prevDate = new Date(single.timestamp - 3600000);
@@ -1296,6 +1313,41 @@ export default function CashierDashboard() {
           bills: 0,
         },
       ];
+    }
+
+    // If shift spans across multiple hours within 14 hours, fill continuous timeline so quiet hours show clean empty tracks
+    const minTime = entries[0].timestamp;
+    const maxTime = entries[entries.length - 1].timestamp;
+    const diffHours = Math.round((maxTime - minTime) / 3600000);
+
+    if (diffHours >= 1 && diffHours <= 14) {
+      const continuous: Array<{ time: string; revenue: number; bills: number }> = [];
+      for (let t = minTime; t <= maxTime; t += 3600000) {
+        const d = new Date(t);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const h = d.getHours();
+        const key = `${y}-${m}-${day} ${String(h).padStart(2, "0")}:00`;
+        const period = h >= 12 ? "PM" : "AM";
+        const displayH = h % 12 === 0 ? 12 : h % 12;
+        const label = `${displayH} ${period}`;
+
+        if (buckets[key]) {
+          continuous.push({
+            time: label,
+            revenue: Math.round(buckets[key].revenue * 100) / 100,
+            bills: buckets[key].bills,
+          });
+        } else {
+          continuous.push({
+            time: label,
+            revenue: 0,
+            bills: 0,
+          });
+        }
+      }
+      return continuous;
     }
 
     return entries.map((e) => ({
