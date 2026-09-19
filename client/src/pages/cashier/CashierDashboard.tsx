@@ -38,6 +38,7 @@ import {
   Cell,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip as RechartsTooltip,
 } from "recharts";
 import toast from "react-hot-toast";
@@ -353,60 +354,86 @@ const ShiftAnalyticsCharts = ({
         </div>
       </div>
 
-      {/* 7 cols: Hourly Revenue Curve / Area Chart */}
-      <div className="lg:col-span-7 min-w-0 p-6 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
-        <div>
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-[#FA2D48]/10 text-[#FA2D48] border border-[#FA2D48]/20">
-                <TrendingUp className="h-4 w-4" />
+      {/* 7 cols: Hourly Revenue Curve / Area Chart (Redesigned) */}
+      <div className="lg:col-span-7 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between space-y-4">
+        {/* Subtle Ambient Glow */}
+        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-[#FA2D48]/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
+
+        <div className="relative z-10">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#FA2D48]/25 to-rose-600/15 text-[#FA2D48] border border-[#FA2D48]/30 shadow-lg shadow-[#FA2D48]/10">
+                <TrendingUp className="h-4 w-4 stroke-[2.5]" />
               </div>
               <div>
-                <h3 className="font-sans font-bold text-white text-sm">Revenue Trajectory</h3>
-                <p className="text-[11px] text-neutral-400">Hourly sales volume & settlement velocity</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-sans font-bold text-white text-sm tracking-tight">Revenue Trajectory</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-white/[0.06] text-neutral-400 border border-white/10">
+                    Shift Curve
+                  </span>
+                </div>
+                <p className="text-[11px] text-neutral-400 mt-0.5">Hourly transaction volume & collection momentum</p>
               </div>
             </div>
 
-            {peakHour && peakHour.revenue > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-bold">
-                <Sparkles className="h-3 w-3" />
+            {peakHour && peakHour.revenue > 0 ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 to-rose-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold shadow-sm">
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
                 <span>
                   Peak: {peakHour.time} (₹{peakHour.revenue.toLocaleString("en-IN")})
                 </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#FA2D48] animate-pulse" />
+                <span>Live Audit</span>
               </div>
             )}
           </div>
 
           {hourlyRevenueData.length === 0 || hourlyRevenueData.every((d) => d.revenue === 0) ? (
-            <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-2 text-neutral-500">
-              <TrendingUp className="h-10 w-10 opacity-30 stroke-[1.5]" />
-              <p className="text-xs font-medium text-neutral-400">No settled transactions in this shift yet</p>
-              <p className="text-[11px] text-neutral-600">
-                Hourly sales curve will populate automatically once dining or takeaway bills are settled
-              </p>
+            <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-3">
+              <div className="relative">
+                <div className="h-12 w-12 rounded-2xl bg-[#FA2D48]/10 border border-[#FA2D48]/20 flex items-center justify-center text-[#FA2D48] shadow-lg shadow-[#FA2D48]/10">
+                  <TrendingUp className="h-6 w-6 stroke-[1.8]" />
+                </div>
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 animate-ping" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-500" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">Awaiting Shift Settlement Data</h4>
+                <p className="text-[11px] text-neutral-400 max-w-xs mx-auto leading-relaxed">
+                  Revenue curve will plot your hourly volume dynamically as tables and takeaway orders are paid.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="h-56 my-2 -ml-2 w-full">
               <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={hourlyRevenueData} margin={{ top: 12, right: 12, left: -20, bottom: 0 }}>
+                <AreaChart data={hourlyRevenueData} margin={{ top: 12, right: 12, left: -15, bottom: 4 }}>
                   <defs>
                     <linearGradient id="cashierRevenueGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FA2D48" stopOpacity={0.45} />
-                      <stop offset="95%" stopColor="#FA2D48" stopOpacity={0.0} />
+                      <stop offset="0%" stopColor="#FA2D48" stopOpacity={0.5} />
+                      <stop offset="60%" stopColor="#FA2D48" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#FA2D48" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis
                     dataKey="time"
-                    stroke="#52525b"
+                    stroke="#71717a"
                     fontSize={10}
                     tickLine={false}
                     axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                    dy={6}
                   />
                   <YAxis
-                    stroke="#52525b"
+                    stroke="#71717a"
                     fontSize={10}
                     tickLine={false}
-                    axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                    axisLine={false}
+                    dx={-4}
                     tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}`}
                   />
                   <RechartsTooltip content={<ChartCustomTooltip />} />
@@ -414,11 +441,11 @@ const ShiftAnalyticsCharts = ({
                     type="monotone"
                     dataKey="revenue"
                     stroke="#FA2D48"
-                    strokeWidth={2.5}
+                    strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#cashierRevenueGlow)"
-                    dot={{ r: 2.5, fill: "#FA2D48", stroke: "#1c1c1f", strokeWidth: 1.5 }}
-                    activeDot={{ r: 5, fill: "#FA2D48", stroke: "#fff", strokeWidth: 2 }}
+                    dot={{ r: 3, fill: "#FA2D48", stroke: "#1c1c1f", strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: "#FA2D48", stroke: "#ffffff", strokeWidth: 2.5 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -426,32 +453,32 @@ const ShiftAnalyticsCharts = ({
           )}
         </div>
 
-        {/* Chart Bottom Highlights */}
-        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/[0.06]">
-          <div className="space-y-0.5">
+        {/* Chart Bottom Highlights: Apple Glass Cards */}
+        <div className="relative z-10 grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.08]">
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
             <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
               Shift Gross
             </span>
-            <span className="font-['Outfit'] text-sm font-bold text-white">
-              ₹{Number(totalRevenue).toFixed(2)}
+            <span className="font-['Outfit'] text-base font-black text-white block tracking-tight">
+              ₹{Number(totalRevenue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
           </div>
 
-          <div className="space-y-0.5">
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
             <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
-              Average Order Value
+              Average Order (AOV)
             </span>
-            <span className="font-['Outfit'] text-sm font-bold text-emerald-400">
+            <span className="font-['Outfit'] text-base font-black text-emerald-400 block tracking-tight">
               ₹{aov}
             </span>
           </div>
 
-          <div className="space-y-0.5">
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
             <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
-              Velocity (Settled)
+              Total Receipts
             </span>
-            <span className="font-['Outfit'] text-sm font-bold text-white">
-              {totalBills} receipts
+            <span className="font-['Outfit'] text-base font-black text-white block tracking-tight">
+              {totalBills} bills
             </span>
           </div>
         </div>
@@ -1683,13 +1710,13 @@ export default function CashierDashboard() {
 
             {/* Quick Table Search */}
             <div className="relative w-full lg:w-64">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
               <input
                 type="text"
                 value={tableSearch}
                 onChange={(e) => setTableSearch(e.target.value)}
                 placeholder="Search table #..."
-                className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.05] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
+                className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
               />
             </div>
           </div>
@@ -2077,13 +2104,13 @@ export default function CashierDashboard() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                   {/* Search Bar */}
                   <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
                     <input
                       type="text"
                       value={takeawaySearch}
                       onChange={(e) => setTakeawaySearch(e.target.value)}
                       placeholder="Search dishes for takeaway by name..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/[0.05] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
                     />
                   </div>
 
@@ -2707,13 +2734,13 @@ export default function CashierDashboard() {
                 </div>
 
                 <div className="relative w-full sm:w-72">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
                   <input
                     type="text"
                     value={takeawayQueueSearch}
                     onChange={(e) => setTakeawayQueueSearch(e.target.value)}
                     placeholder="Search token #, customer, phone..."
-                    className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.05] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50"
+                    className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
                   />
                 </div>
               </div>
@@ -2974,13 +3001,13 @@ export default function CashierDashboard() {
               </div>
 
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
                 <input
                   type="text"
                   value={historySearch}
                   onChange={(e) => setHistorySearch(e.target.value)}
                   placeholder="Filter table or invoice..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-xs text-white focus:outline-none focus:border-[#FA2D48]/50"
+                  className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
                 />
               </div>
             </div>
@@ -3898,13 +3925,13 @@ export default function CashierDashboard() {
               {/* Menu Browser */}
               <div className="space-y-3">
                 <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
                   <input
                     type="text"
                     value={punchSearch}
                     onChange={(e) => setPunchSearch(e.target.value)}
                     placeholder="Search dishes to add..."
-                    className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none"
+                    className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
                   />
                 </div>
 
