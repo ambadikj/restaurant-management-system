@@ -28,6 +28,7 @@ import {
   Sparkles,
   TrendingUp,
   PieChart as PieChartIcon,
+  Flame,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -2420,9 +2421,9 @@ export default function CashierDashboard() {
 
                           {/* Urgency Low Stock Badge */}
                           {isLowStock && (
-                            <div className="absolute bottom-2 left-2 bg-black/85 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-amber-400 border border-amber-500/30 flex items-center gap-1 z-10 shadow-md">
-                              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                              <span>Only {remaining} left</span>
+                            <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-xl border border-[#FA2D48]/40 text-white text-[10px] font-bold shadow-xl shadow-[#FA2D48]/20 animate-in fade-in zoom-in-95 duration-200">
+                              <Flame className="h-3 w-3 text-[#FA2D48] fill-[#FA2D48] animate-pulse" />
+                              <span className="text-neutral-200">Only <strong className="text-[#FA2D48] font-black">{remaining}</strong> left</span>
                             </div>
                           )}
 
@@ -2578,7 +2579,10 @@ export default function CashierDashboard() {
                   </div>
 
                   {/* Cart Items List */}
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  <div
+                    className="space-y-2 max-h-56 overflow-y-auto pr-2 scrollbar-none"
+                    style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.12) transparent" }}
+                  >
                     {takeawayCart.length === 0 ? (
                       <div className="text-center py-10 text-xs text-neutral-500">
                         Tray is empty. Tap dishes on the left to add items.
@@ -2599,8 +2603,9 @@ export default function CashierDashboard() {
                                 <h5 className="text-xs font-bold text-white truncate flex items-center gap-1.5">
                                   <span className="truncate">{ci.item.name}</span>
                                   {liveRemaining !== null && liveRemaining <= 5 && (
-                                    <span className="text-[10px] font-bold text-amber-400 font-mono shrink-0">
-                                      (Only {liveRemaining} left)
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FA2D48]/15 border border-[#FA2D48]/35 text-[#FA2D48] text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm">
+                                      <Flame className="h-2.5 w-2.5 fill-[#FA2D48]" />
+                                      Only {liveRemaining} left
                                     </span>
                                   )}
                                 </h5>
