@@ -1696,26 +1696,66 @@ export default function CashierDashboard() {
 
           {/* Action Pills */}
           <div className="relative z-10 flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.08] border border-white/[0.12] text-neutral-300 backdrop-blur-xl shadow-sm">
-              <Clock className="h-3.5 w-3.5 text-neutral-400" />
-              <span>{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
-            </div>
+            {activeTab === "takeaway" ? (
+              <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-black/50 border border-white/10 backdrop-blur-2xl shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => setTakeawaySubTab("register")}
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    takeawaySubTab === "register"
+                      ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
+                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10"
+                  }`}
+                >
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>Counter Register</span>
+                </button>
 
-            <button
-              onClick={handlePrintShiftReport}
-              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95 cursor-pointer"
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5 text-neutral-400" />
-              <span>Shift Register</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTakeawaySubTab("queue");
+                    loadTakeawayOrders();
+                  }}
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
+                    takeawaySubTab === "queue"
+                      ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
+                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10"
+                  }`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Orders & Pickup Queue</span>
+                  {takeawayActiveCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-black ml-1 shadow-sm">
+                      {takeawayActiveCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.08] border border-white/[0.12] text-neutral-300 backdrop-blur-xl shadow-sm">
+                  <Clock className="h-3.5 w-3.5 text-neutral-400" />
+                  <span>{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+                </div>
 
-            <button
-              onClick={loadFloorData}
-              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 cursor-pointer"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>Refresh</span>
-            </button>
+                <button
+                  onClick={handlePrintShiftReport}
+                  className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95 cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5 text-neutral-400" />
+                  <span>Shift Register</span>
+                </button>
+
+                <button
+                  onClick={loadFloorData}
+                  className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 cursor-pointer"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -2167,74 +2207,6 @@ export default function CashierDashboard() {
       {/* ================= TAB 2: TAKEAWAY POS & ORDERS QUEUE ================= */}
       {activeTab === "takeaway" && (
         <div className="space-y-6">
-          {/* Sub-navigation Header: Register vs Queue */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-3xl bg-[#1c1c1f]/80 border border-white/[0.08] backdrop-blur-2xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setTakeawaySubTab("register")}
-                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  takeawaySubTab === "register"
-                    ? "bg-white text-black shadow-lg shadow-white/10"
-                    : "bg-white/[0.05] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10"
-                }`}
-              >
-                <ShoppingBag className="h-3.5 w-3.5" />
-                <span>Counter Register</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setTakeawaySubTab("queue");
-                  loadTakeawayOrders();
-                }}
-                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
-                  takeawaySubTab === "queue"
-                    ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30"
-                    : "bg-white/[0.05] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10"
-                }`}
-              >
-                <Clock className="h-3.5 w-3.5" />
-                <span>Orders & Pickup Queue</span>
-                {takeawayActiveCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-black ml-1">
-                    {takeawayActiveCount}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Quick Live Counters & Refresh */}
-            <div className="flex items-center gap-3 text-xs text-neutral-400">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.03] border border-white/5">
-                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                <span className="text-neutral-400 text-[11px]">Kitchen:</span>
-                <strong className="text-white font-mono">{takeawayPreparingCount}</strong>
-              </div>
-
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.03] border border-white/5">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                <span className="text-neutral-400 text-[11px]">Ready:</span>
-                <strong className="text-white font-mono">{takeawayReadyCount}</strong>
-              </div>
-
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.03] border border-white/5">
-                <span className="h-2 w-2 rounded-full bg-neutral-500" />
-                <span className="text-neutral-400 text-[11px]">Served:</span>
-                <strong className="text-white font-mono">{takeawayServedCount}</strong>
-              </div>
-
-              <button
-                onClick={() => loadTakeawayOrders()}
-                disabled={isLoadingTakeawayOrders}
-                title="Refresh Queue"
-                className="p-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/10 transition-all cursor-pointer"
-              >
-                <RefreshCw
-                  className={`h-3.5 w-3.5 ${isLoadingTakeawayOrders ? "animate-spin text-[#FA2D48]" : ""}`}
-                />
-              </button>
-            </div>
-          </div>
 
           {/* SUB-TAB 1: COUNTER REGISTER (NEW TAKEAWAY ORDER) */}
           {takeawaySubTab === "register" && (
@@ -2873,15 +2845,28 @@ export default function CashierDashboard() {
                   ))}
                 </div>
 
-                <div className="relative w-full sm:w-72">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
-                  <input
-                    type="text"
-                    value={takeawayQueueSearch}
-                    onChange={(e) => setTakeawayQueueSearch(e.target.value)}
-                    placeholder="Search token #, customer, phone..."
-                    className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
-                  />
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-72">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
+                    <input
+                      type="text"
+                      value={takeawayQueueSearch}
+                      onChange={(e) => setTakeawayQueueSearch(e.target.value)}
+                      placeholder="Search token #, customer, phone..."
+                      className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => loadTakeawayOrders()}
+                    disabled={isLoadingTakeawayOrders}
+                    title="Refresh Queue"
+                    className="p-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/10 transition-all cursor-pointer shrink-0 active:scale-95"
+                  >
+                    <RefreshCw
+                      className={`h-3.5 w-3.5 ${isLoadingTakeawayOrders ? "animate-spin text-[#FA2D48]" : ""}`}
+                    />
+                  </button>
                 </div>
               </div>
 
