@@ -785,18 +785,31 @@ export const createTakeawayBill = async (req: Request, res: Response): Promise<v
 };
 
 /**
+ * Standard hospitality shift cutoff (5:00 AM).
+ * If current time is e.g. 02:30 AM, the shift belongs to yesterday 05:00 AM.
+ */
+const getShiftStartCutoff = (): Date => {
+  const now = new Date();
+  const cutoff = new Date(now);
+  if (now.getHours() < 5) {
+    cutoff.setDate(cutoff.getDate() - 1);
+  }
+  cutoff.setHours(5, 0, 0, 0);
+  return cutoff;
+};
+
+/**
  * GET /api/cashier/history
  * Today's closed bills and shift transactions
  */
 export const getSettledBillsHistory = async (req: Request, res: Response): Promise<void> => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const shiftCutoff = getShiftStartCutoff();
 
     const sessions = await prisma.diningSession.findMany({
       where: {
         status: "COMPLETED",
-        endTime: { gte: today },
+        endTime: { gte: shiftCutoff },
       },
       orderBy: { endTime: "desc" },
       include: {
@@ -857,13 +870,12 @@ export const getSettledBillsHistory = async (req: Request, res: Response): Promi
  */
 export const getCashierStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const shiftCutoff = getShiftStartCutoff();
 
     const payments = await prisma.payment.findMany({
       where: {
         paymentStatus: "PAID",
-        paidAt: { gte: today },
+        paidAt: { gte: shiftCutoff },
       },
     });
 
@@ -891,7 +903,7 @@ export const getCashierStats = async (req: Request, res: Response): Promise<void
     const settledSessionsCount = await prisma.diningSession.count({
       where: {
         status: "COMPLETED",
-        endTime: { gte: today },
+        endTime: { gte: shiftCutoff },
       },
     });
 

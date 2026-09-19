@@ -354,7 +354,7 @@ const ShiftAnalyticsCharts = ({
       </div>
 
       {/* 7 cols: Hourly Revenue Curve / Area Chart */}
-      <div className="lg:col-span-7 p-6 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
+      <div className="lg:col-span-7 min-w-0 p-6 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
             <div className="flex items-center gap-2.5">
@@ -367,7 +367,7 @@ const ShiftAnalyticsCharts = ({
               </div>
             </div>
 
-            {peakHour && (
+            {peakHour && peakHour.revenue > 0 && (
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-bold">
                 <Sparkles className="h-3 w-3" />
                 <span>
@@ -377,43 +377,53 @@ const ShiftAnalyticsCharts = ({
             )}
           </div>
 
-          <div className="h-56 my-2 -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={hourlyRevenueData} margin={{ top: 12, right: 12, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="cashierRevenueGlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FA2D48" stopOpacity={0.45} />
-                    <stop offset="95%" stopColor="#FA2D48" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="time"
-                  stroke="#52525b"
-                  fontSize={10}
-                  tickLine={false}
-                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
-                />
-                <YAxis
-                  stroke="#52525b"
-                  fontSize={10}
-                  tickLine={false}
-                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
-                  tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}`}
-                />
-                <RechartsTooltip content={<ChartCustomTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#FA2D48"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#cashierRevenueGlow)"
-                  dot={{ r: 2.5, fill: "#FA2D48", stroke: "#1c1c1f", strokeWidth: 1.5 }}
-                  activeDot={{ r: 5, fill: "#FA2D48", stroke: "#fff", strokeWidth: 2 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          {hourlyRevenueData.length === 0 || hourlyRevenueData.every((d) => d.revenue === 0) ? (
+            <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-2 text-neutral-500">
+              <TrendingUp className="h-10 w-10 opacity-30 stroke-[1.5]" />
+              <p className="text-xs font-medium text-neutral-400">No settled transactions in this shift yet</p>
+              <p className="text-[11px] text-neutral-600">
+                Hourly sales curve will populate automatically once dining or takeaway bills are settled
+              </p>
+            </div>
+          ) : (
+            <div className="h-56 my-2 -ml-2 w-full">
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={hourlyRevenueData} margin={{ top: 12, right: 12, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="cashierRevenueGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FA2D48" stopOpacity={0.45} />
+                      <stop offset="95%" stopColor="#FA2D48" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="time"
+                    stroke="#52525b"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                  />
+                  <YAxis
+                    stroke="#52525b"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                    tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}`}
+                  />
+                  <RechartsTooltip content={<ChartCustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#FA2D48"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#cashierRevenueGlow)"
+                    dot={{ r: 2.5, fill: "#FA2D48", stroke: "#1c1c1f", strokeWidth: 1.5 }}
+                    activeDot={{ r: 5, fill: "#FA2D48", stroke: "#fff", strokeWidth: 2 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
 
         {/* Chart Bottom Highlights */}
@@ -627,6 +637,7 @@ export default function CashierDashboard() {
     loadFloorData();
     loadMenuData();
     loadTakeawayOrders();
+    loadHistoryData();
   }, [authConfig, loadTakeawayOrders]);
 
   useEffect(() => {
@@ -667,6 +678,7 @@ export default function CashierDashboard() {
     const handleTableUpdate = () => {
       loadFloorData();
       loadTakeawayOrders();
+      loadHistoryData();
     };
 
     // Customer pressed "Request Bill"
@@ -896,6 +908,7 @@ export default function CashierDashboard() {
       setBillDetails(null);
       setInspectTable(null);
       loadFloorData();
+      loadHistoryData();
 
       // Show receipt modal
       if (res.data.receipt) {
@@ -1174,34 +1187,85 @@ export default function CashierDashboard() {
   }, [stats, history]);
 
   const hourlyRevenueData = useMemo(() => {
-    const buckets: Record<number, { revenue: number; bills: number }> = {};
-    for (let h = 9; h <= 23; h++) {
-      buckets[h] = { revenue: 0, bills: 0 };
+    if (!history || history.length === 0) {
+      return [];
     }
 
-    history.forEach((bill) => {
-      const d = new Date(bill.endTime || bill.startTime);
-      const h = d.getHours();
-      if (buckets[h] !== undefined) {
-        buckets[h].revenue += Number(bill.totalAmount) || 0;
-        buckets[h].bills += 1;
-      }
+    // Sort history chronologically by endTime / startTime
+    const sorted = [...history].sort((a, b) => {
+      const ta = new Date(a.endTime || a.startTime).getTime();
+      const tb = new Date(b.endTime || b.startTime).getTime();
+      return ta - tb;
     });
 
-    const hours = Object.keys(buckets).map(Number).sort((a, b) => a - b);
-    return hours.map((h) => {
+    const buckets: Record<string, { label: string; revenue: number; bills: number; timestamp: number }> = {};
+
+    sorted.forEach((bill) => {
+      const d = new Date(bill.endTime || bill.startTime);
+      if (isNaN(d.getTime())) return;
+
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const h = d.getHours();
+      const key = `${y}-${m}-${day} ${String(h).padStart(2, "0")}:00`;
+
       const period = h >= 12 ? "PM" : "AM";
       const displayH = h % 12 === 0 ? 12 : h % 12;
-      return {
-        time: `${displayH} ${period}`,
-        revenue: Math.round(buckets[h].revenue),
-        bills: buckets[h].bills,
-      };
+      const label = `${displayH} ${period}`;
+
+      if (!buckets[key]) {
+        buckets[key] = {
+          label,
+          revenue: 0,
+          bills: 0,
+          timestamp: new Date(y, d.getMonth(), d.getDate(), h).getTime(),
+        };
+      }
+
+      buckets[key].revenue += Number(bill.totalAmount) || 0;
+      buckets[key].bills += 1;
     });
+
+    const entries = Object.values(buckets).sort((a, b) => a.timestamp - b.timestamp);
+    if (entries.length === 0) return [];
+
+    // If only 1 hour has transactions, pad previous and next hour so the curve renders beautifully
+    if (entries.length === 1) {
+      const single = entries[0];
+      const prevDate = new Date(single.timestamp - 3600000);
+      const nextDate = new Date(single.timestamp + 3600000);
+      const prevH = prevDate.getHours();
+      const nextH = nextDate.getHours();
+
+      return [
+        {
+          time: `${prevH % 12 === 0 ? 12 : prevH % 12} ${prevH >= 12 ? "PM" : "AM"}`,
+          revenue: 0,
+          bills: 0,
+        },
+        {
+          time: single.label,
+          revenue: Math.round(single.revenue * 100) / 100,
+          bills: single.bills,
+        },
+        {
+          time: `${nextH % 12 === 0 ? 12 : nextH % 12} ${nextH >= 12 ? "PM" : "AM"}`,
+          revenue: 0,
+          bills: 0,
+        },
+      ];
+    }
+
+    return entries.map((e) => ({
+      time: e.label,
+      revenue: Math.round(e.revenue * 100) / 100,
+      bills: e.bills,
+    }));
   }, [history]);
 
   const peakHour = useMemo(() => {
-    if (hourlyRevenueData.length === 0) return null;
+    if (!hourlyRevenueData || hourlyRevenueData.length === 0) return null;
     const max = [...hourlyRevenueData].sort((a, b) => b.revenue - a.revenue)[0];
     return max && max.revenue > 0 ? max : null;
   }, [hourlyRevenueData]);
@@ -1396,6 +1460,7 @@ export default function CashierDashboard() {
       setTakeawaySplitAmounts({ CASH: "", UPI: "", CARD: "" });
       loadFloorData();
       loadTakeawayOrders();
+      loadHistoryData();
 
       if (res.data.receipt) {
         // Automatically pop up Customer Token Slip for 1-click printing
