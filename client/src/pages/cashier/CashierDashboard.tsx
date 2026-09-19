@@ -26,6 +26,9 @@ import {
   Check,
   Edit3,
   FileText,
+  Users,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { socket } from "../../lib/socket";
@@ -1244,193 +1247,221 @@ export default function CashierDashboard() {
                 return (
                   <div
                     key={table.id}
-                    className="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-[#1c1c1f]/85 hover:bg-[#222227] border border-white/[0.08] hover:border-white/[0.2] p-4.5 backdrop-blur-2xl shadow-xl hover:shadow-2xl transition-all duration-300"
+                    className={`group relative flex flex-col justify-between rounded-3xl p-5 bg-[#18181b]/95 hover:bg-[#1f1f25] border transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 overflow-hidden ${
+                      isBilling
+                        ? "border-[#FA2D48]/50 ring-1 ring-[#FA2D48]/40 shadow-[#FA2D48]/15"
+                        : isOccupied
+                        ? "border-sky-500/30 hover:border-sky-500/60 shadow-sky-500/10"
+                        : isCleaning
+                        ? "border-purple-500/30 hover:border-purple-500/60 shadow-purple-500/10"
+                        : "border-emerald-500/20 hover:border-emerald-500/50 shadow-emerald-500/5"
+                    }`}
                   >
-                    {/* Top Tile / Artwork Area */}
+                    {/* Ambient glowing radial spotlight in corner */}
                     <div
-                      onClick={() => table.activeSession && setInspectTable(table)}
-                      className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-black/40 border border-white/[0.09] flex flex-col items-center justify-between p-4 transition-all group-hover:border-white/[0.2] cursor-pointer"
-                    >
-                      {/* Ambient Glow */}
-                      <div
-                        className={`pointer-events-none absolute inset-0 opacity-25 group-hover:opacity-40 transition-opacity duration-300 ${
-                          isBilling
-                            ? "bg-radial from-[#FA2D48]/50 via-rose-950/20 to-transparent"
-                            : isOccupied
-                            ? "bg-radial from-sky-500/40 via-sky-950/20 to-transparent"
-                            : isCleaning
-                            ? "bg-radial from-purple-500/40 via-purple-950/20 to-transparent"
-                            : "bg-radial from-emerald-500/40 via-emerald-950/20 to-transparent"
-                        }`}
-                      />
+                      className={`pointer-events-none absolute -top-10 -right-10 h-36 w-36 rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition-opacity duration-500 ${
+                        isBilling
+                          ? "bg-[#FA2D48]"
+                          : isOccupied
+                          ? "bg-sky-500"
+                          : isCleaning
+                          ? "bg-purple-500"
+                          : "bg-emerald-500"
+                      }`}
+                    />
 
-                      {/* Top Bar: Table Number Badge & Live Status Pill */}
-                      <div className="w-full flex items-center justify-between z-10">
-                        <span className="rounded-full bg-black/75 backdrop-blur-md px-2.5 py-1 text-xs font-mono font-black text-white border border-white/[0.14] shadow-md">
-                          TABLE {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
-                        </span>
-
-                        {/* Status Pill */}
-                        <div>
-                          {isBilling && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FA2D48]/25 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-[#FA2D48] border border-[#FA2D48]/40 animate-pulse">
-                              <span className="relative flex h-1.5 w-1.5">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FA2D48] opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#FA2D48]"></span>
-                              </span>
-                              Bill Requested
-                            </span>
-                          )}
-                          {isOccupied && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/25 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-sky-400 border border-sky-500/30">
-                              <span className="relative flex h-1.5 w-1.5">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500"></span>
-                              </span>
-                              Occupied
-                            </span>
-                          )}
-                          {isAvail && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/25 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
-                              <span className="relative flex h-1.5 w-1.5">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                              </span>
-                              Ready
-                            </span>
-                          )}
-                          {isCleaning && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/25 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-purple-400 border border-purple-500/30">
-                              Cleaning
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Center Info: Big Running Total or Capacity Icon */}
-                      <div className="z-10 text-center my-auto">
-                        {table.activeSession ? (
-                          <div className="space-y-1">
-                            <span className="text-[10px] text-neutral-400 font-mono uppercase tracking-wider block">
-                              Running Bill
-                            </span>
-                            <span className="font-['Outfit'] text-3xl font-black text-white block tracking-tight">
-                              ₹{table.activeSession.totalAmount.toFixed(2)}
-                            </span>
-                            <span className="text-[11px] text-neutral-400 block font-medium">
-                              {table.activeSession.totalItems} portions • {table.activeSession.ordersCount} courses
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="space-y-1 text-neutral-400">
-                            <UtensilsCrossed className="h-8 w-8 mx-auto text-neutral-600 group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-xs font-semibold block text-neutral-300">
-                              Ready for Guests
-                            </span>
-                            <span className="text-[10px] text-neutral-400 block">
-                              Capacity: {table.capacity} Guests
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Bottom Banner inside tile: Click hint or Session Code */}
-                      <div className="w-full text-center z-10">
-                        {table.activeSession ? (
-                          <span className="text-[10px] font-mono text-neutral-400 group-hover:text-white flex items-center justify-center gap-1">
-                            <Eye className="h-3 w-3 text-[#FA2D48]" />
-                            <span>Click to inspect order items</span>
+                    {/* Header Row: Table # + Capacity Chip + Status Beacon Pill */}
+                    <div className="flex items-start justify-between gap-2 z-10">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-['Outfit'] text-xl font-black text-white tracking-tight">
+                            Table {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
                           </span>
-                        ) : (
-                          <span className="text-[10px] text-neutral-400">
-                            Available for Seating
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-[10px] font-bold text-neutral-300">
+                            <Users className="h-3 w-3 text-neutral-400" />
+                            <span>{table.capacity} Seats</span>
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-neutral-400 mt-0.5 block">
+                          {table.activeSession
+                            ? `Session #${table.activeSession.sessionCode?.slice(-6) || table.activeSession.id}`
+                            : "Ready for seating"}
+                        </span>
+                      </div>
+
+                      {/* Live Status Pill */}
+                      <div className="shrink-0">
+                        {isBilling && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FA2D48]/20 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-[#FA2D48] border border-[#FA2D48]/40 animate-pulse shadow-sm shadow-[#FA2D48]/30">
+                            <span className="relative flex h-2 w-2">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FA2D48] opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FA2D48]" />
+                            </span>
+                            <span>Bill Due</span>
+                          </span>
+                        )}
+                        {isOccupied && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/20 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-sky-400 border border-sky-500/30 shadow-sm shadow-sky-500/20">
+                            <span className="relative flex h-2 w-2">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
+                            </span>
+                            <span>Occupied</span>
+                          </span>
+                        )}
+                        {isAvail && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/20">
+                            <span className="relative flex h-2 w-2">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                            </span>
+                            <span>Available</span>
+                          </span>
+                        )}
+                        {isCleaning && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-purple-300 border border-purple-500/30 shadow-sm shadow-purple-500/20">
+                            <Sparkles className="h-3 w-3" />
+                            <span>Cleaning</span>
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Mid Action Buttons: Check Pre-bill, Transfer, Add Dishes */}
-                    <div className="pt-3 pb-2 flex items-center justify-between gap-1.5">
+                    {/* Center Content Section */}
+                    <div className="my-5 z-10">
                       {table.activeSession ? (
-                        <>
-                          <button
-                            onClick={() => handlePrintEstimate(table)}
-                            title="Print Pre-bill Check"
-                            className="flex-1 py-1.5 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-semibold text-[11px] transition-all cursor-pointer"
-                          >
-                            <Printer className="h-3 w-3 text-neutral-400" />
-                            <span>Check</span>
-                          </button>
+                        <div
+                          onClick={() => setInspectTable(table)}
+                          className="p-4 rounded-2xl bg-black/40 border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group/session relative overflow-hidden"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-bold">
+                              Running Bill
+                            </span>
+                            <span className="text-[10px] text-neutral-400 group-hover/session:text-[#FA2D48] transition-colors flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              <span>Details</span>
+                            </span>
+                          </div>
+
+                          <div className="mt-1.5 flex items-baseline justify-between">
+                            <span className="font-['Outfit'] text-3xl font-black text-white tracking-tight">
+                              ₹{table.activeSession.totalAmount.toFixed(2)}
+                            </span>
+                            <span className="font-mono text-[11px] font-bold text-neutral-400 bg-white/[0.05] px-2 py-0.5 rounded-md border border-white/5">
+                              {table.activeSession.totalItems} items
+                            </span>
+                          </div>
+
+                          <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-neutral-400 font-medium">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-sky-400" />
+                              <span>{table.activeSession.ordersCount} rounds</span>
+                            </span>
+                            <span className="text-[#FA2D48] font-bold">Click to view</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 rounded-2xl bg-emerald-500/[0.04] border border-emerald-500/15 flex flex-col items-center text-center space-y-2.5">
+                          <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform duration-300">
+                            <UtensilsCrossed className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <span className="font-['Outfit'] text-sm font-bold text-white block">
+                              Ready for Guests
+                            </span>
+                            <span className="text-[11px] text-neutral-400 block mt-0.5">
+                              Table sanitized & set for up to {table.capacity}
+                            </span>
+                          </div>
 
                           <button
-                            onClick={() => {
-                              setTransferSourceTable(table);
-                              setTransferDestTableNumber(null);
-                            }}
-                            title="Transfer session to another table"
-                            className="flex-1 py-1.5 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-semibold text-[11px] transition-all cursor-pointer"
-                          >
-                            <ArrowRightLeft className="h-3 w-3 text-neutral-400" />
-                            <span>Transfer</span>
-                          </button>
-
-                          <button
+                            type="button"
                             onClick={() => {
                               setPunchTable(table);
                               setPunchCart([]);
                               setPunchNotes("");
                             }}
-                            title="Add dishes directly to table"
-                            className="flex-1 py-1.5 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-semibold text-[11px] transition-all cursor-pointer"
+                            className="w-full mt-1 py-2.5 px-4 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 active:scale-98 shadow-sm cursor-pointer"
                           >
-                            <PlusCircle className="h-3 w-3 text-[#FA2D48]" />
-                            <span>Add</span>
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span>Punch Dine-in Order</span>
                           </button>
-                        </>
-                      ) : (
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Active Session Mid-Actions */}
+                    {table.activeSession && (
+                      <div className="grid grid-cols-3 gap-1.5 mb-3 z-10">
+                        <button
+                          onClick={() => handlePrintEstimate(table)}
+                          title="Print Pre-bill Check"
+                          className="py-2 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
+                        >
+                          <Printer className="h-3.5 w-3.5 text-neutral-400" />
+                          <span>Check</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setTransferSourceTable(table);
+                            setTransferDestTableNumber(null);
+                          }}
+                          title="Transfer table"
+                          className="py-2 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
+                        >
+                          <ArrowRightLeft className="h-3.5 w-3.5 text-neutral-400" />
+                          <span>Move</span>
+                        </button>
+
                         <button
                           onClick={() => {
                             setPunchTable(table);
                             setPunchCart([]);
                             setPunchNotes("");
                           }}
-                          className="w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/10 flex items-center justify-center gap-1.5 font-semibold text-xs transition-all cursor-pointer"
+                          title="Add more dishes"
+                          className="py-2 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
                         >
-                          <PlusCircle className="h-3.5 w-3.5 text-emerald-400" />
-                          <span>Punch Dine-in Order</span>
+                          <PlusCircle className="h-3.5 w-3.5 text-[#FA2D48]" />
+                          <span>+ Add</span>
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Bottom Controls: Status Selector & Settle Button */}
-                    <div className="pt-2 border-t border-white/[0.08] flex items-center gap-2">
-                      <select
-                        value={table.status}
-                        onChange={(e) =>
-                          handleUpdateTableStatus(
-                            table.tableNumber,
-                            e.target.value as FloorTable["status"]
-                          )
-                        }
-                        className="flex-1 bg-white/[0.04] text-xs font-semibold text-neutral-200 px-3 py-2 rounded-2xl border border-white/10 focus:outline-none cursor-pointer"
-                      >
-                        <option value="AVAILABLE" className="bg-[#18181c]">Available</option>
-                        <option value="OCCUPIED" className="bg-[#18181c]">Occupied</option>
-                        <option value="BILLING" className="bg-[#18181c]">Billing</option>
-                        <option value="CLEANING" className="bg-[#18181c]">Cleaning</option>
-                      </select>
+                    <div className="pt-3 border-t border-white/[0.08] flex items-center gap-2 z-10">
+                      <div className="relative flex-1">
+                        <select
+                          value={table.status}
+                          onChange={(e) =>
+                            handleUpdateTableStatus(
+                              table.tableNumber,
+                              e.target.value as FloorTable["status"]
+                            )
+                          }
+                          className="w-full appearance-none bg-white/[0.04] hover:bg-white/[0.08] text-xs font-bold text-neutral-300 pl-3 pr-7 py-2 rounded-xl border border-white/10 focus:outline-none cursor-pointer transition-colors"
+                        >
+                          <option value="AVAILABLE" className="bg-[#18181c] text-white">Available</option>
+                          <option value="OCCUPIED" className="bg-[#18181c] text-white">Occupied</option>
+                          <option value="BILLING" className="bg-[#18181c] text-white">Billing</option>
+                          <option value="CLEANING" className="bg-[#18181c] text-white">Cleaning</option>
+                        </select>
+                        <ChevronRight className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 rotate-90 text-neutral-500 pointer-events-none" />
+                      </div>
 
                       {table.activeSession && (
                         <button
                           onClick={() => openSettlementModal(table)}
-                          className={`px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-md cursor-pointer ${
+                          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-lg cursor-pointer ${
                             isBilling
-                              ? "bg-[#FA2D48] text-white hover:bg-[#ff3b56] shadow-lg shadow-[#FA2D48]/30"
+                              ? "bg-gradient-to-r from-[#FA2D48] to-[#ff3b56] text-white shadow-[#FA2D48]/30 animate-pulse"
                               : "bg-white text-black hover:bg-neutral-200"
                           }`}
                         >
                           <Receipt className="h-3.5 w-3.5" />
-                          <span>Settle</span>
+                          <span>Checkout</span>
                         </button>
                       )}
                     </div>
@@ -1564,13 +1595,20 @@ export default function CashierDashboard() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[660px] overflow-y-auto scrollbar-none pr-1">
                   {filteredTakeawayDishes.map((dish) => {
                     const cartEntry = takeawayCart.find((ci) => ci.item.id === dish.id);
+                    const isVeg = !/chicken|meat|fish|beef|pork|egg|mutton|prawn|seafood/i.test(dish.name);
+
                     return (
                       <div
                         key={dish.id}
                         onClick={() => addToTakeawayCart(dish)}
-                        className="p-3.5 rounded-3xl bg-[#1c1c1f]/85 hover:bg-[#222227] border border-white/[0.08] hover:border-white/[0.2] backdrop-blur-2xl transition-all cursor-pointer flex flex-col justify-between group active:scale-98 shadow-xl"
+                        className={`group relative flex flex-col justify-between rounded-3xl p-3.5 bg-[#18181b]/90 hover:bg-[#202026] border transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:-translate-y-1.5 select-none overflow-hidden ${
+                          cartEntry
+                            ? "border-[#FA2D48]/50 ring-1 ring-[#FA2D48]/30 shadow-[#FA2D48]/10"
+                            : "border-white/[0.08] hover:border-white/[0.25]"
+                        }`}
                       >
-                        <div className="aspect-square w-full rounded-2xl bg-black/40 overflow-hidden mb-2.5 relative border border-white/[0.06]">
+                        {/* Artwork Area with gradient overlay and badges */}
+                        <div className="aspect-[4/3] w-full rounded-2xl bg-black/50 overflow-hidden mb-3 relative border border-white/[0.06]">
                           <img
                             src={
                               dish.imageUrl?.startsWith("http")
@@ -1578,26 +1616,86 @@ export default function CashierDashboard() {
                                 : `${UPLOADS_BASE}/${dish.imageUrl?.replace(/^\/+/, "")}`
                             }
                             alt={dish.name}
-                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
                             onError={(e: any) => {
                               e.target.src =
                                 "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80";
                             }}
                           />
+
+                          {/* Subtle Bottom Gradient Vignette */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                          {/* Veg / Non-Veg Indicator Badge */}
+                          <div className="absolute top-2 left-2 z-10">
+                            <div
+                              className={`h-4 w-4 rounded-md border flex items-center justify-center bg-black/75 backdrop-blur-md ${
+                                isVeg ? "border-emerald-500/80" : "border-rose-500/80"
+                              }`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full ${isVeg ? "bg-emerald-400" : "bg-rose-500"}`} />
+                            </div>
+                          </div>
+
+                          {/* In-Tray Quantity Badge */}
                           {cartEntry && (
-                            <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-[#FA2D48] text-white text-[11px] font-black flex items-center justify-center shadow-lg shadow-[#FA2D48]/40">
-                              {cartEntry.quantity}
+                            <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FA2D48] text-white text-[11px] font-black shadow-lg shadow-[#FA2D48]/50 backdrop-blur-md animate-in zoom-in-50 duration-200">
+                              <span>×{cartEntry.quantity}</span>
                             </div>
                           )}
                         </div>
 
-                        <div className="leading-snug">
-                          <h4 className="text-xs font-bold text-white line-clamp-1 group-hover:text-[#FA2D48] transition-colors">
+                        {/* Dish Details */}
+                        <div className="flex flex-col justify-between flex-1">
+                          <h4 className="font-['Outfit'] text-sm font-extrabold text-white line-clamp-1 group-hover:text-[#FA2D48] transition-colors">
                             {dish.name}
                           </h4>
-                          <span className="font-['Outfit'] text-xs font-black text-white mt-1 block">
-                            ₹{Number(dish.price).toFixed(2)}
-                          </span>
+
+                          {dish.description && (
+                            <p className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
+                              {dish.description}
+                            </p>
+                          )}
+
+                          {/* Price & Interactive Action */}
+                          <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/[0.06]">
+                            <span className="font-['Outfit'] text-sm font-black text-white group-hover:text-emerald-400 transition-colors tracking-tight">
+                              ₹{Number(dish.price).toFixed(2)}
+                            </span>
+
+                            {cartEntry ? (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex items-center gap-1 bg-white/[0.08] p-0.5 rounded-xl border border-white/10"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => updateTakeawayQty(dish.id, -1)}
+                                  className="h-6 w-6 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer transition-colors"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </button>
+                                <span className="font-mono text-xs font-bold text-white px-1.5">
+                                  {cartEntry.quantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => addToTakeawayCart(dish)}
+                                  className="h-6 w-6 rounded-lg bg-[#FA2D48] hover:bg-[#ff3b56] text-white flex items-center justify-center cursor-pointer transition-colors"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="h-7 px-3 rounded-xl bg-white/[0.08] group-hover:bg-[#FA2D48] group-hover:text-white text-neutral-300 text-xs font-bold flex items-center gap-1 transition-all shadow-sm"
+                              >
+                                <Plus className="h-3 w-3" />
+                                <span>Add</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -1964,59 +2062,136 @@ export default function CashierDashboard() {
                       </div>
                     ) : (
                       /* Split Mode: Multiple Currencies Inputs */
-                      <div className="p-3 rounded-2xl bg-black/40 border border-white/10 space-y-2.5">
-                        {(["CASH", "UPI", "CARD"] as const).map((method) => (
-                          <div key={method} className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] font-bold text-neutral-300 w-12">{method}</span>
-                            <div className="relative flex-1">
-                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-neutral-500">
-                                ₹
-                              </span>
-                              <input
-                                type="number"
-                                value={takeawaySplitAmounts[method]}
-                                onChange={(e) =>
-                                  setTakeawaySplitAmounts((prev) => ({
-                                    ...prev,
-                                    [method]: e.target.value,
-                                  }))
-                                }
-                                placeholder="0.00"
-                                className="w-full pl-6 pr-2 py-1 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white focus:outline-none"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setTakeawaySplitAmounts((prev) => {
-                                  const otherSum = (["CASH", "UPI", "CARD"] as const)
-                                    .filter((m) => m !== method)
-                                    .reduce((sum, m) => sum + (parseFloat(prev[m]) || 0), 0);
-                                  const rem = Math.max(0, parseFloat((takeawayGrandTotal - otherSum).toFixed(2)));
-                                  return {
-                                    ...prev,
-                                    [method]: rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0",
-                                  };
-                                });
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 hover:text-white transition-all cursor-pointer whitespace-nowrap"
-                            >
-                              Fill Rem.
-                            </button>
-                          </div>
-                        ))}
-
-                        <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
-                          <span className="text-neutral-400">Allocated / Total:</span>
-                          <span className="font-mono text-white font-bold">
-                            ₹{takeawaySplitTotal.toFixed(2)} / ₹{takeawayGrandTotal.toFixed(2)}
+                      <div className="p-4 rounded-3xl bg-black/60 border border-white/10 space-y-3 shadow-inner">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                          <span className="text-xs font-bold text-neutral-300 flex items-center gap-1.5">
+                            <ArrowRightLeft className="h-3.5 w-3.5 text-[#FA2D48]" />
+                            <span>Split Allocation</span>
+                          </span>
+                          <span className="font-mono text-xs font-bold text-white bg-white/[0.08] px-2.5 py-0.5 rounded-full border border-white/10">
+                            Target: ₹{takeawayGrandTotal.toFixed(2)}
                           </span>
                         </div>
 
-                        {Math.abs(takeawaySplitRemaining) > 0.01 && (
-                          <div className="text-[11px] text-[#FA2D48] text-right font-medium">
-                            ₹{Math.abs(takeawaySplitRemaining).toFixed(2)}{" "}
-                            {takeawaySplitRemaining > 0 ? "unallocated" : "over allocated"}
+                        {(["CASH", "UPI", "CARD"] as const).map((method) => {
+                          const icon =
+                            method === "CASH" ? (
+                              <Banknote className="h-3.5 w-3.5 text-emerald-400" />
+                            ) : method === "UPI" ? (
+                              <QrCode className="h-3.5 w-3.5 text-sky-400" />
+                            ) : (
+                              <CreditCard className="h-3.5 w-3.5 text-violet-400" />
+                            );
+                          const bgTint =
+                            method === "CASH"
+                              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                              : method === "UPI"
+                              ? "bg-sky-500/10 border-sky-500/20 text-sky-400"
+                              : "bg-violet-500/10 border-violet-500/20 text-violet-400";
+
+                          return (
+                            <div
+                              key={method}
+                              className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.15] transition-all"
+                            >
+                              <div
+                                className={`w-20 px-2 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold shrink-0 ${bgTint}`}
+                              >
+                                {icon}
+                                <span>{method}</span>
+                              </div>
+                              <div className="relative flex-1">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-neutral-500">
+                                  ₹
+                                </span>
+                                <input
+                                  type="number"
+                                  value={takeawaySplitAmounts[method]}
+                                  onChange={(e) =>
+                                    setTakeawaySplitAmounts((prev) => ({
+                                      ...prev,
+                                      [method]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="0.00"
+                                  className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/50 border border-white/10 focus:border-white/30 text-sm font-mono font-bold text-white focus:outline-none transition-all"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTakeawaySplitAmounts((prev) => {
+                                    const otherSum = (["CASH", "UPI", "CARD"] as const)
+                                      .filter((m) => m !== method)
+                                      .reduce((sum, m) => sum + (parseFloat(prev[m]) || 0), 0);
+                                    const rem = Math.max(0, parseFloat((takeawayGrandTotal - otherSum).toFixed(2)));
+                                    return {
+                                      ...prev,
+                                      [method]: rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0",
+                                    };
+                                  });
+                                }}
+                                className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                              >
+                                Fill Rem.
+                              </button>
+                            </div>
+                          );
+                        })}
+
+                        {/* Real-time 3-color Segmented Progress Bar */}
+                        {takeawayGrandTotal > 0 && (
+                          <div className="space-y-1.5 pt-2">
+                            <div className="h-2 w-full bg-white/[0.08] rounded-full overflow-hidden flex gap-0.5 p-0.5">
+                              <div
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    ((Number(takeawaySplitAmounts.CASH) || 0) / takeawayGrandTotal) * 100
+                                  )}%`,
+                                }}
+                                className="bg-emerald-400 rounded-full transition-all duration-300"
+                                title="Cash"
+                              />
+                              <div
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    ((Number(takeawaySplitAmounts.UPI) || 0) / takeawayGrandTotal) * 100
+                                  )}%`,
+                                }}
+                                className="bg-sky-400 rounded-full transition-all duration-300"
+                                title="UPI"
+                              />
+                              <div
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    ((Number(takeawaySplitAmounts.CARD) || 0) / takeawayGrandTotal) * 100
+                                  )}%`,
+                                }}
+                                className="bg-violet-400 rounded-full transition-all duration-300"
+                                title="Card"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-xs font-mono pt-1">
+                              <span className="text-neutral-400">
+                                Allocated: <b className="text-white">₹{takeawaySplitTotal.toFixed(2)}</b>
+                              </span>
+                              {Math.abs(takeawaySplitRemaining) <= 0.05 ? (
+                                <span className="text-emerald-400 font-bold flex items-center gap-1">
+                                  <Check className="h-3.5 w-3.5" /> Fully Allocated
+                                </span>
+                              ) : takeawaySplitRemaining > 0 ? (
+                                <span className="text-amber-400 font-bold">
+                                  ₹{takeawaySplitRemaining.toFixed(2)} remaining
+                                </span>
+                              ) : (
+                                <span className="text-rose-400 font-bold">
+                                  ₹{Math.abs(takeawaySplitRemaining).toFixed(2)} over
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -2652,7 +2827,7 @@ export default function CashierDashboard() {
       {/* ================= MODAL 1: BILL SETTLEMENT & SPLIT PAYMENT ================= */}
       {settlementTable && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl bg-[#1c1c1f]/95 border border-white/[0.12] rounded-3xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto backdrop-blur-2xl">
+          <div className="w-full max-w-3xl bg-[#141417]/95 border border-white/[0.12] rounded-3xl p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto backdrop-blur-3xl">
             {isLoadingBill || !billDetails ? (
               <div className="py-20 flex flex-col items-center justify-center gap-3 text-center">
                 <RefreshCw className="h-7 w-7 text-white animate-spin" />
@@ -2663,11 +2838,15 @@ export default function CashierDashboard() {
                 {/* Modal Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-white/10">
                   <div>
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
+                    <span className="text-[10px] font-black text-[#FA2D48] uppercase tracking-wider block">
                       Checkout & Payment Gateway
                     </span>
-                    <h3 className="font-sans text-lg font-black text-white mt-0.5">
-                      Table #{settlementTable.tableNumber} • Session {billDetails.session.sessionCode}
+                    <h3 className="font-['Outfit'] text-xl font-black text-white mt-0.5 flex items-center gap-2">
+                      <span>Table #{settlementTable.tableNumber}</span>
+                      <span className="text-neutral-500 font-light">•</span>
+                      <span className="font-mono text-xs font-bold text-neutral-400 bg-white/[0.06] px-2.5 py-0.5 rounded-full border border-white/10">
+                        {billDetails.session.sessionCode}
+                      </span>
                     </h3>
                   </div>
                   <button
@@ -2675,7 +2854,7 @@ export default function CashierDashboard() {
                       setSettlementTable(null);
                       setBillDetails(null);
                     }}
-                    className="h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center cursor-pointer"
+                    className="h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-neutral-400 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -2684,116 +2863,137 @@ export default function CashierDashboard() {
                 {/* Modal Body: Two Columns */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Left Column: Itemized Dish Summary */}
-                  <div className="space-y-3 bg-white/[0.03] p-4.5 rounded-3xl border border-white/5">
-                    <span className="text-xs font-bold text-neutral-400 uppercase tracking-wide block">
-                      Itemized Order Breakdown
-                    </span>
+                  <div className="space-y-3.5 bg-black/50 p-5 rounded-3xl border border-white/[0.08] flex flex-col justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider block mb-3 flex items-center gap-1.5">
+                        <Receipt className="h-3.5 w-3.5 text-[#FA2D48]" />
+                        <span>Itemized Order Breakdown</span>
+                      </span>
 
-                    <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                      {billDetails.items.map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between text-xs">
-                          <div className="truncate pr-2">
-                            <span className="font-bold text-white">{item.name}</span>
-                            <span className="text-neutral-400 ml-1.5">× {item.quantity}</span>
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-none">
+                        {billDetails.items && billDetails.items.length > 0 ? (
+                          billDetails.items.map((item: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between text-xs py-1 border-b border-white/[0.04]"
+                            >
+                              <div className="truncate pr-2">
+                                <span className="font-bold text-white">{item.name}</span>
+                                <span className="text-neutral-400 ml-1.5 font-mono">× {item.quantity}</span>
+                              </div>
+                              <span className="font-mono text-white font-bold shrink-0">
+                                ₹{item.subtotal.toFixed(2)}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="py-6 text-center text-xs text-neutral-500 font-mono">
+                            No dishes recorded in this session
                           </div>
-                          <span className="font-mono text-white font-bold shrink-0">
-                            ₹{item.subtotal.toFixed(2)}
-                          </span>
+                        )}
+                      </div>
+
+                      <div className="pt-3 mt-3 border-t border-dashed border-white/15 space-y-2 text-xs">
+                        <div className="flex justify-between text-neutral-400">
+                          <span>Subtotal:</span>
+                          <span className="text-white font-mono font-bold">₹{billDetails.subtotal.toFixed(2)}</span>
                         </div>
-                      ))}
-                    </div>
+                        <div className="flex justify-between text-neutral-400">
+                          <span>GST (5%):</span>
+                          <span className="text-white font-mono font-bold">₹{billDetails.taxAmount.toFixed(2)}</span>
+                        </div>
 
-                    <div className="pt-3 border-t border-white/10 space-y-2 text-xs">
-                      <div className="flex justify-between text-neutral-400">
-                        <span>Subtotal:</span>
-                        <span className="text-white">₹{billDetails.subtotal.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-neutral-400">
-                        <span>GST (5%):</span>
-                        <span className="text-white">₹{billDetails.taxAmount.toFixed(2)}</span>
-                      </div>
-
-                      {/* Discount Options: Flat vs Percent */}
-                      <div className="space-y-1.5 pt-1 border-t border-white/5">
-                        <div className="flex items-center justify-between text-neutral-400">
-                          <span className="flex items-center gap-1 font-bold text-neutral-300">
-                            <span>Discount:</span>
-                            <span className="text-[10px] text-emerald-400">
-                              (-₹{calculatedDiscount.toFixed(2)})
+                        {/* Discount Options: Flat vs Percent */}
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1 font-bold text-neutral-300 text-xs">
+                              <span>Discount:</span>
+                              <span className="text-[10px] text-emerald-400 font-mono">
+                                (-₹{calculatedDiscount.toFixed(2)})
+                              </span>
                             </span>
-                          </span>
 
-                          <div className="flex items-center gap-1 bg-white/[0.05] p-0.5 rounded-full border border-white/10">
-                            <button
-                              type="button"
-                              onClick={() => setDiscountType("FLAT")}
-                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                discountType === "FLAT"
-                                  ? "bg-white text-black"
-                                  : "text-neutral-400 hover:text-white"
-                              }`}
-                            >
-                              ₹ Flat
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDiscountType("PERCENT")}
-                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                discountType === "PERCENT"
-                                  ? "bg-white text-black"
-                                  : "text-neutral-400 hover:text-white"
-                              }`}
-                            >
-                              % Pct
-                            </button>
+                            <div className="flex items-center gap-1 bg-white/[0.05] p-0.5 rounded-full border border-white/10">
+                              <button
+                                type="button"
+                                onClick={() => setDiscountType("FLAT")}
+                                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
+                                  discountType === "FLAT"
+                                    ? "bg-white text-black"
+                                    : "text-neutral-400 hover:text-white"
+                                }`}
+                              >
+                                ₹ Flat
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDiscountType("PERCENT")}
+                                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
+                                  discountType === "PERCENT"
+                                    ? "bg-white text-black"
+                                    : "text-neutral-400 hover:text-white"
+                                }`}
+                              >
+                                % Pct
+                              </button>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            value={discountInput}
-                            onChange={(e) => setDiscountInput(e.target.value)}
-                            placeholder="0"
-                            className="flex-1 px-3 py-1.5 rounded-2xl bg-white/[0.05] border border-white/10 text-right text-xs text-white font-bold focus:outline-none"
-                          />
-                        </div>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-neutral-500 font-bold">
+                              {discountType === "FLAT" ? "₹" : "%"}
+                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={discountInput}
+                              onChange={(e) => setDiscountInput(e.target.value)}
+                              placeholder="0"
+                              className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-xs text-white font-mono font-bold focus:outline-none focus:border-white/30"
+                            />
+                          </div>
 
-                        {/* Quick Discount Presets */}
-                        <div className="flex items-center gap-1.5">
-                          {["5", "10", "15", "20"].map((pct) => (
+                          {/* Quick Discount Presets */}
+                          <div className="flex items-center gap-1.5 pt-0.5">
+                            {["5", "10", "15", "20"].map((pct) => (
+                              <button
+                                key={pct}
+                                type="button"
+                                onClick={() => {
+                                  setDiscountType("PERCENT");
+                                  setDiscountInput(pct);
+                                }}
+                                className="px-2.5 py-0.5 rounded-full bg-white/[0.05] hover:bg-white/[0.12] text-[10px] font-mono font-bold text-neutral-300 border border-white/5 cursor-pointer transition-colors"
+                              >
+                                {pct}%
+                              </button>
+                            ))}
                             <button
-                              key={pct}
                               type="button"
                               onClick={() => {
-                                setDiscountType("PERCENT");
-                                setDiscountInput(pct);
+                                setDiscountType("FLAT");
+                                setDiscountInput("0");
                               }}
-                              className="px-2 py-0.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
+                              className="px-2.5 py-0.5 rounded-full bg-white/[0.05] hover:bg-rose-500/20 text-[10px] font-bold text-rose-400 border border-white/5 cursor-pointer transition-colors"
                             >
-                              {pct}%
+                              Clear
                             </button>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDiscountType("FLAT");
-                              setDiscountInput("0");
-                            }}
-                            className="px-2 py-0.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-rose-400 border border-white/5 cursor-pointer"
-                          >
-                            Clear
-                          </button>
+                          </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-white/10">
-                        <span>Net Grand Total:</span>
-                        <span className="font-['Outfit'] text-xl font-black text-white">
-                          ₹{currentNetTotal.toFixed(2)}
+                    {/* Net Grand Total Banner */}
+                    <div className="p-4 rounded-2xl bg-gradient-to-r from-[#FA2D48]/15 via-rose-950/20 to-transparent border border-[#FA2D48]/30 flex items-center justify-between shadow-lg">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-300 block">
+                          Net Payable
                         </span>
+                        <span className="text-[11px] text-neutral-400">All taxes included</span>
                       </div>
+                      <span className="font-['Outfit'] text-3xl font-black text-white tracking-tight">
+                        ₹{currentNetTotal.toFixed(2)}
+                      </span>
                     </div>
                   </div>
 
@@ -2835,13 +3035,16 @@ export default function CashierDashboard() {
                       <label className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider block mb-1">
                         Customer Mobile (Digital Invoice)
                       </label>
-                      <input
-                        type="text"
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="e.g. 9876543210"
-                        className="w-full px-3 py-1.5 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none"
-                      />
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+                        <input
+                          type="text"
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                          placeholder="e.g. 9876543210"
+                          className="w-full pl-9 pr-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-white/30"
+                        />
+                      </div>
                     </div>
 
                     {/* Single Method Form */}
@@ -2853,65 +3056,74 @@ export default function CashierDashboard() {
                               key={m}
                               type="button"
                               onClick={() => setSingleMethod(m)}
-                              className={`py-2.5 rounded-2xl text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                              className={`py-3 rounded-2xl text-xs font-bold flex flex-col items-center gap-1.5 border transition-all cursor-pointer ${
                                 singleMethod === m
-                                  ? "bg-white text-black border-white shadow-md"
-                                  : "bg-white/[0.04] text-neutral-300 border-white/10 hover:border-white/20"
+                                  ? "bg-white text-black border-white shadow-lg shadow-white/10 scale-[1.02]"
+                                  : "bg-white/[0.04] text-neutral-300 border-white/10 hover:border-white/25 hover:bg-white/[0.08]"
                               }`}
                             >
-                              {m === "CASH" && <Banknote className="h-4 w-4" />}
-                              {m === "UPI" && <QrCode className="h-4 w-4" />}
-                              {m === "CARD" && <CreditCard className="h-4 w-4" />}
+                              {m === "CASH" && <Banknote className="h-4 w-4 text-emerald-500" />}
+                              {m === "UPI" && <QrCode className="h-4 w-4 text-sky-500" />}
+                              {m === "CARD" && <CreditCard className="h-4 w-4 text-violet-500" />}
                               <span>{m}</span>
                             </button>
                           ))}
                         </div>
 
                         {singleMethod === "CASH" && (
-                          <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
-                            <label className="text-[11px] text-neutral-400 font-bold block">
-                              Cash Tendered (₹)
-                            </label>
-                            <input
-                              type="number"
-                              value={cashTendered}
-                              onChange={(e) => setCashTendered(e.target.value)}
-                              placeholder={`Enter amount e.g. ${Math.ceil(currentNetTotal / 100) * 100}`}
-                              className="w-full px-3 py-2 rounded-2xl bg-white/[0.05] border border-white/10 text-sm font-bold text-white focus:outline-none"
-                            />
-                            {/* Quick Tendered Notes */}
-                            <div className="flex items-center gap-1.5 pt-1">
-                              <button
-                                type="button"
-                                onClick={() => setCashTendered(String(currentNetTotal))}
-                                className="px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
-                              >
-                                Exact
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setCashTendered(String(Math.ceil(currentNetTotal / 100) * 100))
-                                }
-                                className="px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
-                              >
-                                Round 100
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setCashTendered(String(Math.ceil(currentNetTotal / 500) * 500))
-                                }
-                                className="px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.1] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
-                              >
-                                Round 500
-                              </button>
+                          <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] text-neutral-400 font-bold block">
+                                Cash Tendered (₹)
+                              </label>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setCashTendered(String(currentNetTotal))}
+                                  className="px-2 py-0.5 rounded-md bg-white/[0.06] hover:bg-white/[0.12] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
+                                >
+                                  Exact
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCashTendered(String(Math.ceil(currentNetTotal / 100) * 100))
+                                  }
+                                  className="px-2 py-0.5 rounded-md bg-white/[0.06] hover:bg-white/[0.12] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
+                                >
+                                  Round 100
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCashTendered(String(Math.ceil(currentNetTotal / 500) * 500))
+                                  }
+                                  className="px-2 py-0.5 rounded-md bg-white/[0.06] hover:bg-white/[0.12] text-[10px] font-bold text-neutral-300 border border-white/5 cursor-pointer"
+                                >
+                                  Round 500
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 font-bold">
+                                ₹
+                              </span>
+                              <input
+                                type="number"
+                                value={cashTendered}
+                                onChange={(e) => setCashTendered(e.target.value)}
+                                placeholder="0.00"
+                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-black/40 border border-white/10 text-sm font-mono font-bold text-white focus:outline-none focus:border-white/30"
+                              />
                             </div>
 
                             {Number(cashTendered) >= currentNetTotal && (
-                              <div className="flex justify-between text-xs font-bold text-emerald-400 pt-1.5 border-t border-white/5">
+                              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex justify-between items-center text-xs font-bold text-emerald-400">
                                 <span>Change Return:</span>
-                                <span>₹{(Number(cashTendered) - currentNetTotal).toFixed(2)}</span>
+                                <span className="font-mono text-sm font-black">
+                                  ₹{(Number(cashTendered) - currentNetTotal).toFixed(2)}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -2919,25 +3131,36 @@ export default function CashierDashboard() {
                       </div>
                     ) : (
                       /* Split Payment Form (Cash + UPI + Card) */
-                      <div className="p-4 rounded-3xl bg-white/[0.03] border border-white/10 space-y-3">
-                        <span className="text-[11px] text-amber-400 font-bold block">
-                          Enter Split Portions (Total must equal ₹{currentNetTotal.toFixed(2)})
-                        </span>
+                      <div className="p-4 rounded-3xl bg-black/60 border border-white/10 space-y-3 shadow-inner">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                          <span className="text-xs font-bold text-neutral-300 flex items-center gap-1.5">
+                            <ArrowRightLeft className="h-3.5 w-3.5 text-[#FA2D48]" />
+                            <span>Split Breakdown</span>
+                          </span>
+                          <span className="font-mono text-xs font-bold text-white bg-white/[0.08] px-2.5 py-0.5 rounded-full border border-white/10">
+                            Target: ₹{currentNetTotal.toFixed(2)}
+                          </span>
+                        </div>
 
-                        <div className="space-y-2 text-xs">
+                        <div className="space-y-2">
                           {/* Cash Portion */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 text-neutral-400 flex items-center gap-1 font-bold shrink-0">
-                              <Banknote className="h-3.5 w-3.5 text-emerald-400" />
-                              <span>Cash:</span>
+                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+                            <div className="w-20 px-2 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                              <Banknote className="h-3.5 w-3.5" />
+                              <span>Cash</span>
                             </div>
-                            <input
-                              type="number"
-                              value={splitCash}
-                              onChange={(e) => setSplitCash(e.target.value)}
-                              className="flex-1 px-3 py-1.5 rounded-2xl bg-white/[0.05] border border-white/10 text-white font-bold focus:outline-none"
-                              placeholder="₹ 0"
-                            />
+                            <div className="relative flex-1">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-neutral-500">
+                                ₹
+                              </span>
+                              <input
+                                type="number"
+                                value={splitCash}
+                                onChange={(e) => setSplitCash(e.target.value)}
+                                className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-sm font-mono font-bold text-white focus:outline-none focus:border-white/30"
+                                placeholder="0.00"
+                              />
+                            </div>
                             <button
                               type="button"
                               onClick={() => {
@@ -2945,25 +3168,30 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitCash(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="px-2.5 py-1 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                             >
                               Fill Rem.
                             </button>
                           </div>
 
                           {/* UPI Portion */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 text-neutral-400 flex items-center gap-1 font-bold shrink-0">
-                              <QrCode className="h-3.5 w-3.5 text-sky-400" />
-                              <span>UPI:</span>
+                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+                            <div className="w-20 px-2 py-1.5 rounded-xl border border-sky-500/20 bg-sky-500/10 text-sky-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                              <QrCode className="h-3.5 w-3.5" />
+                              <span>UPI</span>
                             </div>
-                            <input
-                              type="number"
-                              value={splitUpi}
-                              onChange={(e) => setSplitUpi(e.target.value)}
-                              className="flex-1 px-3 py-1.5 rounded-2xl bg-white/[0.05] border border-white/10 text-white font-bold focus:outline-none"
-                              placeholder="₹ 0"
-                            />
+                            <div className="relative flex-1">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-neutral-500">
+                                ₹
+                              </span>
+                              <input
+                                type="number"
+                                value={splitUpi}
+                                onChange={(e) => setSplitUpi(e.target.value)}
+                                className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-sm font-mono font-bold text-white focus:outline-none focus:border-white/30"
+                                placeholder="0.00"
+                              />
+                            </div>
                             <button
                               type="button"
                               onClick={() => {
@@ -2971,25 +3199,30 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitUpi(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="px-2.5 py-1 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                             >
                               Fill Rem.
                             </button>
                           </div>
 
                           {/* Card Portion */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 text-neutral-400 flex items-center gap-1 font-bold shrink-0">
-                              <CreditCard className="h-3.5 w-3.5 text-violet-400" />
-                              <span>Card:</span>
+                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+                            <div className="w-20 px-2 py-1.5 rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                              <CreditCard className="h-3.5 w-3.5" />
+                              <span>Card</span>
                             </div>
-                            <input
-                              type="number"
-                              value={splitCard}
-                              onChange={(e) => setSplitCard(e.target.value)}
-                              className="flex-1 px-3 py-1.5 rounded-2xl bg-white/[0.05] border border-white/10 text-white font-bold focus:outline-none"
-                              placeholder="₹ 0"
-                            />
+                            <div className="relative flex-1">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-neutral-500">
+                                ₹
+                              </span>
+                              <input
+                                type="number"
+                                value={splitCard}
+                                onChange={(e) => setSplitCard(e.target.value)}
+                                className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-sm font-mono font-bold text-white focus:outline-none focus:border-white/30"
+                                placeholder="0.00"
+                              />
+                            </div>
                             <button
                               type="button"
                               onClick={() => {
@@ -2997,34 +3230,64 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitCard(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="px-2.5 py-1 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-[10px] font-bold text-neutral-300 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                             >
                               Fill Rem.
                             </button>
                           </div>
-
-                          {/* Sum check */}
-                          {(() => {
-                            const sum =
-                              (Number(splitCash) || 0) +
-                              (Number(splitUpi) || 0) +
-                              (Number(splitCard) || 0);
-                            const diff = currentNetTotal - sum;
-                            return (
-                              <div className="pt-2 border-t border-white/10 flex justify-between text-xs font-bold">
-                                <span className="text-neutral-400">Allocated / Total:</span>
-                                <span className={Math.abs(diff) < 0.5 ? "text-emerald-400" : "text-amber-400"}>
-                                  ₹{sum.toFixed(2)} / ₹{currentNetTotal.toFixed(2)}
-                                  {Math.abs(diff) > 0.5 && (
-                                    <span className="block text-[10px] text-right text-rose-400">
-                                      Remaining: ₹{diff.toFixed(2)}
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                            );
-                          })()}
                         </div>
+
+                        {/* Segmented Dynamic Bar */}
+                        {(() => {
+                          const cashVal = Number(splitCash) || 0;
+                          const upiVal = Number(splitUpi) || 0;
+                          const cardVal = Number(splitCard) || 0;
+                          const sum = cashVal + upiVal + cardVal;
+                          const diff = currentNetTotal - sum;
+                          const cashPct = currentNetTotal > 0 ? (cashVal / currentNetTotal) * 100 : 0;
+                          const upiPct = currentNetTotal > 0 ? (upiVal / currentNetTotal) * 100 : 0;
+                          const cardPct = currentNetTotal > 0 ? (cardVal / currentNetTotal) * 100 : 0;
+
+                          return (
+                            <div className="space-y-1.5 pt-2">
+                              {currentNetTotal > 0 && (
+                                <div className="h-2 w-full bg-white/[0.08] rounded-full overflow-hidden flex gap-0.5 p-0.5">
+                                  <div
+                                    style={{ width: `${Math.min(100, cashPct)}%` }}
+                                    className="bg-emerald-400 rounded-full transition-all duration-300"
+                                  />
+                                  <div
+                                    style={{ width: `${Math.min(100, upiPct)}%` }}
+                                    className="bg-sky-400 rounded-full transition-all duration-300"
+                                  />
+                                  <div
+                                    style={{ width: `${Math.min(100, cardPct)}%` }}
+                                    className="bg-violet-400 rounded-full transition-all duration-300"
+                                  />
+                                </div>
+                              )}
+
+                              <div className="flex justify-between items-center text-xs font-mono pt-1">
+                                <span className="text-neutral-400">
+                                  Allocated: <b className="text-white font-bold">₹{sum.toFixed(2)}</b>
+                                </span>
+                                {Math.abs(diff) <= 0.05 ? (
+                                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                                    <Check className="h-3.5 w-3.5" /> Fully Balanced
+                                  </span>
+                                ) : diff > 0 ? (
+                                  <span className="text-amber-400 font-bold">
+                                    ₹{diff.toFixed(2)} remaining
+                                  </span>
+                                ) : (
+                                  <span className="text-rose-400 font-bold">
+                                    ₹{Math.abs(diff).toFixed(2)} over
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
 
@@ -3032,7 +3295,7 @@ export default function CashierDashboard() {
                     <button
                       disabled={isSettling}
                       onClick={handleExecuteSettlement}
-                      className="w-full py-3.5 rounded-full bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white font-sans font-bold text-xs tracking-wide transition-all active:scale-98 shadow-xl shadow-[#FA2D48]/30 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#FA2D48] to-[#ff3b56] hover:from-[#ff3b56] hover:to-[#ff526c] disabled:opacity-50 text-white font-['Outfit'] font-black text-sm tracking-wider uppercase transition-all duration-200 active:scale-[0.99] shadow-xl shadow-[#FA2D48]/30 flex items-center justify-center gap-2 cursor-pointer mt-3"
                     >
                       {isSettling ? (
                         <span>Processing Settlement...</span>
