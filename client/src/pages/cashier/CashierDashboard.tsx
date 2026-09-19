@@ -253,14 +253,28 @@ const ShiftAnalyticsCharts = ({
   const aov =
     totalBills > 0 ? (totalRevenue / totalBills).toFixed(2) : "0.00";
 
+  const cashItem = paymentPieData.find((p) => p.name === "Cash");
+  const upiItem = paymentPieData.find((p) => p.name === "UPI / QR");
+  const cardItem = paymentPieData.find((p) => p.name === "Card POS");
+
+  const cashAmt = Number(stats?.cashTotal || cashItem?.value || 0);
+  const upiAmt = Number(stats?.upiTotal || upiItem?.value || 0);
+  const cardAmt = Number(stats?.cardTotal || cardItem?.value || 0);
+  const digitalTotal = upiAmt + cardAmt;
+
+  const topMethod = useMemo(() => {
+    if (!paymentPieData || paymentPieData.length === 0) return null;
+    return [...paymentPieData].sort((a, b) => b.value - a.value)[0];
+  }, [paymentPieData]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6">
-      {/* 5 cols: Payment Methods Pie / Donut Chart */}
-      <div className="lg:col-span-5 p-6 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
+      {/* 6 cols: Payment Methods Pie / Donut Chart */}
+      <div className="lg:col-span-6 p-6 rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between space-y-4">
         <div>
           <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/25 to-indigo-600/15 text-purple-400 border border-purple-500/30 shadow-lg shadow-purple-500/10">
                 <PieChartIcon className="h-4 w-4" />
               </div>
               <div>
@@ -269,7 +283,7 @@ const ShiftAnalyticsCharts = ({
               </div>
             </div>
             <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-white/[0.04] text-neutral-400 border border-white/10">
-              Breakdown
+              {totalBills} {totalBills === 1 ? "Bill" : "Bills"}
             </span>
           </div>
 
@@ -280,88 +294,159 @@ const ShiftAnalyticsCharts = ({
               <p className="text-[11px] text-neutral-600">Settle your first bill to view tender distribution</p>
             </div>
           ) : (
-            <div className="relative h-56 my-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <RechartsTooltip content={<ChartCustomTooltip />} />
-                  <Pie
-                    data={paymentPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={62}
-                    outerRadius={86}
-                    paddingAngle={4}
-                    dataKey="value"
-                    stroke="rgba(28,28,31,0.8)"
-                    strokeWidth={3}
-                  >
-                    {paymentPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Centered Donut Label */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                  Total
-                </span>
-                <span className="font-['Outfit'] font-black text-white text-lg tracking-tight">
-                  ₹{Math.round(totalRevenue).toLocaleString("en-IN")}
-                </span>
-                <span className="text-[9px] text-neutral-500 font-mono">
-                  {totalBills} {totalBills === 1 ? "Bill" : "Bills"}
-                </span>
+            <div className="flex flex-col sm:flex-row items-center gap-4 py-2 min-h-[220px]">
+              {/* Donut Chart (Left Side) */}
+              <div className="relative w-48 h-48 sm:w-52 sm:h-52 flex-shrink-0 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <RechartsTooltip content={<ChartCustomTooltip />} />
+                    <Pie
+                      data={paymentPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={54}
+                      outerRadius={78}
+                      paddingAngle={4}
+                      dataKey="value"
+                      stroke="rgba(28,28,31,0.9)"
+                      strokeWidth={3}
+                    >
+                      {paymentPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Centered Donut Label */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                    Total
+                  </span>
+                  <span className="font-['Outfit'] font-black text-white text-lg tracking-tight">
+                    ₹{Math.round(totalRevenue).toLocaleString("en-IN")}
+                  </span>
+                  <span className="text-[9px] text-neutral-500 font-mono">
+                    {totalBills} {totalBills === 1 ? "Bill" : "Bills"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Tender Progress Rows (Right Side) */}
+              <div className="flex-1 w-full flex flex-col justify-center space-y-2.5 min-w-0">
+                {/* Cash */}
+                <div className="p-2.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 transition-all space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50" />
+                      <span className="text-xs font-bold text-white">Cash</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-['Outfit'] font-bold text-white text-xs">
+                        ₹{cashAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                        {cashItem?.percent || "0"}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                      style={{ width: `${cashItem?.percent || 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* UPI / QR */}
+                <div className="p-2.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 transition-all space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-sky-400 shadow-sm shadow-sky-500/50" />
+                      <span className="text-xs font-bold text-white">UPI / QR</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-['Outfit'] font-bold text-white text-xs">
+                        ₹{upiAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/20">
+                        {upiItem?.percent || "0"}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-sky-400 rounded-full transition-all duration-500"
+                      style={{ width: `${upiItem?.percent || 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Card POS */}
+                <div className="p-2.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 transition-all space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-purple-400 shadow-sm shadow-purple-500/50" />
+                      <span className="text-xs font-bold text-white">Card POS</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-['Outfit'] font-bold text-white text-xs">
+                        ₹{cardAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/20">
+                        {cardItem?.percent || "0"}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-400 rounded-full transition-all duration-500"
+                      style={{ width: `${cardItem?.percent || 0}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Legend Cards */}
-        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/[0.06]">
-          <div className="p-2.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="text-[10px] font-bold text-neutral-400">Cash</span>
-            </div>
-            <p className="font-['Outfit'] font-bold text-white text-xs">
-              ₹{Number(stats?.cashTotal || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-            </p>
-            <span className="text-[9px] text-emerald-400/80 font-mono block">
-              {paymentPieData.find((p) => p.name === "Cash")?.percent || "0"}%
+        {/* Payment Bottom Highlights */}
+        <div className="relative z-10 grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.08]">
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
+              Top Tender
+            </span>
+            <span className="font-['Outfit'] text-xs font-black text-sky-400 block truncate tracking-tight">
+              {topMethod ? `${topMethod.name}` : "N/A"}
+            </span>
+            <span className="text-[9px] font-mono text-neutral-400 block">
+              {topMethod ? `${topMethod.percent}% of gross` : "0%"}
             </span>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-sky-400" />
-              <span className="text-[10px] font-bold text-neutral-400">UPI / QR</span>
-            </div>
-            <p className="font-['Outfit'] font-bold text-white text-xs">
-              ₹{Number(stats?.upiTotal || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-            </p>
-            <span className="text-[9px] text-sky-400/80 font-mono block">
-              {paymentPieData.find((p) => p.name === "UPI / QR")?.percent || "0"}%
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
+              Cash in Till
             </span>
+            <span className="font-['Outfit'] text-base font-black text-emerald-400 block tracking-tight">
+              ₹{cashAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </span>
+            <span className="text-[9px] font-mono text-neutral-400 block">Physical drawer</span>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-purple-400" />
-              <span className="text-[10px] font-bold text-neutral-400">Card POS</span>
-            </div>
-            <p className="font-['Outfit'] font-bold text-white text-xs">
-              ₹{Number(stats?.cardTotal || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-            </p>
-            <span className="text-[9px] text-purple-400/80 font-mono block">
-              {paymentPieData.find((p) => p.name === "Card POS")?.percent || "0"}%
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
+              Digital Volume
             </span>
+            <span className="font-['Outfit'] text-base font-black text-white block tracking-tight">
+              ₹{digitalTotal.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </span>
+            <span className="text-[9px] font-mono text-neutral-400 block">UPI + Card</span>
           </div>
         </div>
       </div>
 
-      {/* 7 cols: Hourly Revenue Curve / Area Chart (Redesigned) */}
-      <div className="lg:col-span-7 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between space-y-4">
+      {/* 6 cols: Hourly Revenue Curve / Area Chart (Redesigned) */}
+      <div className="lg:col-span-6 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between space-y-4">
         {/* Subtle Ambient Glow */}
         <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-[#FA2D48]/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
