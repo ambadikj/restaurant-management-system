@@ -2059,7 +2059,7 @@ export default function CashierDashboard() {
               No dining tables found matching the selected status filter.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
               {filteredTables.map((table) => {
                 const isAvail = table.status === "AVAILABLE";
                 const isOccupied = table.status === "OCCUPIED";
@@ -2069,7 +2069,7 @@ export default function CashierDashboard() {
                 return (
                   <div
                     key={table.id}
-                    className={`group relative flex flex-col justify-between rounded-3xl p-5 bg-[#18181b]/95 hover:bg-[#1f1f25] border transition-all duration-300 shadow-xl hover:shadow-2xl overflow-hidden ${
+                    className={`group relative flex flex-col justify-between rounded-3xl p-4 sm:p-5 bg-[#18181b]/95 hover:bg-[#1f1f25] border transition-all duration-300 shadow-xl hover:shadow-2xl overflow-hidden ${
                       isBilling
                         ? "border-[#FA2D48]/50 shadow-[#FA2D48]/10"
                         : isOccupied
@@ -2079,9 +2079,9 @@ export default function CashierDashboard() {
                         : "border-white/[0.08] hover:border-white/[0.18]"
                     }`}
                   >
-                    {/* Subtle Ambient Radial Glow */}
+                    {/* Top ambient color glow */}
                     <div
-                      className={`pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 ${
+                      className={`absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-500 group-hover:opacity-35 ${
                         isBilling
                           ? "bg-[#FA2D48]"
                           : isOccupied
@@ -2094,16 +2094,16 @@ export default function CashierDashboard() {
 
                     {/* Top Header: Table # + Capacity + Status Pill */}
                     <div className="flex items-start justify-between gap-2 z-10">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-['Outfit'] text-xl font-black text-white tracking-tight">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-['Outfit'] text-lg xl:text-xl font-black text-white tracking-tight whitespace-nowrap">
                             Table {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
                           </span>
-                          <span className="rounded-full bg-white/[0.06] border border-white/[0.08] px-2.5 py-0.5 text-xs font-semibold text-neutral-300">
+                          <span className="rounded-full bg-white/[0.06] border border-white/[0.08] px-2 py-0.5 text-[11px] font-semibold text-neutral-300 whitespace-nowrap shrink-0">
                             {table.capacity} Guests
                           </span>
                         </div>
-                        <span className="text-[11px] text-neutral-400 mt-0.5 block">
+                        <span className="text-[11px] text-neutral-400 mt-0.5 block truncate">
                           {table.activeSession
                             ? `Session #${table.activeSession.sessionCode?.slice(-6) || table.activeSession.id} • Active`
                             : "Dining Station • Ready for Seating"}
@@ -2111,9 +2111,9 @@ export default function CashierDashboard() {
                       </div>
 
                       {/* Live Status Pill */}
-                      <div className="shrink-0">
+                      <div className="shrink-0 whitespace-nowrap">
                         {isAvail && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-emerald-400 border border-emerald-500/30">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                             <span className="relative flex h-1.5 w-1.5">
                               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
@@ -2122,7 +2122,7 @@ export default function CashierDashboard() {
                           </span>
                         )}
                         {isOccupied && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-sky-400 border border-sky-500/30">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-sky-400 border border-sky-500/30 whitespace-nowrap">
                             <span className="relative flex h-1.5 w-1.5">
                               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
                               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500" />
@@ -2131,13 +2131,13 @@ export default function CashierDashboard() {
                           </span>
                         )}
                         {isBilling && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FA2D48]/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-[#FA2D48] border border-[#FA2D48]/30 animate-pulse">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FA2D48]/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-[#FA2D48] border border-[#FA2D48]/30 animate-pulse whitespace-nowrap">
                             <Sparkles className="h-3 w-3 text-[#FA2D48]" />
                             Bill Due
                           </span>
                         )}
                         {isCleaning && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-purple-400 border border-purple-500/30">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-purple-400 border border-purple-500/30 whitespace-nowrap">
                             <RefreshCw className="h-3 w-3 text-purple-400 animate-spin" />
                             Cleaning
                           </span>
