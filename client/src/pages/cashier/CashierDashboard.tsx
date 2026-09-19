@@ -667,7 +667,6 @@ export default function CashierDashboard() {
   // History Tab state
   const [history, setHistory] = useState<SettledBill[]>([]);
   const [historySearch, setHistorySearch] = useState("");
-  const [historyPaymentFilter, setHistoryPaymentFilter] = useState<string>("ALL");
 
   // Takeaway POS state
   const [takeawaySubTab, setTakeawaySubTab] = useState<"register" | "queue">("register");
@@ -3332,35 +3331,15 @@ export default function CashierDashboard() {
               </span>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-              {/* Payment Method Pills */}
-              <div className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-full border border-white/10">
-                {(["ALL", "CASH", "UPI", "CARD"] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setHistoryPaymentFilter(m)}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
-                      historyPaymentFilter === m
-                        ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-                        : "text-neutral-400 hover:text-white"
-                    }`}
-                  >
-                    {m === "ALL" ? "All Methods" : m}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
-                <input
-                  type="text"
-                  value={historySearch}
-                  onChange={(e) => setHistorySearch(e.target.value)}
-                  placeholder="Filter table or invoice..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
-                />
-              </div>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="Search table, invoice, or payment..."
+                className="w-full pl-9 pr-3 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
+              />
             </div>
           </div>
 
@@ -3397,13 +3376,12 @@ export default function CashierDashboard() {
                   ) : (
                     history
                       .filter((h) => {
-                        const matchesSearch =
-                          h.invoiceNumber.toLowerCase().includes(historySearch.toLowerCase()) ||
-                          String(h.tableNumber).toLowerCase().includes(historySearch.toLowerCase());
-                        const matchesPayment =
-                          historyPaymentFilter === "ALL" ||
-                          h.payments.some((p) => p.method === historyPaymentFilter);
-                        return matchesSearch && matchesPayment;
+                        if (!historySearch.trim()) return true;
+                        const q = historySearch.toLowerCase().trim();
+                        const matchesInvoice = h.invoiceNumber.toLowerCase().includes(q);
+                        const matchesTable = String(h.tableNumber).toLowerCase().includes(q);
+                        const matchesPayment = h.payments.some((p) => p.method.toLowerCase().includes(q));
+                        return matchesInvoice || matchesTable || matchesPayment;
                       })
                       .map((bill) => (
                         <tr key={bill.id} className="hover:bg-white/[0.02] transition-colors">
