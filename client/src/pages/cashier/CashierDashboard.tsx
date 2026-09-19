@@ -378,14 +378,28 @@ const ShiftAnalyticsCharts = ({
             </div>
 
             {peakHour && peakHour.revenue > 0 ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 to-rose-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold shadow-sm">
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                <span>
-                  Peak: {peakHour.time} (₹{peakHour.revenue.toLocaleString("en-IN")})
+              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.1] shadow-lg backdrop-blur-xl transition-all">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-5 w-5 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400">
+                    <Sparkles className="h-3 w-3" />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                    Peak Hour
+                  </span>
+                </div>
+
+                <div className="h-3 w-[1px] bg-white/15" />
+
+                <span className="text-xs font-['Outfit'] font-extrabold text-white">
+                  {peakHour.time}
+                </span>
+
+                <span className="px-2 py-0.5 rounded-lg bg-[#FA2D48]/15 border border-[#FA2D48]/30 font-['Outfit'] text-xs font-black text-[#FA2D48] tracking-tight">
+                  ₹{Number(peakHour.revenue).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono backdrop-blur-xl">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#FA2D48] animate-pulse" />
                 <span>Live Audit</span>
               </div>
