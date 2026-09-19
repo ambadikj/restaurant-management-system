@@ -1584,32 +1584,28 @@ export default function CashierDashboard() {
     return max && max.revenue > 0 ? max : null;
   }, [hourlyRevenueData]);
 
-  // Tab Header Information (Badge, Main Heading H1)
+  // Tab Header Information (Main Heading H1)
   const tabHeaderInfo = useMemo(() => {
     switch (activeTab) {
       case "takeaway":
         return {
           icon: ShoppingBag,
-          badge: "Walk-in & Counter Register",
           title: "Takeaway POS & Token Terminal",
         };
       case "history":
         return {
           icon: FileText,
-          badge: "Daily Audit Trail",
           title: "Settled Invoices & Closed Bills Log",
         };
       case "stats":
         return {
           icon: TrendingUp,
-          badge: "EOD Closeout & Metrics",
           title: "Shift Register & Financial Metrics",
         };
       case "floor":
       default:
         return {
           icon: Layers,
-          badge: "Point of Sale & Floor Checkout",
           title: "Floor POS & Table Checkout",
         };
     }
@@ -1817,15 +1813,8 @@ export default function CashierDashboard() {
         <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] border border-white/[0.1] px-3 py-1 text-[11px] font-semibold text-neutral-300 backdrop-blur-md">
-              <tabHeaderInfo.icon className="h-3.5 w-3.5 text-[#FA2D48]" />
-              <span className="tracking-widest uppercase text-[10px] font-bold text-white/90">
-                {tabHeaderInfo.badge}
-              </span>
-            </div>
-
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
               {tabHeaderInfo.title}
             </h1>
