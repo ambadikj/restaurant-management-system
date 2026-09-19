@@ -246,6 +246,13 @@ const ShiftAnalyticsCharts = ({
   stats: ShiftStats | null;
   history: SettledBill[];
 }) => {
+  const [activeTender, setActiveTender] = useState<{
+    name: string;
+    value: number;
+    color: string;
+    percent: string;
+  } | null>(null);
+
   const totalRevenue =
     stats?.totalRevenue ??
     history.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
@@ -264,148 +271,195 @@ const ShiftAnalyticsCharts = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6">
       {/* 6 cols: Payment Methods Pie / Donut Chart */}
-      <div className="lg:col-span-6 p-6 rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between space-y-4">
-        <div>
-          <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/25 to-indigo-600/15 text-purple-400 border border-purple-500/30 shadow-lg shadow-purple-500/10">
-                <PieChartIcon className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-sans font-bold text-white text-sm">Payment Methods</h3>
-                <p className="text-[11px] text-neutral-400">Tender share across all settled bills</p>
-              </div>
+      <div className="lg:col-span-6 p-6 rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
+        <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/25 to-indigo-600/15 text-purple-400 border border-purple-500/30 shadow-lg shadow-purple-500/10">
+              <PieChartIcon className="h-4 w-4" />
             </div>
-            <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-white/[0.04] text-neutral-400 border border-white/10">
-              {totalBills} {totalBills === 1 ? "Bill" : "Bills"}
-            </span>
+            <div>
+              <h3 className="font-sans font-bold text-white text-sm">Payment Methods</h3>
+              <p className="text-[11px] text-neutral-400">Tender share across all settled bills</p>
+            </div>
           </div>
-
-          {paymentPieData.length === 0 ? (
-            <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-2 text-neutral-500">
-              <PieChartIcon className="h-10 w-10 opacity-30 stroke-[1.5]" />
-              <p className="text-xs">No settled payment transactions yet</p>
-              <p className="text-[11px] text-neutral-600">Settle your first bill to view tender distribution</p>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row items-center gap-4 py-2 min-h-[220px]">
-              {/* Donut Chart (Left Side) */}
-              <div className="relative w-48 h-48 sm:w-52 sm:h-52 flex-shrink-0 flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <RechartsTooltip content={<ChartCustomTooltip />} />
-                    <Pie
-                      data={paymentPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={54}
-                      outerRadius={78}
-                      paddingAngle={4}
-                      dataKey="value"
-                      stroke="rgba(28,28,31,0.9)"
-                      strokeWidth={3}
-                    >
-                      {paymentPieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                {/* Centered Donut Label */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400">
-                    Total
-                  </span>
-                  <span className="font-['Outfit'] font-black text-white text-lg tracking-tight">
-                    ₹{Math.round(totalRevenue).toLocaleString("en-IN")}
-                  </span>
-                  <span className="text-[9px] text-neutral-500 font-mono">
-                    {totalBills} {totalBills === 1 ? "Bill" : "Bills"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Tender Progress Rows (Right Side) */}
-              <div className="flex-1 w-full flex flex-col justify-center space-y-2.5 min-w-0">
-                {/* Cash */}
-                <div className="p-2.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 transition-all space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50" />
-                      <span className="text-xs font-bold text-white">Cash</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-['Outfit'] font-bold text-white text-xs">
-                        ₹{cashAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                      </span>
-                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                        {cashItem?.percent || "0"}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-400 rounded-full transition-all duration-500"
-                      style={{ width: `${cashItem?.percent || 0}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* UPI / QR */}
-                <div className="p-2.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 transition-all space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-sky-400 shadow-sm shadow-sky-500/50" />
-                      <span className="text-xs font-bold text-white">UPI / QR</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-['Outfit'] font-bold text-white text-xs">
-                        ₹{upiAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                      </span>
-                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/20">
-                        {upiItem?.percent || "0"}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-sky-400 rounded-full transition-all duration-500"
-                      style={{ width: `${upiItem?.percent || 0}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Card POS */}
-                <div className="p-2.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 transition-all space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-purple-400 shadow-sm shadow-purple-500/50" />
-                      <span className="text-xs font-bold text-white">Card POS</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-['Outfit'] font-bold text-white text-xs">
-                        ₹{cardAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                      </span>
-                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/20">
-                        {cardItem?.percent || "0"}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-400 rounded-full transition-all duration-500"
-                      style={{ width: `${cardItem?.percent || 0}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-white/[0.04] text-neutral-400 border border-white/10">
+            {totalBills} {totalBills === 1 ? "Bill" : "Bills"}
+          </span>
         </div>
+
+        {paymentPieData.length === 0 ? (
+          <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-2 text-neutral-500">
+            <PieChartIcon className="h-10 w-10 opacity-30 stroke-[1.5]" />
+            <p className="text-xs">No settled payment transactions yet</p>
+            <p className="text-[11px] text-neutral-600">Settle your first bill to view tender distribution</p>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row items-center gap-6 pt-4 pb-1 flex-1 justify-center">
+            {/* Donut Chart (Left Side) */}
+            <div className="relative w-48 h-48 sm:w-52 sm:h-52 flex-shrink-0 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={paymentPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={56}
+                    outerRadius={80}
+                    paddingAngle={4}
+                    dataKey="value"
+                    stroke="rgba(28,28,31,0.95)"
+                    strokeWidth={3}
+                    onMouseEnter={(_, index) => setActiveTender(paymentPieData[index])}
+                    onMouseLeave={() => setActiveTender(null)}
+                  >
+                    {paymentPieData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                        className="cursor-pointer transition-opacity duration-200"
+                        opacity={activeTender && activeTender.name !== entry.name ? 0.35 : 1}
+                      />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              {/* Centered Donut Label (Dynamically transforms on hover - no floating tooltip overlap!) */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
+                {activeTender ? (
+                  <div className="text-center space-y-0.5 animate-fadeIn">
+                    <span
+                      className="text-[10px] font-black uppercase tracking-wider block"
+                      style={{ color: activeTender.color }}
+                    >
+                      {activeTender.name}
+                    </span>
+                    <span className="font-['Outfit'] font-black text-white text-lg tracking-tight block">
+                      ₹{Number(activeTender.value).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[10px] font-bold text-neutral-300 font-mono block">
+                      {activeTender.percent}% share
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-center space-y-0.5">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block">
+                      Total
+                    </span>
+                    <span className="font-['Outfit'] font-black text-white text-lg tracking-tight block">
+                      ₹{Math.round(totalRevenue).toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-[9px] text-neutral-500 font-mono block">
+                      {totalBills} {totalBills === 1 ? "Bill" : "Bills"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Tender Progress Rows (Right Side) */}
+            <div className="flex-1 w-full flex flex-col justify-center space-y-3 min-w-0">
+              {/* Cash */}
+              <div
+                onMouseEnter={() => setActiveTender(cashItem || null)}
+                onMouseLeave={() => setActiveTender(null)}
+                className={`p-3 rounded-2xl border transition-all cursor-pointer space-y-1.5 ${
+                  activeTender?.name === "Cash"
+                    ? "bg-white/[0.08] border-emerald-500/40 shadow-lg shadow-emerald-500/10"
+                    : "bg-white/[0.02] hover:bg-white/[0.05] border-white/5"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50" />
+                    <span className="text-xs font-bold text-white">Cash</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-['Outfit'] font-bold text-white text-xs">
+                      ₹{cashAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                      {cashItem?.percent || "0"}%
+                    </span>
+                  </div>
+                </div>
+                <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                    style={{ width: `${cashItem?.percent || 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* UPI / QR */}
+              <div
+                onMouseEnter={() => setActiveTender(upiItem || null)}
+                onMouseLeave={() => setActiveTender(null)}
+                className={`p-3 rounded-2xl border transition-all cursor-pointer space-y-1.5 ${
+                  activeTender?.name === "UPI / QR"
+                    ? "bg-white/[0.08] border-sky-500/40 shadow-lg shadow-sky-500/10"
+                    : "bg-white/[0.02] hover:bg-white/[0.05] border-white/5"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-sky-400 shadow-sm shadow-sky-500/50" />
+                    <span className="text-xs font-bold text-white">UPI / QR</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-['Outfit'] font-bold text-white text-xs">
+                      ₹{upiAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/20">
+                      {upiItem?.percent || "0"}%
+                    </span>
+                  </div>
+                </div>
+                <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-sky-400 rounded-full transition-all duration-500"
+                    style={{ width: `${upiItem?.percent || 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Card POS */}
+              <div
+                onMouseEnter={() => setActiveTender(cardItem || null)}
+                onMouseLeave={() => setActiveTender(null)}
+                className={`p-3 rounded-2xl border transition-all cursor-pointer space-y-1.5 ${
+                  activeTender?.name === "Card POS"
+                    ? "bg-white/[0.08] border-purple-500/40 shadow-lg shadow-purple-500/10"
+                    : "bg-white/[0.02] hover:bg-white/[0.05] border-white/5"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-purple-400 shadow-sm shadow-purple-500/50" />
+                    <span className="text-xs font-bold text-white">Card POS</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-['Outfit'] font-bold text-white text-xs">
+                      ₹{cardAmt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/20">
+                      {cardItem?.percent || "0"}%
+                    </span>
+                  </div>
+                </div>
+                <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-purple-400 rounded-full transition-all duration-500"
+                    style={{ width: `${cardItem?.percent || 0}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 6 cols: Hourly Revenue Curve / Area Chart (Redesigned) */}
-      <div className="lg:col-span-6 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between space-y-4">
+      <div className="lg:col-span-6 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between">
         {/* Subtle Ambient Glow */}
         <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-[#FA2D48]/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
