@@ -25,7 +25,20 @@ import {
   Edit3,
   FileText,
   Sparkles,
+  TrendingUp,
+  PieChart as PieChartIcon,
 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+} from "recharts";
 import toast from "react-hot-toast";
 import { socket } from "../../lib/socket";
 import SwipeableToaster from "@/components/SwipeableToaster";
@@ -184,6 +197,257 @@ interface TakeawayOrder {
     categoryName?: string;
   }>;
 }
+
+/* ─────────────────────────── CHART TOOLTIP ─────────────────────────── */
+const ChartCustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div className="px-3.5 py-2.5 rounded-2xl bg-[#1c1c1f]/95 border border-white/10 shadow-2xl backdrop-blur-xl text-xs font-mono space-y-1">
+        <p className="text-neutral-400 font-bold text-[11px]">{label || data.name}</p>
+        <p className="text-white font-black text-sm">
+          ₹{Number(data.value).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+        </p>
+        {data.payload?.percent && (
+          <p className="text-[10px] text-neutral-400">
+            Share: <span className="text-emerald-400 font-bold">{data.payload.percent}%</span>
+          </p>
+        )}
+        {data.payload?.bills !== undefined && (
+          <p className="text-[10px] text-neutral-400">
+            Orders Settled: <span className="text-white font-bold">{data.payload.bills}</span>
+          </p>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
+/* ─────────────────────────── VISUAL ANALYTICS CHARTS ─────────────────────────── */
+const ShiftAnalyticsCharts = ({
+  paymentPieData,
+  hourlyRevenueData,
+  peakHour,
+  stats,
+  history,
+}: {
+  paymentPieData: Array<{ name: string; value: number; color: string; percent: string }>;
+  hourlyRevenueData: Array<{ time: string; revenue: number; bills: number }>;
+  peakHour: { time: string; revenue: number; bills: number } | null;
+  stats: ShiftStats | null;
+  history: SettledBill[];
+}) => {
+  const totalRevenue =
+    stats?.totalRevenue ??
+    history.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+  const totalBills = stats?.settledBillsCount ?? history.length;
+  const aov =
+    totalBills > 0 ? (totalRevenue / totalBills).toFixed(2) : "0.00";
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6">
+      {/* 5 cols: Payment Methods Pie / Donut Chart */}
+      <div className="lg:col-span-5 p-6 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <PieChartIcon className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-sans font-bold text-white text-sm">Payment Methods</h3>
+                <p className="text-[11px] text-neutral-400">Tender share across all settled bills</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-white/[0.04] text-neutral-400 border border-white/10">
+              Breakdown
+            </span>
+          </div>
+
+          {paymentPieData.length === 0 ? (
+            <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-2 text-neutral-500">
+              <PieChartIcon className="h-10 w-10 opacity-30 stroke-[1.5]" />
+              <p className="text-xs">No settled payment transactions yet</p>
+              <p className="text-[11px] text-neutral-600">Settle your first bill to view tender distribution</p>
+            </div>
+          ) : (
+            <div className="relative h-56 my-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <RechartsTooltip content={<ChartCustomTooltip />} />
+                  <Pie
+                    data={paymentPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={62}
+                    outerRadius={86}
+                    paddingAngle={4}
+                    dataKey="value"
+                    stroke="rgba(28,28,31,0.8)"
+                    strokeWidth={3}
+                  >
+                    {paymentPieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              {/* Centered Donut Label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                  Total
+                </span>
+                <span className="font-['Outfit'] font-black text-white text-lg tracking-tight">
+                  ₹{Math.round(totalRevenue).toLocaleString("en-IN")}
+                </span>
+                <span className="text-[9px] text-neutral-500 font-mono">
+                  {totalBills} {totalBills === 1 ? "Bill" : "Bills"}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Legend Cards */}
+        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/[0.06]">
+          <div className="p-2.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span className="text-[10px] font-bold text-neutral-400">Cash</span>
+            </div>
+            <p className="font-['Outfit'] font-bold text-white text-xs">
+              ₹{Number(stats?.cashTotal || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </p>
+            <span className="text-[9px] text-emerald-400/80 font-mono block">
+              {paymentPieData.find((p) => p.name === "Cash")?.percent || "0"}%
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-sky-400" />
+              <span className="text-[10px] font-bold text-neutral-400">UPI / QR</span>
+            </div>
+            <p className="font-['Outfit'] font-bold text-white text-xs">
+              ₹{Number(stats?.upiTotal || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </p>
+            <span className="text-[9px] text-sky-400/80 font-mono block">
+              {paymentPieData.find((p) => p.name === "UPI / QR")?.percent || "0"}%
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-purple-400" />
+              <span className="text-[10px] font-bold text-neutral-400">Card POS</span>
+            </div>
+            <p className="font-['Outfit'] font-bold text-white text-xs">
+              ₹{Number(stats?.cardTotal || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </p>
+            <span className="text-[9px] text-purple-400/80 font-mono block">
+              {paymentPieData.find((p) => p.name === "Card POS")?.percent || "0"}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 7 cols: Hourly Revenue Curve / Area Chart */}
+      <div className="lg:col-span-7 p-6 rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-[#FA2D48]/10 text-[#FA2D48] border border-[#FA2D48]/20">
+                <TrendingUp className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-sans font-bold text-white text-sm">Revenue Trajectory</h3>
+                <p className="text-[11px] text-neutral-400">Hourly sales volume & settlement velocity</p>
+              </div>
+            </div>
+
+            {peakHour && (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-bold">
+                <Sparkles className="h-3 w-3" />
+                <span>
+                  Peak: {peakHour.time} (₹{peakHour.revenue.toLocaleString("en-IN")})
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="h-56 my-2 -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={hourlyRevenueData} margin={{ top: 12, right: 12, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="cashierRevenueGlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FA2D48" stopOpacity={0.45} />
+                    <stop offset="95%" stopColor="#FA2D48" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="time"
+                  stroke="#52525b"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                />
+                <YAxis
+                  stroke="#52525b"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                  tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}`}
+                />
+                <RechartsTooltip content={<ChartCustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#FA2D48"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#cashierRevenueGlow)"
+                  dot={{ r: 2.5, fill: "#FA2D48", stroke: "#1c1c1f", strokeWidth: 1.5 }}
+                  activeDot={{ r: 5, fill: "#FA2D48", stroke: "#fff", strokeWidth: 2 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart Bottom Highlights */}
+        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/[0.06]">
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
+              Shift Gross
+            </span>
+            <span className="font-['Outfit'] text-sm font-bold text-white">
+              ₹{Number(totalRevenue).toFixed(2)}
+            </span>
+          </div>
+
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
+              Average Order Value
+            </span>
+            <span className="font-['Outfit'] text-sm font-bold text-emerald-400">
+              ₹{aov}
+            </span>
+          </div>
+
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-neutral-400 font-semibold block uppercase tracking-wider">
+              Velocity (Settled)
+            </span>
+            <span className="font-['Outfit'] text-sm font-bold text-white">
+              {totalBills} receipts
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function CashierDashboard() {
   // User auth details
@@ -371,6 +635,9 @@ export default function CashierDashboard() {
       loadFloorData();
     } else if (activeTab === "takeaway") {
       loadTakeawayOrders();
+    } else if (activeTab === "stats") {
+      loadFloorData();
+      loadHistoryData();
     }
   }, [activeTab, loadTakeawayOrders]);
 
@@ -876,6 +1143,67 @@ export default function CashierDashboard() {
     [takeawayOrders]
   );
   const takeawayActiveCount = takeawayPreparingCount + takeawayReadyCount;
+
+  // Visual Analytics Computations
+  const paymentPieData = useMemo(() => {
+    let cash = Number(stats?.cashTotal) || 0;
+    let upi = Number(stats?.upiTotal) || 0;
+    let card = Number(stats?.cardTotal) || 0;
+
+    if (cash === 0 && upi === 0 && card === 0 && history.length > 0) {
+      history.forEach((b) => {
+        (b.payments || []).forEach((p) => {
+          const amt = Number(p.amount) || 0;
+          if (p.method === "CASH") cash += amt;
+          else if (p.method === "UPI") upi += amt;
+          else if (p.method === "CARD") card += amt;
+        });
+      });
+    }
+
+    const total = cash + upi + card;
+
+    if (total === 0) return [];
+
+    return [
+      { name: "Cash", value: cash, color: "#10B981", percent: ((cash / total) * 100).toFixed(1) },
+      { name: "UPI / QR", value: upi, color: "#38BDF8", percent: ((upi / total) * 100).toFixed(1) },
+      { name: "Card POS", value: card, color: "#A855F7", percent: ((card / total) * 100).toFixed(1) },
+    ].filter((d) => d.value > 0);
+  }, [stats, history]);
+
+  const hourlyRevenueData = useMemo(() => {
+    const buckets: Record<number, { revenue: number; bills: number }> = {};
+    for (let h = 9; h <= 23; h++) {
+      buckets[h] = { revenue: 0, bills: 0 };
+    }
+
+    history.forEach((bill) => {
+      const d = new Date(bill.endTime || bill.startTime);
+      const h = d.getHours();
+      if (buckets[h] !== undefined) {
+        buckets[h].revenue += Number(bill.totalAmount) || 0;
+        buckets[h].bills += 1;
+      }
+    });
+
+    const hours = Object.keys(buckets).map(Number).sort((a, b) => a - b);
+    return hours.map((h) => {
+      const period = h >= 12 ? "PM" : "AM";
+      const displayH = h % 12 === 0 ? 12 : h % 12;
+      return {
+        time: `${displayH} ${period}`,
+        revenue: Math.round(buckets[h].revenue),
+        bills: buckets[h].bills,
+      };
+    });
+  }, [history]);
+
+  const peakHour = useMemo(() => {
+    if (hourlyRevenueData.length === 0) return null;
+    const max = [...hourlyRevenueData].sort((a, b) => b.revenue - a.revenue)[0];
+    return max && max.revenue > 0 ? max : null;
+  }, [hourlyRevenueData]);
 
   // Filtered Queue Orders
   const filteredTakeawayOrders = useMemo(() => {
@@ -2553,6 +2881,15 @@ export default function CashierDashboard() {
             </div>
           </div>
 
+          {/* Visual Analytics Graphs & Donut Chart */}
+          <ShiftAnalyticsCharts
+            paymentPieData={paymentPieData}
+            hourlyRevenueData={hourlyRevenueData}
+            peakHour={peakHour}
+            stats={stats}
+            history={history}
+          />
+
           <div className="rounded-3xl bg-[#1c1c1f]/85 border border-white/[0.08] overflow-hidden shadow-2xl backdrop-blur-2xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -2710,6 +3047,15 @@ export default function CashierDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Visual Analytics Graphs & Donut Chart */}
+          <ShiftAnalyticsCharts
+            paymentPieData={paymentPieData}
+            hourlyRevenueData={hourlyRevenueData}
+            peakHour={peakHour}
+            stats={stats}
+            history={history}
+          />
 
           {/* Operational Shift Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
