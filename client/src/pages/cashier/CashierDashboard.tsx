@@ -26,9 +26,7 @@ import {
   Check,
   Edit3,
   FileText,
-  Users,
   Sparkles,
-  ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { socket } from "../../lib/socket";
@@ -201,7 +199,7 @@ export default function CashierDashboard() {
   }, []);
 
   // Main UI Tab (driven by URL search params ?tab=...)
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab");
   const activeTab: "floor" | "takeaway" | "history" | "stats" =
     rawTab === "takeaway" || rawTab === "history" || rawTab === "stats" ? rawTab : "floor";
@@ -1086,6 +1084,76 @@ export default function CashierDashboard() {
         </div>
       </div>
 
+      {/* ================= APPLE MUSIC PRIMARY SEGMENTED NAVIGATION BAR ================= */}
+      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-2xl overflow-x-auto scrollbar-none w-full sm:w-fit">
+        <button
+          onClick={() => setSearchParams({ tab: "floor" })}
+          className={`flex items-center gap-2 px-4.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "floor"
+              ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30"
+              : "text-neutral-400 hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <UtensilsCrossed className="h-3.5 w-3.5" />
+          <span>Floor Stations</span>
+          <span
+            className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+              activeTab === "floor" ? "bg-white/25 text-white" : "bg-white/[0.08] text-neutral-400"
+            }`}
+          >
+            {tables.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setSearchParams({ tab: "takeaway" })}
+          className={`flex items-center gap-2 px-4.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "takeaway"
+              ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30"
+              : "text-neutral-400 hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <ShoppingBag className="h-3.5 w-3.5" />
+          <span>Takeaway POS</span>
+          {takeawayOrders.filter((o) => o.status !== "SERVED" && o.status !== "CANCELLED").length > 0 && (
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500 text-black font-extrabold">
+              {takeawayOrders.filter((o) => o.status !== "SERVED" && o.status !== "CANCELLED").length}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setSearchParams({ tab: "history" })}
+          className={`flex items-center gap-2 px-4.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "history"
+              ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30"
+              : "text-neutral-400 hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <Receipt className="h-3.5 w-3.5" />
+          <span>Settled Bills</span>
+          <span
+            className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+              activeTab === "history" ? "bg-white/25 text-white" : "bg-white/[0.08] text-neutral-400"
+            }`}
+          >
+            {history.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setSearchParams({ tab: "stats" })}
+          className={`flex items-center gap-2 px-4.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "stats"
+              ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/30"
+              : "text-neutral-400 hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <FileSpreadsheet className="h-3.5 w-3.5" />
+          <span>Shift Register</span>
+        </button>
+      </div>
+
       {/* ================= PENDING QR SCAN ACCESS REQUESTS BANNER ================= */}
       {pendingRequests.length > 0 && (
         <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/15 via-[#18181c]/90 to-transparent border border-amber-500/30 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-3 duration-300 backdrop-blur-2xl">
@@ -1247,222 +1315,290 @@ export default function CashierDashboard() {
                 return (
                   <div
                     key={table.id}
-                    className={`group relative flex flex-col justify-between rounded-3xl p-5 bg-[#18181b]/95 hover:bg-[#1f1f25] border transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 overflow-hidden ${
-                      isBilling
-                        ? "border-[#FA2D48]/50 ring-1 ring-[#FA2D48]/40 shadow-[#FA2D48]/15"
-                        : isOccupied
-                        ? "border-sky-500/30 hover:border-sky-500/60 shadow-sky-500/10"
-                        : isCleaning
-                        ? "border-purple-500/30 hover:border-purple-500/60 shadow-purple-500/10"
-                        : "border-emerald-500/20 hover:border-emerald-500/50 shadow-emerald-500/5"
-                    }`}
+                    className="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-[#1c1c1f]/85 hover:bg-[#222227] border border-white/[0.08] hover:border-white/[0.2] p-4.5 backdrop-blur-2xl shadow-xl hover:shadow-2xl transition-all duration-300"
                   >
-                    {/* Ambient glowing radial spotlight in corner */}
+                    {/* Apple Music Square Artwork Tile */}
                     <div
-                      className={`pointer-events-none absolute -top-10 -right-10 h-36 w-36 rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition-opacity duration-500 ${
-                        isBilling
-                          ? "bg-[#FA2D48]"
-                          : isOccupied
-                          ? "bg-sky-500"
-                          : isCleaning
-                          ? "bg-purple-500"
-                          : "bg-emerald-500"
-                      }`}
-                    />
+                      onClick={() => {
+                        if (table.activeSession) {
+                          setInspectTable(table);
+                        } else {
+                          setPunchTable(table);
+                          setPunchCart([]);
+                          setPunchNotes("");
+                        }
+                      }}
+                      className="relative aspect-square w-full cursor-pointer rounded-2xl overflow-hidden bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-black/40 border border-white/[0.09] flex flex-col items-center justify-center transition-all group-hover:border-white/[0.2]"
+                    >
+                      {/* Subtle Ambient Radial Glow Based on Status */}
+                      <div
+                        className={`pointer-events-none absolute inset-0 opacity-25 group-hover:opacity-40 transition-opacity duration-300 ${
+                          isAvail
+                            ? "bg-radial from-emerald-500/40 via-emerald-950/20 to-transparent"
+                            : isOccupied
+                            ? "bg-radial from-sky-500/40 via-sky-950/20 to-transparent"
+                            : isBilling
+                            ? "bg-radial from-[#FA2D48]/40 via-rose-950/20 to-transparent"
+                            : "bg-radial from-purple-500/40 via-purple-950/20 to-transparent"
+                        }`}
+                      />
 
-                    {/* Header Row: Table # + Capacity Chip + Status Beacon Pill */}
-                    <div className="flex items-start justify-between gap-2 z-10">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-['Outfit'] text-xl font-black text-white tracking-tight">
-                            Table {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
-                          </span>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-[10px] font-bold text-neutral-300">
-                            <Users className="h-3 w-3 text-neutral-400" />
-                            <span>{table.capacity} Seats</span>
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-mono text-neutral-400 mt-0.5 block">
-                          {table.activeSession
-                            ? `Session #${table.activeSession.sessionCode?.slice(-6) || table.activeSession.id}`
-                            : "Ready for seating"}
+                      {/* Top Artwork Bar: Table Number Badge & Live Status Pill */}
+                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
+                        <span className="rounded-full bg-black/75 backdrop-blur-md px-2.5 py-1 text-xs font-mono font-black text-white border border-white/[0.14] shadow-md">
+                          TABLE {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
                         </span>
+
+                        {/* Live Status Pill */}
+                        <div>
+                          {isAvail && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/25 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                              </span>
+                              Ready
+                            </span>
+                          )}
+                          {isOccupied && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/25 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-sky-400 border border-sky-500/30">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500" />
+                              </span>
+                              Occupied
+                            </span>
+                          )}
+                          {isBilling && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FA2D48]/25 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-[#FA2D48] border border-[#FA2D48]/30 animate-pulse">
+                              <Sparkles className="h-3 w-3 text-[#FA2D48]" />
+                              Bill Due
+                            </span>
+                          )}
+                          {isCleaning && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/25 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-purple-400 border border-purple-500/30">
+                              <RefreshCw className="h-3 w-3 text-purple-400 animate-spin" />
+                              Cleaning
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Live Status Pill */}
-                      <div className="shrink-0">
-                        {isBilling && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FA2D48]/20 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-[#FA2D48] border border-[#FA2D48]/40 animate-pulse shadow-sm shadow-[#FA2D48]/30">
-                            <span className="relative flex h-2 w-2">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FA2D48] opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FA2D48]" />
-                            </span>
-                            <span>Bill Due</span>
-                          </span>
-                        )}
-                        {isOccupied && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/20 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-sky-400 border border-sky-500/30 shadow-sm shadow-sky-500/20">
-                            <span className="relative flex h-2 w-2">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
-                            </span>
-                            <span>Occupied</span>
-                          </span>
-                        )}
-                        {isAvail && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/20">
-                            <span className="relative flex h-2 w-2">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                            </span>
-                            <span>Available</span>
-                          </span>
-                        )}
-                        {isCleaning && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-purple-300 border border-purple-500/30 shadow-sm shadow-purple-500/20">
-                            <Sparkles className="h-3 w-3" />
-                            <span>Cleaning</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Center Content Section */}
-                    <div className="my-5 z-10">
+                      {/* Center Artwork Visual */}
                       {table.activeSession ? (
-                        <div
-                          onClick={() => setInspectTable(table)}
-                          className="p-4 rounded-2xl bg-black/40 border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group/session relative overflow-hidden"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-bold">
-                              Running Bill
-                            </span>
-                            <span className="text-[10px] text-neutral-400 group-hover/session:text-[#FA2D48] transition-colors flex items-center gap-1">
-                              <Eye className="h-3 w-3" />
-                              <span>Details</span>
-                            </span>
+                        <div className="text-center px-4 z-10 transition-transform duration-300 group-hover:scale-105">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold block mb-1">
+                            Running Bill
+                          </span>
+                          <div className="font-['Outfit'] text-3xl sm:text-4xl font-black text-white tracking-tight">
+                            ₹{table.activeSession.totalAmount.toFixed(2)}
                           </div>
-
-                          <div className="mt-1.5 flex items-baseline justify-between">
-                            <span className="font-['Outfit'] text-3xl font-black text-white tracking-tight">
-                              ₹{table.activeSession.totalAmount.toFixed(2)}
-                            </span>
-                            <span className="font-mono text-[11px] font-bold text-neutral-400 bg-white/[0.05] px-2 py-0.5 rounded-md border border-white/5">
+                          <div className="mt-2.5 flex items-center justify-center gap-1.5">
+                            <span className="font-mono text-[10px] font-bold text-neutral-300 bg-white/[0.08] px-2 py-0.5 rounded-full border border-white/10 backdrop-blur-md">
                               {table.activeSession.totalItems} items
                             </span>
-                          </div>
-
-                          <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-neutral-400 font-medium">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-sky-400" />
-                              <span>{table.activeSession.ordersCount} rounds</span>
+                            <span className="font-mono text-[10px] font-bold text-sky-300 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20 backdrop-blur-md">
+                              {table.activeSession.ordersCount} rounds
                             </span>
-                            <span className="text-[#FA2D48] font-bold">Click to view</span>
                           </div>
                         </div>
                       ) : (
-                        <div className="p-4 rounded-2xl bg-emerald-500/[0.04] border border-emerald-500/15 flex flex-col items-center text-center space-y-2.5">
-                          <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform duration-300">
-                            <UtensilsCrossed className="h-6 w-6" />
+                        <div className="text-center px-4 z-10 flex flex-col items-center gap-2 transition-transform duration-300 group-hover:scale-105">
+                          <div className="h-14 w-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-emerald-400 shadow-inner">
+                            <UtensilsCrossed className="h-7 w-7" />
                           </div>
                           <div>
-                            <span className="font-['Outfit'] text-sm font-bold text-white block">
+                            <span className="text-sm font-bold text-white block">
                               Ready for Guests
                             </span>
                             <span className="text-[11px] text-neutral-400 block mt-0.5">
-                              Table sanitized & set for up to {table.capacity}
+                              Up to {table.capacity} guests
                             </span>
                           </div>
+                        </div>
+                      )}
 
+                      {/* Hover Overlay: Apple Music Center Action Pill */}
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2.5 z-20 pointer-events-none">
+                        <div className="h-12 w-12 rounded-full bg-[#FA2D48] text-white flex items-center justify-center shadow-2xl shadow-[#FA2D48]/50 transform scale-95 group-hover:scale-100 transition-transform">
+                          {table.activeSession ? (
+                            isBilling ? (
+                              <Receipt className="h-6 w-6" />
+                            ) : (
+                              <Eye className="h-6 w-6" />
+                            )
+                          ) : (
+                            <Plus className="h-6 w-6" />
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold text-white tracking-wide bg-black/60 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                          {table.activeSession
+                            ? isBilling
+                              ? "Settle & Checkout"
+                              : "Inspect Session"
+                            : "Punch Dine-in"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Below Artwork: Apple Music Album Typography & Meta */}
+                    <div className="mt-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-base font-bold text-white tracking-tight group-hover:text-[#FA2D48] transition-colors">
+                          Table {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
+                        </h3>
+                        <span className="rounded-full bg-white/[0.06] border border-white/[0.08] px-2.5 py-0.5 text-xs font-semibold text-neutral-300">
+                          {table.capacity} Guests
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-neutral-400 truncate">
+                        {table.activeSession
+                          ? `Session #${table.activeSession.sessionCode?.slice(-6) || table.activeSession.id} • Active`
+                          : "Dining Station • Ready for Seating"}
+                      </p>
+
+                      {/* Apple iOS 4-Segmented Status Controller */}
+                      <div className="pt-1.5">
+                        <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateTableStatus(table.tableNumber, "AVAILABLE");
+                            }}
+                            className={`py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                              isAvail
+                                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                                : "text-neutral-400 hover:text-white"
+                            }`}
+                            title="Set Ready / Available"
+                          >
+                            Ready
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateTableStatus(table.tableNumber, "OCCUPIED");
+                            }}
+                            className={`py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                              isOccupied
+                                ? "bg-sky-600 text-white shadow-md shadow-sky-600/30"
+                                : "text-neutral-400 hover:text-white"
+                            }`}
+                            title="Set Occupied"
+                          >
+                            Occ
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateTableStatus(table.tableNumber, "BILLING");
+                            }}
+                            className={`py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                              isBilling
+                                ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                                : "text-neutral-400 hover:text-white"
+                            }`}
+                            title="Set Bill Due"
+                          >
+                            Bill
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateTableStatus(table.tableNumber, "CLEANING");
+                            }}
+                            className={`py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                              isCleaning
+                                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                                : "text-neutral-400 hover:text-white"
+                            }`}
+                            title="Set Cleaning"
+                          >
+                            Clean
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Cashier Operational Action Buttons */}
+                      {table.activeSession ? (
+                        <div className="pt-2 grid grid-cols-4 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePrintEstimate(table);
+                            }}
+                            title="Print Pre-bill Check"
+                            className="py-2 px-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
+                          >
+                            <Printer className="h-3.5 w-3.5 text-neutral-400" />
+                            <span className="hidden xl:inline">Check</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTransferSourceTable(table);
+                              setTransferDestTableNumber(null);
+                            }}
+                            title="Transfer table"
+                            className="py-2 px-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
+                          >
+                            <ArrowRightLeft className="h-3.5 w-3.5 text-neutral-400" />
+                            <span className="hidden xl:inline">Move</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setPunchTable(table);
                               setPunchCart([]);
                               setPunchNotes("");
                             }}
-                            className="w-full mt-1 py-2.5 px-4 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 active:scale-98 shadow-sm cursor-pointer"
+                            title="Add dishes"
+                            className="py-2 px-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
+                          >
+                            <PlusCircle className="h-3.5 w-3.5 text-[#FA2D48]" />
+                            <span className="hidden xl:inline">Add</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openSettlementModal(table);
+                            }}
+                            title="Settle & Checkout Bill"
+                            className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 shadow-md cursor-pointer ${
+                              isBilling
+                                ? "bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-[#FA2D48]/30 animate-pulse"
+                                : "bg-white text-black hover:bg-neutral-200"
+                            }`}
+                          >
+                            <Receipt className="h-3.5 w-3.5" />
+                            <span>Settle</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPunchTable(table);
+                              setPunchCart([]);
+                              setPunchNotes("");
+                            }}
+                            className="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                           >
                             <PlusCircle className="h-3.5 w-3.5" />
                             <span>Punch Dine-in Order</span>
                           </button>
                         </div>
-                      )}
-                    </div>
-
-                    {/* Active Session Mid-Actions */}
-                    {table.activeSession && (
-                      <div className="grid grid-cols-3 gap-1.5 mb-3 z-10">
-                        <button
-                          onClick={() => handlePrintEstimate(table)}
-                          title="Print Pre-bill Check"
-                          className="py-2 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
-                        >
-                          <Printer className="h-3.5 w-3.5 text-neutral-400" />
-                          <span>Check</span>
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setTransferSourceTable(table);
-                            setTransferDestTableNumber(null);
-                          }}
-                          title="Transfer table"
-                          className="py-2 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
-                        >
-                          <ArrowRightLeft className="h-3.5 w-3.5 text-neutral-400" />
-                          <span>Move</span>
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setPunchTable(table);
-                            setPunchCart([]);
-                            setPunchNotes("");
-                          }}
-                          title="Add more dishes"
-                          className="py-2 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
-                        >
-                          <PlusCircle className="h-3.5 w-3.5 text-[#FA2D48]" />
-                          <span>+ Add</span>
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Bottom Controls: Status Selector & Settle Button */}
-                    <div className="pt-3 border-t border-white/[0.08] flex items-center gap-2 z-10">
-                      <div className="relative flex-1">
-                        <select
-                          value={table.status}
-                          onChange={(e) =>
-                            handleUpdateTableStatus(
-                              table.tableNumber,
-                              e.target.value as FloorTable["status"]
-                            )
-                          }
-                          className="w-full appearance-none bg-white/[0.04] hover:bg-white/[0.08] text-xs font-bold text-neutral-300 pl-3 pr-7 py-2 rounded-xl border border-white/10 focus:outline-none cursor-pointer transition-colors"
-                        >
-                          <option value="AVAILABLE" className="bg-[#18181c] text-white">Available</option>
-                          <option value="OCCUPIED" className="bg-[#18181c] text-white">Occupied</option>
-                          <option value="BILLING" className="bg-[#18181c] text-white">Billing</option>
-                          <option value="CLEANING" className="bg-[#18181c] text-white">Cleaning</option>
-                        </select>
-                        <ChevronRight className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 rotate-90 text-neutral-500 pointer-events-none" />
-                      </div>
-
-                      {table.activeSession && (
-                        <button
-                          onClick={() => openSettlementModal(table)}
-                          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-lg cursor-pointer ${
-                            isBilling
-                              ? "bg-gradient-to-r from-[#FA2D48] to-[#ff3b56] text-white shadow-[#FA2D48]/30 animate-pulse"
-                              : "bg-white text-black hover:bg-neutral-200"
-                          }`}
-                        >
-                          <Receipt className="h-3.5 w-3.5" />
-                          <span>Checkout</span>
-                        </button>
                       )}
                     </div>
                   </div>
@@ -1643,6 +1779,13 @@ export default function CashierDashboard() {
                               <span>×{cartEntry.quantity}</span>
                             </div>
                           )}
+
+                          {/* Apple Music Hover Center Play/Add Button */}
+                          <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+                            <div className="h-10 w-10 rounded-full bg-[#FA2D48] text-white flex items-center justify-center shadow-2xl shadow-[#FA2D48]/50 transform scale-90 group-hover:scale-100 transition-transform">
+                              <Plus className="h-5 w-5" />
+                            </div>
+                          </div>
                         </div>
 
                         {/* Dish Details */}
