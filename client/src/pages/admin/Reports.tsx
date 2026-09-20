@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Download,
   Receipt,
-  CreditCard,
   Star,
   RefreshCw,
   TrendingUp,
@@ -26,7 +25,6 @@ import {
   Tooltip as RechartsTooltip,
 } from "recharts";
 import toast from "react-hot-toast";
-import { BrandCrest } from "@/components/BrandLogo";
 import axiosInstance from "../../api/axiosInstance";
 import { socket } from "../../lib/socket";
 
@@ -558,10 +556,6 @@ export default function Reports() {
   const cardTotal = stats?.cardTotal ?? history.reduce((sum, h) => sum + h.payments.filter(p => p.method === "CARD").reduce((pSum, p) => pSum + p.amount, 0), 0);
   const cashTotal = stats?.cashTotal ?? history.reduce((sum, h) => sum + h.payments.filter(p => p.method === "CASH").reduce((pSum, p) => pSum + p.amount, 0), 0);
 
-  const upiShare = totalRevenue > 0 ? ((upiTotal / totalRevenue) * 100).toFixed(1) : "0.0";
-  const cardShare = totalRevenue > 0 ? ((cardTotal / totalRevenue) * 100).toFixed(1) : "0.0";
-  const cashShare = totalRevenue > 0 ? ((cashTotal / totalRevenue) * 100).toFixed(1) : "0.0";
-
   // Visual Analytics Computations
   const paymentPieData = useMemo(() => {
     let cash = Number(stats?.cashTotal) || 0;
@@ -712,6 +706,10 @@ export default function Reports() {
 
   const displayReviewsCount = reviews.length;
 
+  // Filter Counts
+  const dineInCount = useMemo(() => history.filter((b) => b.tableNumber !== "Takeaway").length, [history]);
+  const takeawayCount = useMemo(() => history.filter((b) => b.tableNumber === "Takeaway").length, [history]);
+
   // Filtered History for Ledger
   const filteredHistory = useMemo(() => {
     return history.filter((b) => {
@@ -816,60 +814,13 @@ export default function Reports() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
-      {/* Live Financial Reconciliation Operational Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/[0.1] bg-[#1c1c1f]/80 p-5 text-xs text-neutral-300 backdrop-blur-2xl shadow-xl">
-        <div className="flex items-center gap-3.5">
-          <BrandCrest className="h-10 w-10 shrink-0 rounded-2xl" />
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-bold text-white text-sm">
-                EOD Financial Reconciliation & Audit
-              </p>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                LIVE
-              </span>
-            </div>
-            <p className="text-neutral-400 mt-0.5 leading-relaxed">
-              Real-time daily turnover auditing, gateway split settlement (UPI / Card / Cash), 5% dining GST reconciliation, and verified guest satisfaction.
-            </p>
-          </div>
-        </div>
+      {/* Header Bar - Apple Music Editorial Hero (Standard across Admin Pages) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
+        {/* Apple Music Ambient Bloom Halos */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
 
-        {/* Range Selector Pills */}
-        <div className="flex items-center gap-1.5 bg-black/40 border border-white/[0.08] p-1 rounded-full self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setRangeFilter("today")}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              rangeFilter === "today"
-                ? "bg-white text-black shadow-md"
-                : "text-neutral-400 hover:text-white"
-            }`}
-          >
-            Today's Shift
-          </button>
-          <button
-            type="button"
-            onClick={() => setRangeFilter("all")}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              rangeFilter === "all"
-                ? "bg-white text-black shadow-md"
-                : "text-neutral-400 hover:text-white"
-            }`}
-          >
-            All-Time History
-          </button>
-        </div>
-      </div>
-
-      {/* Header Bar - Apple Music Style Hero */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-white/[0.08] pb-6">
-        <div>
-          <div className="flex items-center gap-2 text-[11px] font-bold text-[#FA2D48] tracking-widest uppercase mb-1">
-            <Receipt className="h-3.5 w-3.5" />
-            <span>Auditing & Revenue</span>
-          </div>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
               End-of-Day (EOD) Reports
@@ -877,42 +828,66 @@ export default function Reports() {
             <button
               type="button"
               onClick={() => loadData(true)}
-              className="p-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-full bg-white/[0.05] hover:bg-white/[0.12] text-neutral-400 hover:text-white transition-colors cursor-pointer"
               title="Refresh Live Data"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
             </button>
           </div>
-          <p className="mt-1 text-xs sm:text-sm text-neutral-400">
-            Categorized settlement breakdowns, visual trajectory charts, tax audit, and itemized invoice reprinting.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
-          {/* Print Register Closeout Report */}
-          <button
-            type="button"
-            onClick={handlePrintShiftReport}
-            className="flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/10 active:scale-95 transition-all shadow-lg cursor-pointer"
-          >
-            <Printer className="h-4 w-4 text-neutral-300" />
-            <span>Print Shift Audit</span>
-          </button>
+          {/* Action Controls in a Clean, Aligned Row */}
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+            {/* Range Selector Pills: Today's Shift vs All-Time */}
+            <div className="flex items-center gap-1 bg-black/40 border border-white/[0.1] p-1 rounded-full backdrop-blur-xl shrink-0">
+              <button
+                type="button"
+                onClick={() => setRangeFilter("today")}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  rangeFilter === "today"
+                    ? "bg-white text-black shadow-md font-bold"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                Today's Shift
+              </button>
+              <button
+                type="button"
+                onClick={() => setRangeFilter("all")}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  rangeFilter === "all"
+                    ? "bg-white text-black shadow-md font-bold"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                All-Time
+              </button>
+            </div>
 
-          {/* Export CSV */}
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            disabled={isExporting || history.length === 0}
-            className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold bg-white text-black hover:bg-neutral-200 active:scale-95 transition-all shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isExporting ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            <span>Export Summary (CSV)</span>
-          </button>
+            {/* Print Shift Audit */}
+            <button
+              type="button"
+              onClick={handlePrintShiftReport}
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+            >
+              <Printer className="h-4 w-4 text-neutral-300" />
+              <span>Print Shift Audit</span>
+            </button>
+
+            {/* Export Summary (CSV) */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              disabled={isExporting || history.length === 0}
+              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              {isExporting ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span>Export Summary (CSV)</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -966,7 +941,7 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Visual Analytics Graphs & Donut Chart (Ported from Closed Bills Log) */}
+      {/* Visual Analytics Graphs & Donut Chart */}
       <ShiftAnalyticsCharts
         paymentPieData={paymentPieData}
         hourlyRevenueData={hourlyRevenueData}
@@ -975,157 +950,50 @@ export default function Reports() {
         history={history}
       />
 
-      {/* Financial Breakdown Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Card 1: Settlement by Gateway */}
-        <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-white/[0.07] pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-[#FA2D48]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
-                  Settlement by Gateway
-                </span>
-              </div>
-              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 text-[10px] font-mono text-emerald-400">
-                AUDITED
-              </span>
-            </div>
-
-            <div className="space-y-3 font-mono text-xs">
-              <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <span className="text-white">UPI & QR Pay</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold text-white">₹{upiTotal.toFixed(2)}</span>
-                  <span className="text-[10px] text-neutral-500 block font-sans">
-                    {upiShare}% share
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-blue-400" />
-                  <span className="text-white">Credit / Debit Cards</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold text-white">₹{cardTotal.toFixed(2)}</span>
-                  <span className="text-[10px] text-neutral-500 block font-sans">
-                    {cardShare}% share
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  <span className="text-white">Cash Counter</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold text-white">₹{cashTotal.toFixed(2)}</span>
-                  <span className="text-[10px] text-neutral-500 block font-sans">
-                    {cashShare}% share
-                  </span>
-                </div>
-              </div>
-            </div>
+      {/* Statutory 5% Dining GST Tax Audit & Register Reconciliation Strip */}
+      <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
+          <div className="flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-[#FA2D48]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+              Tax Reconciliation & Register Audit (5% Dining GST)
+            </span>
           </div>
-
-          <div className="border-t border-white/[0.07] pt-4 mt-5 flex justify-between items-center text-xs text-neutral-400">
-            <span>Reconciled Register Balance</span>
-            <span className="font-mono text-emerald-400 font-bold">₹{totalRevenue.toFixed(2)}</span>
-          </div>
+          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 text-[10px] font-mono text-emerald-400">
+            AUDITED COMPLIANCE
+          </span>
         </div>
 
-        {/* Card 2: 5% Dining GST Tax Audit */}
-        <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-white/[0.07] pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-[#FA2D48]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
-                  Tax Reconciliation (5% GST)
-                </span>
-              </div>
-              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 text-[10px] font-mono text-emerald-400">
-                AUDITED
-              </span>
-            </div>
-
-            <div className="space-y-3 font-mono text-xs">
-              <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/[0.03]">
-                <span className="text-neutral-400">Gross Food Sales</span>
-                <span className="text-white font-bold">₹{grossFoodSales.toFixed(2)}</span>
-              </div>
-
-              <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/[0.03]">
-                <span className="text-neutral-400">CGST (2.5%)</span>
-                <span className="text-[#FA2D48] font-bold">₹{halfTax.toFixed(2)}</span>
-              </div>
-
-              <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/[0.03]">
-                <span className="text-neutral-400">SGST (2.5%)</span>
-                <span className="text-[#FA2D48] font-bold">₹{halfTax.toFixed(2)}</span>
-              </div>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
+            <span className="text-[10px] text-neutral-400 font-sans block">Gross Food Sales (Pre-Tax)</span>
+            <span className="text-base font-bold text-white block font-mono">₹{grossFoodSales.toFixed(2)}</span>
+            <span className="text-[9px] text-neutral-500 font-sans block">Tax-exclusive food volume</span>
           </div>
 
-          <div className="border-t border-white/[0.07] pt-4 mt-5 flex justify-between items-center text-xs text-neutral-400">
-            <span>Total Government Remittance</span>
-            <span className="font-mono text-white font-bold">₹{taxCollected.toFixed(2)}</span>
-          </div>
-        </div>
-
-        {/* Card 3: Customer Satisfaction Rating */}
-        <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-white/[0.07] pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
-                  Guest Satisfaction
-                </span>
-              </div>
-              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-mono text-amber-400 border border-amber-500/30">
-                {Number(avgRating) >= 4.5 ? "TOP TIER" : "LIVE SCORE"}
-              </span>
-            </div>
-
-            <div className="flex flex-col items-center justify-center py-3">
-              <div className="text-4xl font-extrabold text-white font-mono tracking-tight">
-                {avgRating} <span className="text-lg text-neutral-500">/ 5.0</span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    className={`h-4 w-4 ${
-                      s <= Math.round(Number(avgRating))
-                        ? "text-amber-400 fill-amber-400"
-                        : "text-neutral-600"
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className="text-[11px] text-neutral-400 mt-2 text-center">
-                Real-time feedback collected directly from customers upon cashier bill payment.
-              </p>
-            </div>
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
+            <span className="text-[10px] text-neutral-400 font-sans block">CGST (2.5%)</span>
+            <span className="text-base font-bold text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-[9px] text-neutral-500 font-sans block">Central Govt remittance</span>
           </div>
 
-          <div className="border-t border-white/[0.07] pt-4 mt-5 flex justify-between items-center text-xs text-neutral-400">
-            <span>Verified Feedback Count</span>
-            <span className="font-mono text-white font-bold">{displayReviewsCount} Review{displayReviewsCount === 1 ? "" : "s"}</span>
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
+            <span className="text-[10px] text-neutral-400 font-sans block">SGST (2.5%)</span>
+            <span className="text-base font-bold text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-[9px] text-neutral-500 font-sans block">State Govt remittance</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
+            <span className="text-[10px] text-neutral-400 font-sans block">Total GST Remittance</span>
+            <span className="text-base font-bold text-white block font-mono">₹{taxCollected.toFixed(2)}</span>
+            <span className="text-[9px] text-emerald-400 font-sans block">Physical Cash: ₹{cashTotal.toFixed(2)}</span>
           </div>
         </div>
       </div>
 
       {/* Closed Session Audits Table - Full Closed Bills Log Integration */}
       <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 backdrop-blur-xl overflow-hidden shadow-2xl space-y-0">
-        {/* Table Top Header with Search & Filter Controls */}
+        {/* Table Top Controls Bar: Status Filter Tabs (Apple Music Pill Row) & Search */}
         <div className="p-5 sm:p-6 border-b border-white/[0.07] space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -1148,64 +1016,76 @@ export default function Reports() {
             </span>
           </div>
 
-          {/* Search Bar & Type Filter Tabs */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+          {/* Filter Pills & Search Input Row matching Tables & Menu Inventory */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+            {/* Apple Music Pill Capsule Row */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                type="button"
+                onClick={() => setTypeFilter("all")}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  typeFilter === "all"
+                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30 font-bold"
+                    : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
+                }`}
+              >
+                <span>All Invoices</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/20 text-white">
+                  {history.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTypeFilter("table")}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  typeFilter === "table"
+                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30 font-bold"
+                    : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
+                }`}
+              >
+                <span>Dine-In Tables</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/20 text-white">
+                  {dineInCount}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTypeFilter("takeaway")}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  typeFilter === "takeaway"
+                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30 font-bold"
+                    : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
+                }`}
+              >
+                <ShoppingBag className="h-3 w-3" />
+                <span>Takeaway Orders</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/20 text-white">
+                  {takeawayCount}
+                </span>
+              </button>
+            </div>
+
             {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
               <input
                 type="text"
-                placeholder="Search by invoice #, table, payment mode, or dish..."
+                placeholder="Search invoice, table, payment, or dish..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-2xl bg-black/40 border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48] transition-colors"
+                className="w-full pl-9 pr-8 py-1.5 rounded-2xl bg-black/40 border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48] transition-colors"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white cursor-pointer"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
-            </div>
-
-            {/* Type Filters: All, Table, Takeaway */}
-            <div className="flex items-center gap-1.5 bg-black/40 border border-white/[0.08] p-1 rounded-2xl self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setTypeFilter("all")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  typeFilter === "all"
-                    ? "bg-white text-black shadow-sm"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                All Bills
-              </button>
-              <button
-                type="button"
-                onClick={() => setTypeFilter("table")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  typeFilter === "table"
-                    ? "bg-white text-black shadow-sm"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                Dine-In Tables
-              </button>
-              <button
-                type="button"
-                onClick={() => setTypeFilter("takeaway")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  typeFilter === "takeaway"
-                    ? "bg-white text-black shadow-sm"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                Takeaway Orders
-              </button>
             </div>
           </div>
         </div>
