@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
@@ -24,10 +24,12 @@ import {
   Check,
   Edit3,
   FileText,
-  Sparkles,
   TrendingUp,
   PieChart as PieChartIcon,
   Flame,
+  Users,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -619,6 +621,28 @@ export default function CashierDashboard() {
   // Floor & Table states
   const [tables, setTables] = useState<FloorTable[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingAccessItem[]>([]);
+  const [isQrDrawerOpen, setIsQrDrawerOpen] = useState(false);
+  const qrDrawerRef = useRef<HTMLDivElement>(null);
+
+  // Close QR drawer on outside click
+  useEffect(() => {
+    if (!isQrDrawerOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (qrDrawerRef.current && !qrDrawerRef.current.contains(e.target as Node)) {
+        setIsQrDrawerOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, [isQrDrawerOpen]);
+
+  // Auto-close QR drawer if no requests remain or if not on floor tab
+  useEffect(() => {
+    if ((pendingRequests.length === 0 || activeTab !== "floor") && isQrDrawerOpen) {
+      setIsQrDrawerOpen(false);
+    }
+  }, [pendingRequests.length, activeTab, isQrDrawerOpen]);
+
   const [stats, setStats] = useState<ShiftStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -627,6 +651,15 @@ export default function CashierDashboard() {
     "ALL" | "OCCUPIED" | "BILLING" | "AVAILABLE" | "CLEANING"
   >("ALL");
   const [tableSearch, setTableSearch] = useState("");
+  const [openStatusMenuTable, setOpenStatusMenuTable] = useState<number | null>(null);
+
+  // Close table status menu on outside click
+  useEffect(() => {
+    if (openStatusMenuTable === null) return;
+    const handleClickOutside = () => setOpenStatusMenuTable(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, [openStatusMenuTable]);
 
   // Modals state
   const [inspectTable, setInspectTable] = useState<FloorTable | null>(null);
@@ -802,6 +835,23 @@ export default function CashierDashboard() {
         ),
         { duration: 6000 }
       );
+      setPendingRequests((prev) => {
+        const filtered = prev.filter((r) => r.tableNumber !== data.tableNumber);
+        return [
+          {
+            tableNumber: data.tableNumber,
+            requestedAt: data.requestedAt || new Date().toISOString(),
+            guestCount: data.guestCount,
+          },
+          ...filtered,
+        ];
+      });
+      loadFloorData();
+    };
+
+    // Access request handled by staff (approved/declined)
+    const handleAccessHandled = (data: { tableNumber: number; action: string }) => {
+      setPendingRequests((prev) => prev.filter((r) => r.tableNumber !== data.tableNumber));
       loadFloorData();
     };
 
@@ -912,6 +962,7 @@ export default function CashierDashboard() {
     };
 
     socket.on("cashier:access_request", handleAccessRequest);
+    socket.on("cashier:access_handled", handleAccessHandled);
     socket.on("table:update", handleTableUpdate);
     socket.on("service:alert", handleServiceAlert);
     socket.on("order:placed", handleOrderPlaced);
@@ -920,6 +971,7 @@ export default function CashierDashboard() {
 
     return () => {
       socket.off("cashier:access_request", handleAccessRequest);
+      socket.off("cashier:access_handled", handleAccessHandled);
       socket.off("table:update", handleTableUpdate);
       socket.off("service:alert", handleServiceAlert);
       socket.off("order:placed", handleOrderPlaced);
@@ -948,23 +1000,29 @@ export default function CashierDashboard() {
 
   // QR Scan Authorization: Approve
   const handleApproveAccess = async (tableNumber: number) => {
+    // Optimistically remove from pending requests
+    setPendingRequests((prev) => prev.filter((r) => r.tableNumber !== tableNumber));
     try {
       await axios.post(`${API_BASE}/table/${tableNumber}/approve-access`, {}, authConfig);
-      toast.success(`Access approved for Table #${tableNumber}`);
+      toast.success(`Access approved for Table #${tableNumber}! Menu unlocked for customer.`);
       loadFloorData();
     } catch (err) {
       toast.error("Failed to approve access");
+      loadFloorData();
     }
   };
 
   // QR Scan Authorization: Decline
   const handleDeclineAccess = async (tableNumber: number) => {
+    // Optimistically remove from pending requests
+    setPendingRequests((prev) => prev.filter((r) => r.tableNumber !== tableNumber));
     try {
       await axios.post(`${API_BASE}/table/${tableNumber}/decline-access`, {}, authConfig);
       toast.success(`Access declined for Table #${tableNumber}`);
       loadFloorData();
     } catch (err) {
       toast.error("Failed to decline access");
+      loadFloorData();
     }
   };
 
@@ -1800,109 +1858,229 @@ export default function CashierDashboard() {
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       <SwipeableToaster />
 
-      {/* ================= HEADER BAR: APPLE MUSIC EDITORIAL HERO ================= */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
-        {/* Apple Music Signature Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
+      {/* ================= THREE-COLUMN SEGMENTED TITLE CARD ================= */}
+      <div className="relative rounded-[24px] bg-[#0c0c14]/95 border border-white/[0.09] shadow-2xl backdrop-blur-2xl overflow-visible z-20">
+        {/* Extremity Ambient Glows */}
+        <div className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none">
+          {/* Left deep crimson glow */}
+          <div className="absolute top-0 left-0 w-80 h-full bg-gradient-to-r from-[#FA2D48]/22 via-[#FA2D48]/5 to-transparent blur-2xl" />
+          {/* Right purple/violet glow */}
+          <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-violet-600/22 via-indigo-600/8 to-transparent blur-2xl" />
+        </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
+        {/* The Row: Left Title & Right Action Zone */}
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between min-h-[84px] px-6 sm:px-8 py-4 gap-4">
+          {/* Left Section (Header/Title) */}
+          <div className="shrink-0">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-['Outfit']">
               {tabHeaderInfo.title}
             </h1>
           </div>
 
-          {/* Action Pills */}
-          {activeTab === "takeaway" && (
-            <div className="relative z-10 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setTakeawaySubTab("register")}
-                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  takeawaySubTab === "register"
-                    ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
-                    : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
-                }`}
-              >
-                <ShoppingBag className="h-3.5 w-3.5" />
-                <span>Counter Register</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setTakeawaySubTab("queue");
-                  loadTakeawayOrders();
-                }}
-                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
-                  takeawaySubTab === "queue"
-                    ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
-                    : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
-                }`}
-              >
-                <Clock className="h-3.5 w-3.5" />
-                <span>Orders & Pickup Queue</span>
-                {takeawayActiveCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-black ml-1 shadow-sm">
-                    {takeawayActiveCount}
+          {/* Right Section (Seamless Action Zone) */}
+          <div className="flex items-center justify-end relative">
+            {activeTab === "floor" && pendingRequests.length > 0 ? (
+              <div ref={qrDrawerRef} className="relative flex items-center gap-4">
+                {/* Table metadata directly on card surface */}
+                <div
+                  onClick={() => {
+                    if (pendingRequests.length > 1) {
+                      setIsQrDrawerOpen((prev) => !prev);
+                    }
+                  }}
+                  className={`flex flex-col justify-center leading-tight ${
+                    pendingRequests.length > 1 ? "cursor-pointer group" : ""
+                  }`}
+                  title={pendingRequests.length > 1 ? "Click to view all requests" : undefined}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-['Outfit'] text-[15px] sm:text-base font-black text-white tracking-tight leading-none">
+                      Table{" "}
+                      {pendingRequests[0].tableNumber < 10
+                        ? `0${pendingRequests[0].tableNumber}`
+                        : pendingRequests[0].tableNumber}
+                    </span>
+                    {pendingRequests.length > 1 && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-[#FA2D48]/20 border border-[#FA2D48]/35 text-[#FA2D48] font-bold text-[10px] font-mono group-hover:bg-[#FA2D48] group-hover:text-white transition-all">
+                        +{pendingRequests.length - 1}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-[#8e8d9e] font-medium leading-none mt-1">
+                    Scanned{" "}
+                    {new Date(pendingRequests[0].requestedAt)
+                      .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      .toLowerCase()}
                   </span>
+                </div>
+
+                {/* Vertical Divider */}
+                <div className="h-6 w-px bg-white/10 mx-0.5 shrink-0" />
+
+                {/* Secondary Action: Ghost/dark pill button */}
+                <button
+                  type="button"
+                  onClick={() => handleDeclineAccess(pendingRequests[0].tableNumber)}
+                  className="px-4 py-2 rounded-full bg-[#1e1c27] hover:bg-[#2a2838] text-white text-xs font-semibold transition-all cursor-pointer active:scale-95 shrink-0 shadow-sm"
+                >
+                  Decline
+                </button>
+
+                {/* Primary Action: High-emphasis neon coral/red pill */}
+                <button
+                  type="button"
+                  onClick={() => handleApproveAccess(pendingRequests[0].tableNumber)}
+                  className="px-4 py-2 rounded-full bg-[#FA2D48] hover:bg-[#ff3b53] text-white text-xs font-bold transition-all shadow-[0_0_20px_rgba(250,45,72,0.5)] active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <CheckCircle2 className="h-4 w-4 stroke-[2.5]" />
+                  <span>Approve</span>
+                </button>
+
+                {/* Contextual Menu: Minimal circular chevron toggle */}
+                <button
+                  type="button"
+                  onClick={() => setIsQrDrawerOpen((prev) => !prev)}
+                  className={`p-2 rounded-full bg-[#1a1926] hover:bg-[#262438] text-neutral-300 hover:text-white transition-all cursor-pointer border border-white/5 shrink-0 ${
+                    isQrDrawerOpen ? "bg-white/20 text-white" : ""
+                  }`}
+                  title={isQrDrawerOpen ? "Collapse requests" : "Expand all requests"}
+                >
+                  {isQrDrawerOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+
+                {/* Dropdown Quick-Action Drawer */}
+                {isQrDrawerOpen && (
+                  <div className="absolute top-full right-0 mt-3 w-[370px] max-w-[calc(100vw-32px)] rounded-3xl bg-[#0c0c14]/98 border border-[#262534] shadow-[0_20px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl p-4 space-y-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FA2D48] opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FA2D48]" />
+                        </span>
+                        <span className="font-['Outfit'] font-extrabold text-sm text-white tracking-wide">
+                          QR Scan Requests
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 font-mono text-[11px] font-bold">
+                          {pendingRequests.length}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {pendingRequests.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              for (const req of pendingRequests) {
+                                await handleApproveAccess(req.tableNumber);
+                              }
+                            }}
+                            className="px-2.5 py-1 rounded-full bg-[#FA2D48] hover:bg-[#ff3b53] text-white text-[11px] font-black transition-all shadow-sm shadow-[#FA2D48]/30 active:scale-95 cursor-pointer flex items-center gap-1"
+                            title="Approve all waiting requests"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
+                            <span>Approve All</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setIsQrDrawerOpen(false)}
+                          className="p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                          title="Close drawer"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[320px] overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/15">
+                      {pendingRequests.map((req) => (
+                        <div
+                          key={req.tableNumber}
+                          className="flex items-center justify-between p-2.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/5 transition-all"
+                        >
+                          <div className="flex flex-col justify-center leading-tight">
+                            <span className="font-['Outfit'] text-[15px] font-black text-white tracking-tight leading-none">
+                              Table {req.tableNumber < 10 ? `0${req.tableNumber}` : req.tableNumber}
+                            </span>
+                            <span className="text-[11px] text-[#8e8d9e] font-medium leading-none mt-1">
+                              Scanned{" "}
+                              {new Date(req.requestedAt)
+                                .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                                .toLowerCase()}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleDeclineAccess(req.tableNumber)}
+                              className="px-3.5 py-1.5 rounded-full bg-[#1e1c27] hover:bg-[#2a2838] text-white text-xs font-semibold transition-all cursor-pointer active:scale-95"
+                            >
+                              Decline
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleApproveAccess(req.tableNumber)}
+                              className="px-3.5 py-1.5 rounded-full bg-[#FA2D48] hover:bg-[#ff3b53] text-white text-xs font-bold transition-all shadow-md shadow-[#FA2D48]/40 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
+                              <span>Approve</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </button>
-            </div>
-          )}
+              </div>
+            ) : activeTab === "floor" ? (
+              <div className="flex items-center gap-2.5 text-neutral-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-400/80 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+                <span className="text-xs font-medium text-neutral-300">All Tables Authorized</span>
+              </div>
+            ) : activeTab === "takeaway" ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTakeawaySubTab("register")}
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    takeawaySubTab === "register"
+                      ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
+                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
+                  }`}
+                >
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>Counter Register</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTakeawaySubTab("queue");
+                    loadTakeawayOrders();
+                  }}
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
+                    takeawaySubTab === "queue"
+                      ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
+                      : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
+                  }`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Orders & Pickup Queue</span>
+                  {takeawayActiveCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-black ml-1 shadow-sm">
+                      {takeawayActiveCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
-
-      {/* ================= PENDING QR SCAN ACCESS REQUESTS BANNER ================= */}
-      {pendingRequests.length > 0 && (
-        <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/15 via-[#18181c]/90 to-transparent border border-amber-500/30 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-3 duration-300 backdrop-blur-2xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-400 font-sans text-sm font-bold">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
-              </span>
-              <span>Customer QR Scan Access Requests ({pendingRequests.length})</span>
-            </div>
-            <span className="text-[11px] text-amber-300/80">Authorize guest tables to start ordering</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {pendingRequests.map((req) => (
-              <div
-                key={req.tableNumber}
-                className="p-3.5 rounded-2xl bg-[#1c1c1f]/90 border border-amber-500/30 flex items-center justify-between gap-3 shadow-md backdrop-blur-xl"
-              >
-                <div>
-                  <span className="font-mono text-base font-black text-white block leading-none">
-                    Table #{req.tableNumber < 10 ? `0${req.tableNumber}` : req.tableNumber}
-                  </span>
-                  <span className="text-[11px] text-neutral-400 mt-1 block">
-                    {new Date(req.requestedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleDeclineAccess(req.tableNumber)}
-                    className="px-3 py-1.5 rounded-full bg-white/[0.05] hover:bg-rose-500/20 text-neutral-400 hover:text-rose-400 text-xs font-bold transition-all cursor-pointer border border-white/5"
-                  >
-                    Decline
-                  </button>
-                  <button
-                    onClick={() => handleApproveAccess(req.tableNumber)}
-                    className="px-4 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black transition-all shadow-md active:scale-95 flex items-center gap-1 cursor-pointer"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
-                    <span>Approve</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ================= TAB 1: FLOOR & LIVE BILLS ================= */}
       {activeTab === "floor" && (
@@ -2015,205 +2193,231 @@ export default function CashierDashboard() {
                 return (
                   <div
                     key={table.id}
-                    className={`group relative flex flex-col justify-between rounded-3xl p-4 sm:p-5 bg-[#18181b]/95 hover:bg-[#1f1f25] border transition-all duration-300 shadow-xl hover:shadow-2xl overflow-hidden ${
+                    className={`group relative flex flex-col justify-between rounded-3xl p-5 bg-[#131317] hover:bg-[#18181e] border transition-all duration-200 ${
                       isBilling
-                        ? "border-[#FA2D48]/50 shadow-[#FA2D48]/10"
+                        ? "border-[#FA2D48]/40"
                         : isOccupied
-                        ? "border-sky-500/30 shadow-sky-500/10"
+                        ? "border-sky-500/30"
                         : isCleaning
-                        ? "border-purple-500/30 shadow-purple-500/10"
-                        : "border-white/[0.08] hover:border-white/[0.18]"
+                        ? "border-purple-500/30"
+                        : "border-white/[0.08] hover:border-white/[0.16]"
                     }`}
                   >
-                    {/* Top ambient color glow */}
-                    <div
-                      className={`absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-500 group-hover:opacity-35 ${
-                        isBilling
-                          ? "bg-[#FA2D48]"
-                          : isOccupied
-                          ? "bg-sky-500"
-                          : isCleaning
-                          ? "bg-purple-500"
-                          : "bg-emerald-500"
-                      }`}
-                    />
 
-                    {/* Top Header: Table # + Capacity + Status Pill */}
-                    <div className="flex items-start justify-between gap-2 z-10">
+                    {/* Top Header: Table # + Capacity + Interactive Status Pill */}
+                    <div className={`flex items-start justify-between gap-2 ${openStatusMenuTable === table.tableNumber ? "z-30" : "z-10"}`}>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-['Outfit'] text-lg xl:text-xl font-black text-white tracking-tight whitespace-nowrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-['Outfit'] text-xl font-black text-white tracking-tight whitespace-nowrap">
                             Table {table.tableNumber < 10 ? `0${table.tableNumber}` : table.tableNumber}
                           </span>
-                          <span className="rounded-full bg-white/[0.06] border border-white/[0.08] px-2 py-0.5 text-[11px] font-semibold text-neutral-300 whitespace-nowrap shrink-0">
+                          <span className="rounded-full bg-white/[0.05] border border-white/[0.08] px-2.5 py-0.5 text-[11px] font-semibold text-neutral-300 whitespace-nowrap shrink-0">
                             {table.capacity} Guests
                           </span>
                         </div>
-                        <span className="text-[11px] text-neutral-400 mt-0.5 block truncate">
-                          {table.activeSession
-                            ? `Session #${table.activeSession.sessionCode?.slice(-6) || table.activeSession.id} • Active`
-                            : "Dining Station • Ready for Seating"}
-                        </span>
-                      </div>
-
-                      {/* Live Status Pill */}
-                      <div className="shrink-0 whitespace-nowrap">
-                        {isAvail && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
-                            <span className="relative flex h-1.5 w-1.5">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-                            </span>
-                            Ready
-                          </span>
-                        )}
-                        {isOccupied && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-sky-400 border border-sky-500/30 whitespace-nowrap">
-                            <span className="relative flex h-1.5 w-1.5">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500" />
-                            </span>
-                            Occupied
-                          </span>
-                        )}
-                        {isBilling && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FA2D48]/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-[#FA2D48] border border-[#FA2D48]/30 animate-pulse whitespace-nowrap">
-                            <Sparkles className="h-3 w-3 text-[#FA2D48]" />
-                            Bill Due
-                          </span>
-                        )}
-                        {isCleaning && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-purple-400 border border-purple-500/30 whitespace-nowrap">
-                            <RefreshCw className="h-3 w-3 text-purple-400 animate-spin" />
-                            Cleaning
+                        {table.activeSession && (
+                          <span className="text-xs text-neutral-400 mt-1 block truncate font-normal font-mono">
+                            Session #{table.activeSession.sessionCode?.slice(-6) || table.activeSession.id} • Active
                           </span>
                         )}
                       </div>
-                    </div>
 
-                    {/* Middle Section: NET PAYABLE / RUNNING BILL BUTTON (Image 2 Design) */}
-                    <div className="my-4 z-10">
-                      {table.activeSession ? (
-                        <button
-                          type="button"
-                          onClick={() => openSettlementModal(table)}
-                          className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#FA2D48]/15 via-rose-950/20 to-transparent border border-[#FA2D48]/30 hover:border-[#FA2D48]/60 flex items-center justify-between shadow-lg transition-all active:scale-98 cursor-pointer group/btn"
-                        >
-                          <div className="text-left">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-rose-300 block group-hover/btn:text-white transition-colors">
-                              {isBilling ? "Net Payable • Settle" : "Running Bill"}
-                            </span>
-                            <span className="text-[11px] text-neutral-400">
-                              {table.activeSession.totalItems} items • {table.activeSession.ordersCount} rounds
-                            </span>
-                          </div>
-                          <span className="font-['Outfit'] text-3xl font-black text-white tracking-tight group-hover/btn:text-[#FA2D48] transition-colors">
-                            ₹{table.activeSession.totalAmount.toFixed(2)}
-                          </span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPunchTable(table);
-                            setPunchCart([]);
-                            setPunchNotes("");
-                          }}
-                          className="w-full p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-950/20 to-transparent border border-emerald-500/25 hover:border-emerald-500/50 flex items-center justify-between shadow-lg transition-all active:scale-98 cursor-pointer group/btn"
-                        >
-                          <div className="text-left">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 block group-hover/btn:text-white transition-colors">
-                              Ready for Guests
-                            </span>
-                            <span className="text-[11px] text-neutral-400">
-                              Sanitized • Up to {table.capacity} seats
-                            </span>
-                          </div>
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 group-hover/btn:bg-emerald-500 group-hover/btn:text-black transition-all">
-                            <PlusCircle className="h-3.5 w-3.5" />
-                            <span>Punch</span>
-                          </span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Bottom Half: Segmented Status Controller & Actions */}
-                    <div className="space-y-2.5 z-10">
-                      {/* Apple iOS 4-Segmented Status Controller */}
-                      <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                      {/* Interactive Status Pill with Dropdown */}
+                      <div className="relative shrink-0 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleUpdateTableStatus(table.tableNumber, "AVAILABLE");
+                            setOpenStatusMenuTable(
+                              openStatusMenuTable === table.tableNumber ? null : table.tableNumber
+                            );
                           }}
-                          className={`py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                            isAvail
-                              ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
-                              : "text-neutral-400 hover:text-white"
-                          }`}
-                          title="Set Ready / Available"
-                        >
-                          Ready
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUpdateTableStatus(table.tableNumber, "OCCUPIED");
-                          }}
-                          className={`py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                            isOccupied
-                              ? "bg-sky-600 text-white shadow-md shadow-sky-600/30"
-                              : "text-neutral-400 hover:text-white"
-                          }`}
-                          title="Set Occupied"
-                        >
-                          Occ
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUpdateTableStatus(table.tableNumber, "BILLING");
-                          }}
-                          className={`py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold border transition-all cursor-pointer shadow-sm hover:brightness-110 active:scale-95 ${
                             isBilling
-                              ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-                              : "text-neutral-400 hover:text-white"
+                              ? "bg-[#FA2D48]/15 text-[#FA2D48] border-[#FA2D48]/30 animate-pulse"
+                              : isOccupied
+                              ? "bg-sky-500/15 text-sky-400 border-sky-500/25"
+                              : isCleaning
+                              ? "bg-purple-500/15 text-purple-300 border-purple-500/25"
+                              : "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
                           }`}
-                          title="Set Bill Due"
+                          title="Click to change status"
                         >
-                          Bill
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span
+                              className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                                isBilling
+                                  ? "bg-[#FA2D48] animate-ping"
+                                  : isOccupied
+                                  ? "bg-sky-400 animate-ping"
+                                  : isCleaning
+                                  ? "bg-purple-400"
+                                  : "bg-emerald-400 animate-ping"
+                              }`}
+                            />
+                            <span
+                              className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                                isBilling
+                                  ? "bg-[#FA2D48]"
+                                  : isOccupied
+                                  ? "bg-sky-500"
+                                  : isCleaning
+                                  ? "bg-purple-500"
+                                  : "bg-emerald-500"
+                              }`}
+                            />
+                          </span>
+                          <span>
+                            {isBilling
+                              ? "Bill Due"
+                              : isOccupied
+                              ? "Occupied"
+                              : isCleaning
+                              ? "Cleaning"
+                              : "Ready"}
+                          </span>
+                          <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUpdateTableStatus(table.tableNumber, "CLEANING");
-                          }}
-                          className={`py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                            isCleaning
-                              ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                              : "text-neutral-400 hover:text-white"
-                          }`}
-                          title="Set Cleaning"
-                        >
-                          Clean
-                        </button>
-                      </div>
 
-                      {/* Cashier Operational Action Buttons */}
-                      {table.activeSession ? (
-                        <div className="grid grid-cols-4 gap-1.5">
+                        {/* Status Selection Popover - 100% Solid Opaque */}
+                        {openStatusMenuTable === table.tableNumber && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ backgroundColor: "#1e1e24" }}
+                            className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-white/15 p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.95)] z-50 animate-in fade-in zoom-in-95 duration-150"
+                          >
+                            <div className="text-[10px] font-bold text-neutral-400 px-2.5 py-1 uppercase tracking-wider">
+                              Change Status
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleUpdateTableStatus(table.tableNumber, "AVAILABLE");
+                                setOpenStatusMenuTable(null);
+                              }}
+                              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                isAvail
+                                  ? "bg-emerald-500/20 text-emerald-300 font-bold"
+                                  : "text-neutral-300 hover:bg-white/[0.08] hover:text-white"
+                              }`}
+                            >
+                              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                              <span>Ready</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleUpdateTableStatus(table.tableNumber, "OCCUPIED");
+                                setOpenStatusMenuTable(null);
+                              }}
+                              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                isOccupied
+                                  ? "bg-sky-500/20 text-sky-300 font-bold"
+                                  : "text-neutral-300 hover:bg-white/[0.08] hover:text-white"
+                              }`}
+                            >
+                              <span className="h-2 w-2 rounded-full bg-sky-500" />
+                              <span>Occupied</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleUpdateTableStatus(table.tableNumber, "BILLING");
+                                setOpenStatusMenuTable(null);
+                              }}
+                              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                isBilling
+                                  ? "bg-[#FA2D48]/20 text-rose-300 font-bold"
+                                  : "text-neutral-300 hover:bg-white/[0.08] hover:text-white"
+                              }`}
+                            >
+                              <span className="h-2 w-2 rounded-full bg-[#FA2D48]" />
+                              <span>Bill Due</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleUpdateTableStatus(table.tableNumber, "CLEANING");
+                                setOpenStatusMenuTable(null);
+                              }}
+                              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                isCleaning
+                                  ? "bg-purple-500/20 text-purple-300 font-bold"
+                                  : "text-neutral-300 hover:bg-white/[0.08] hover:text-white"
+                              }`}
+                            >
+                              <span className="h-2 w-2 rounded-full bg-purple-500" />
+                              <span>Cleaning</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Middle Section & Actions */}
+                    {table.activeSession ? (
+                      <>
+                        {/* Middle: Running Bill Card */}
+                        <div className="my-4 z-10">
+                          <button
+                            type="button"
+                            onClick={() => openSettlementModal(table)}
+                            className={`w-full p-4 rounded-2xl border transition-all active:scale-98 cursor-pointer text-left shadow-lg group/bill ${
+                              isBilling
+                                ? "bg-white/[0.04] hover:bg-white/[0.07] border-[#FA2D48]/40 hover:border-[#FA2D48]/70"
+                                : "bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.08] hover:border-white/[0.15]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span
+                                  className={`text-[10px] font-black uppercase tracking-wider block transition-colors ${
+                                    isBilling
+                                      ? "text-[#FA2D48]"
+                                      : "text-neutral-400 group-hover/bill:text-neutral-300"
+                                  }`}
+                                >
+                                  {isBilling ? "Bill Due • Tap to Settle" : "Running Total"}
+                                </span>
+                                <span className="text-xs text-neutral-400 mt-0.5 block">
+                                  {table.activeSession.totalItems} items • {table.activeSession.ordersCount} rounds
+                                </span>
+                              </div>
+                              <span
+                                className={`font-['Outfit'] text-2xl sm:text-3xl font-black tracking-tight transition-colors ${
+                                  isBilling ? "text-[#FA2D48]" : "text-white group-hover/bill:text-emerald-400"
+                                }`}
+                              >
+                                ₹{table.activeSession.totalAmount.toFixed(2)}
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+
+                        {/* Bottom Action Toolbar: 3 Columns (Add, Check, Settle) */}
+                        <div className="grid grid-cols-3 gap-2 z-10">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPunchTable(table);
+                              setPunchCart([]);
+                              setPunchNotes("");
+                            }}
+                            title="Punch more dishes"
+                            className="py-2.5 px-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/10 flex items-center justify-center gap-1.5 font-bold text-xs transition-all active:scale-95 cursor-pointer shadow-sm"
+                          >
+                            <PlusCircle className="h-3.5 w-3.5 text-emerald-400" />
+                            <span>Add</span>
+                          </button>
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handlePrintEstimate(table);
                             }}
-                            title="Print Pre-bill Check"
-                            className="py-2 px-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
+                            title="Print pre-bill check"
+                            className="py-2.5 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/10 flex items-center justify-center gap-1.5 font-bold text-xs transition-all active:scale-95 cursor-pointer"
                           >
                             <Printer className="h-3.5 w-3.5 text-neutral-400" />
                             <span>Check</span>
@@ -2222,39 +2426,12 @@ export default function CashierDashboard() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setTransferSourceTable(table);
-                              setTransferDestTableNumber(null);
-                            }}
-                            title="Transfer table"
-                            className="py-2 px-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
-                          >
-                            <ArrowRightLeft className="h-3.5 w-3.5 text-neutral-400" />
-                            <span>Move</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPunchTable(table);
-                              setPunchCart([]);
-                              setPunchNotes("");
-                            }}
-                            title="Add dishes"
-                            className="py-2 px-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 font-bold text-[11px] transition-all cursor-pointer"
-                          >
-                            <PlusCircle className="h-3.5 w-3.5 text-[#FA2D48]" />
-                            <span>Add</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
                               openSettlementModal(table);
                             }}
                             title="Settle & Checkout Bill"
-                            className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 shadow-md cursor-pointer ${
+                            className={`py-2.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md cursor-pointer ${
                               isBilling
-                                ? "bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-[#FA2D48]/30 animate-pulse"
+                                ? "bg-[#FA2D48] hover:bg-[#ff3b56] text-white"
                                 : "bg-white text-black hover:bg-neutral-200"
                             }`}
                           >
@@ -2262,8 +2439,30 @@ export default function CashierDashboard() {
                             <span>Settle</span>
                           </button>
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-1.5">
+                      </>
+                    ) : isOccupied ? (
+                      <>
+                        {/* Middle: Seated Table with No Order */}
+                        <div className="my-4 z-10">
+                          <div className="w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
+                                <Users className="h-5 w-5 text-sky-400" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-bold text-white block">
+                                  Guests Seated
+                                </span>
+                                <span className="text-xs text-neutral-400 mt-0.5 block">
+                                  Awaiting initial order
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div className="grid grid-cols-2 gap-2 z-10">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -2272,9 +2471,94 @@ export default function CashierDashboard() {
                               setPunchCart([]);
                               setPunchNotes("");
                             }}
-                            className="py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                            className="py-2.5 px-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md shadow-white/5 cursor-pointer"
                           >
-                            <PlusCircle className="h-3.5 w-3.5" />
+                            <PlusCircle className="h-4 w-4" />
+                            <span>Punch Order</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateTableStatus(table.tableNumber, "AVAILABLE");
+                            }}
+                            className="py-2.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 text-neutral-300 hover:text-white border border-white/[0.08] font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                            title="Release table back to Available"
+                          >
+                            <span>Clear Table</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : isCleaning ? (
+                      <>
+                        {/* Middle: Cleaning Table */}
+                        <div className="my-4 z-10">
+                          <div className="w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                                <RefreshCw className="h-5 w-5 text-purple-400 animate-spin" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-bold text-white block">
+                                  Table Cleaning
+                                </span>
+                                <span className="text-xs text-neutral-400 mt-0.5 block">
+                                  Sanitizing for next guests
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div className="z-10">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateTableStatus(table.tableNumber, "AVAILABLE");
+                            }}
+                            className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/30 font-extrabold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-emerald-500/10 cursor-pointer"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>Mark Clean & Ready</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Middle: Available Table */}
+                        <div className="my-4 z-10">
+                          <div className="w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-bold text-white block">
+                                  Ready for Guests
+                                </span>
+                                <span className="text-xs text-neutral-400 mt-0.5 block">
+                                  Cleaned • Up to {table.capacity} seats
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div className="grid grid-cols-2 gap-2 z-10">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPunchTable(table);
+                              setPunchCart([]);
+                              setPunchNotes("");
+                            }}
+                            className="py-2.5 px-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md shadow-white/5 cursor-pointer"
+                          >
+                            <PlusCircle className="h-4 w-4" />
                             <span>Punch Order</span>
                           </button>
                           <button
@@ -2283,13 +2567,14 @@ export default function CashierDashboard() {
                               e.stopPropagation();
                               handleUpdateTableStatus(table.tableNumber, "OCCUPIED");
                             }}
-                            className="py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-neutral-300 border border-white/10 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                            className="py-2.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 text-neutral-200 hover:text-white border border-white/[0.08] font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                           >
+                            <Users className="h-3.5 w-3.5 text-neutral-400" />
                             <span>Seat Guests</span>
                           </button>
                         </div>
-                      )}
-                    </div>
+                      </>
+                    )}
                   </div>
                 );
               })}
@@ -3589,7 +3874,7 @@ export default function CashierDashboard() {
 
               <button
                 onClick={() => openSettlementModal(inspectTable)}
-                className="px-5 py-2 rounded-full bg-[#FA2D48] hover:bg-[#ff3b56] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#FA2D48]/30 cursor-pointer active:scale-95"
+                className="px-5 py-2 rounded-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-rose-600/25 cursor-pointer active:scale-95 transition-all"
               >
                 <Receipt className="h-3.5 w-3.5" />
                 <span>Settle Bill</span>
@@ -3602,7 +3887,7 @@ export default function CashierDashboard() {
       {/* ================= MODAL 1: BILL SETTLEMENT & SPLIT PAYMENT ================= */}
       {settlementTable && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-3xl bg-[#141417]/95 border border-white/[0.12] rounded-3xl p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto backdrop-blur-3xl">
+          <div className="w-full max-w-3xl bg-[#121216]/98 border border-white/10 rounded-3xl p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto backdrop-blur-2xl">
             {isLoadingBill || !billDetails ? (
               <div className="py-20 flex flex-col items-center justify-center gap-3 text-center">
                 <RefreshCw className="h-7 w-7 text-white animate-spin" />
@@ -3612,17 +3897,22 @@ export default function CashierDashboard() {
               <>
                 {/* Modal Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                  <div>
-                    <span className="text-[10px] font-black text-[#FA2D48] uppercase tracking-wider block">
-                      Checkout & Payment Gateway
+                  <div className="flex items-center gap-3">
+                    <span className="h-9 w-9 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-white">
+                      <Receipt className="h-4.5 w-4.5" />
                     </span>
-                    <h3 className="font-['Outfit'] text-xl font-black text-white mt-0.5 flex items-center gap-2">
-                      <span>Table #{settlementTable.tableNumber}</span>
-                      <span className="text-neutral-500 font-light">•</span>
-                      <span className="font-mono text-xs font-bold text-neutral-400 bg-white/[0.06] px-2.5 py-0.5 rounded-full border border-white/10">
-                        {billDetails.session.sessionCode}
+                    <div>
+                      <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-wider block">
+                        Settlement & Checkout
                       </span>
-                    </h3>
+                      <h3 className="font-['Outfit'] text-xl font-black text-white mt-0.5 flex items-center gap-2">
+                        <span>Table #{settlementTable.tableNumber}</span>
+                        <span className="text-neutral-600 font-light">•</span>
+                        <span className="font-mono text-xs font-bold text-neutral-300 bg-white/[0.06] px-2.5 py-0.5 rounded-full border border-white/10">
+                          {billDetails.session.sessionCode}
+                        </span>
+                      </h3>
+                    </div>
                   </div>
                   <button
                     onClick={() => {
@@ -3636,25 +3926,25 @@ export default function CashierDashboard() {
                 </div>
 
                 {/* Modal Body: Two Columns */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Left Column: Itemized Dish Summary */}
-                  <div className="space-y-3.5 bg-black/50 p-5 rounded-3xl border border-white/[0.08] flex flex-col justify-between">
+                  <div className="space-y-4 bg-white/[0.025] p-5 rounded-2xl border border-white/[0.08] flex flex-col justify-between">
                     <div>
-                      <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider block mb-3 flex items-center gap-1.5">
-                        <Receipt className="h-3.5 w-3.5 text-[#FA2D48]" />
+                      <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider block mb-3 flex items-center gap-2">
+                        <FileText className="h-3.5 w-3.5 text-neutral-400" />
                         <span>Itemized Order Breakdown</span>
                       </span>
 
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-none">
+                      <div className="space-y-2 max-h-44 overflow-y-auto pr-1 scrollbar-none">
                         {billDetails.items && billDetails.items.length > 0 ? (
                           billDetails.items.map((item: any, idx: number) => (
                             <div
                               key={idx}
-                              className="flex items-center justify-between text-xs py-1 border-b border-white/[0.04]"
+                              className="flex items-center justify-between text-xs py-1.5 border-b border-white/[0.04]"
                             >
                               <div className="truncate pr-2">
-                                <span className="font-bold text-white">{item.name}</span>
-                                <span className="text-neutral-400 ml-1.5 font-mono">× {item.quantity}</span>
+                                <span className="font-medium text-white">{item.name}</span>
+                                <span className="text-neutral-400 ml-1.5 font-mono text-[11px]">× {item.quantity}</span>
                               </div>
                               <span className="font-mono text-white font-bold shrink-0">
                                 ₹{item.subtotal.toFixed(2)}
@@ -3668,7 +3958,7 @@ export default function CashierDashboard() {
                         )}
                       </div>
 
-                      <div className="pt-3 mt-3 border-t border-dashed border-white/15 space-y-2 text-xs">
+                      <div className="pt-3 mt-3 border-t border-dashed border-white/10 space-y-2 text-xs">
                         <div className="flex justify-between text-neutral-400">
                           <span>Subtotal:</span>
                           <span className="text-white font-mono font-bold">₹{billDetails.subtotal.toFixed(2)}</span>
@@ -3679,22 +3969,24 @@ export default function CashierDashboard() {
                         </div>
 
                         {/* Discount Options: Flat vs Percent */}
-                        <div className="space-y-2 pt-2 border-t border-white/10">
+                        <div className="space-y-2 pt-2 border-t border-white/[0.06]">
                           <div className="flex items-center justify-between">
-                            <span className="flex items-center gap-1 font-bold text-neutral-300 text-xs">
-                              <span>Discount:</span>
-                              <span className="text-[10px] text-emerald-400 font-mono">
-                                (-₹{calculatedDiscount.toFixed(2)})
-                              </span>
+                            <span className="flex items-center gap-1.5 font-medium text-neutral-300 text-xs">
+                              <span>Discount</span>
+                              {calculatedDiscount > 0 && (
+                                <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded-full">
+                                  -₹{calculatedDiscount.toFixed(2)}
+                                </span>
+                              )}
                             </span>
 
-                            <div className="flex items-center gap-1 bg-white/[0.05] p-0.5 rounded-full border border-white/10">
+                            <div className="flex items-center gap-1 bg-white/[0.04] p-0.5 rounded-full border border-white/[0.08]">
                               <button
                                 type="button"
                                 onClick={() => setDiscountType("FLAT")}
                                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
                                   discountType === "FLAT"
-                                    ? "bg-white text-black"
+                                    ? "bg-white text-black shadow-sm"
                                     : "text-neutral-400 hover:text-white"
                                 }`}
                               >
@@ -3705,7 +3997,7 @@ export default function CashierDashboard() {
                                 onClick={() => setDiscountType("PERCENT")}
                                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
                                   discountType === "PERCENT"
-                                    ? "bg-white text-black"
+                                    ? "bg-white text-black shadow-sm"
                                     : "text-neutral-400 hover:text-white"
                                 }`}
                               >
@@ -3715,7 +4007,7 @@ export default function CashierDashboard() {
                           </div>
 
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-neutral-500 font-bold">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-neutral-400 font-bold">
                               {discountType === "FLAT" ? "₹" : "%"}
                             </span>
                             <input
@@ -3724,7 +4016,7 @@ export default function CashierDashboard() {
                               value={discountInput}
                               onChange={(e) => setDiscountInput(e.target.value)}
                               placeholder="0"
-                              className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-xs text-white font-mono font-bold focus:outline-none focus:border-white/30"
+                              className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white font-mono font-bold focus:outline-none focus:border-white/25 transition-all"
                             />
                           </div>
 
@@ -3738,7 +4030,7 @@ export default function CashierDashboard() {
                                   setDiscountType("PERCENT");
                                   setDiscountInput(pct);
                                 }}
-                                className="px-2.5 py-0.5 rounded-full bg-white/[0.05] hover:bg-white/[0.12] text-[10px] font-mono font-bold text-neutral-300 border border-white/5 cursor-pointer transition-colors"
+                                className="px-2 py-0.5 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-[10px] font-mono font-bold text-neutral-300 border border-white/[0.06] cursor-pointer transition-colors"
                               >
                                 {pct}%
                               </button>
@@ -3749,7 +4041,7 @@ export default function CashierDashboard() {
                                 setDiscountType("FLAT");
                                 setDiscountInput("0");
                               }}
-                              className="px-2.5 py-0.5 rounded-full bg-white/[0.05] hover:bg-rose-500/20 text-[10px] font-bold text-rose-400 border border-white/5 cursor-pointer transition-colors"
+                              className="px-2 py-0.5 rounded-full bg-white/[0.04] hover:bg-rose-500/20 text-[10px] font-bold text-neutral-400 hover:text-rose-300 border border-white/[0.06] cursor-pointer transition-colors"
                             >
                               Clear
                             </button>
@@ -3759,12 +4051,12 @@ export default function CashierDashboard() {
                     </div>
 
                     {/* Net Grand Total Banner */}
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-[#FA2D48]/15 via-rose-950/20 to-transparent border border-[#FA2D48]/30 flex items-center justify-between shadow-lg">
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-transparent border border-white/10 flex items-center justify-between shadow-xl">
                       <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-300 block">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400 block">
                           Net Payable
                         </span>
-                        <span className="text-[11px] text-neutral-400">All taxes included</span>
+                        <span className="text-[11px] text-neutral-400">All taxes & discounts included</span>
                       </div>
                       <span className="font-['Outfit'] text-3xl font-black text-white tracking-tight">
                         ₹{currentNetTotal.toFixed(2)}
@@ -3779,11 +4071,11 @@ export default function CashierDashboard() {
                       <span className="text-xs font-bold text-neutral-400 uppercase tracking-wide block mb-1.5">
                         Payment Mode
                       </span>
-                      <div className="grid grid-cols-2 gap-2 p-1 rounded-full bg-white/[0.04] border border-white/10">
+                      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                         <button
                           type="button"
                           onClick={() => setPaymentMode("SINGLE")}
-                          className={`py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                          className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             paymentMode === "SINGLE"
                               ? "bg-white text-black shadow-md"
                               : "text-neutral-400 hover:text-white"
@@ -3794,9 +4086,9 @@ export default function CashierDashboard() {
                         <button
                           type="button"
                           onClick={() => setPaymentMode("SPLIT")}
-                          className={`py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                          className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             paymentMode === "SPLIT"
-                              ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                              ? "bg-white text-black shadow-md"
                               : "text-neutral-400 hover:text-white"
                           }`}
                         >
@@ -3817,7 +4109,7 @@ export default function CashierDashboard() {
                           value={customerPhone}
                           onChange={(e) => setCustomerPhone(e.target.value)}
                           placeholder="e.g. 9876543210"
-                          className="w-full pl-9 pr-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-white/30"
+                          className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-white/25 transition-all"
                         />
                       </div>
                     </div>
@@ -3826,27 +4118,42 @@ export default function CashierDashboard() {
                     {paymentMode === "SINGLE" ? (
                       <div className="space-y-3">
                         <div className="grid grid-cols-3 gap-2">
-                          {(["CASH", "UPI", "CARD"] as const).map((m) => (
-                            <button
-                              key={m}
-                              type="button"
-                              onClick={() => setSingleMethod(m)}
-                              className={`py-3 rounded-2xl text-xs font-bold flex flex-col items-center gap-1.5 border transition-all cursor-pointer ${
-                                singleMethod === m
-                                  ? "bg-white text-black border-white shadow-lg shadow-white/10 scale-[1.02]"
-                                  : "bg-white/[0.04] text-neutral-300 border-white/10 hover:border-white/25 hover:bg-white/[0.08]"
-                              }`}
-                            >
-                              {m === "CASH" && <Banknote className="h-4 w-4 text-emerald-500" />}
-                              {m === "UPI" && <QrCode className="h-4 w-4 text-sky-500" />}
-                              {m === "CARD" && <CreditCard className="h-4 w-4 text-violet-500" />}
-                              <span>{m}</span>
-                            </button>
-                          ))}
+                          {(["CASH", "UPI", "CARD"] as const).map((m) => {
+                            const isSelected = singleMethod === m;
+                            return (
+                              <button
+                                key={m}
+                                type="button"
+                                onClick={() => setSingleMethod(m)}
+                                className={`py-3 rounded-2xl text-xs font-bold flex flex-col items-center gap-1.5 border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-white text-black border-white shadow-lg shadow-white/10 scale-[1.02]"
+                                    : "bg-white/[0.03] text-neutral-300 border-white/[0.08] hover:border-white/20 hover:bg-white/[0.06]"
+                                }`}
+                              >
+                                <span
+                                  className={
+                                    isSelected
+                                      ? "text-black"
+                                      : m === "CASH"
+                                      ? "text-emerald-400"
+                                      : m === "UPI"
+                                      ? "text-sky-400"
+                                      : "text-violet-400"
+                                  }
+                                >
+                                  {m === "CASH" && <Banknote className="h-4.5 w-4.5" />}
+                                  {m === "UPI" && <QrCode className="h-4.5 w-4.5" />}
+                                  {m === "CARD" && <CreditCard className="h-4.5 w-4.5" />}
+                                </span>
+                                <span className="font-semibold text-xs">{m}</span>
+                              </button>
+                            );
+                          })}
                         </div>
 
                         {singleMethod === "CASH" && (
-                          <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
+                          <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.08] space-y-2.5">
                             <div className="flex items-center justify-between">
                               <label className="text-[11px] text-neutral-400 font-bold block">
                                 Cash Tendered (₹)
@@ -3881,7 +4188,7 @@ export default function CashierDashboard() {
                             </div>
 
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 font-bold">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-400 font-bold">
                                 ₹
                               </span>
                               <input
@@ -3889,7 +4196,7 @@ export default function CashierDashboard() {
                                 value={cashTendered}
                                 onChange={(e) => setCashTendered(e.target.value)}
                                 placeholder="0.00"
-                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-black/40 border border-white/10 text-sm font-mono font-bold text-white focus:outline-none focus:border-white/30"
+                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm font-mono font-bold text-white focus:outline-none focus:border-white/25 transition-all"
                               />
                             </div>
 
@@ -3905,35 +4212,24 @@ export default function CashierDashboard() {
                         )}
                       </div>
                     ) : (
-                      /* Split Payment Form (Cash + UPI + Card) */
-                      <div className="p-4 rounded-3xl bg-black/60 border border-white/10 space-y-3 shadow-inner">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                          <span className="text-xs font-bold text-neutral-300 flex items-center gap-1.5">
-                            <ArrowRightLeft className="h-3.5 w-3.5 text-[#FA2D48]" />
-                            <span>Split Breakdown</span>
-                          </span>
-                          <span className="font-mono text-xs font-bold text-white bg-white/[0.08] px-2.5 py-0.5 rounded-full border border-white/10">
-                            Target: ₹{currentNetTotal.toFixed(2)}
-                          </span>
-                        </div>
-
-                      <div className="p-4 rounded-3xl bg-[#1c1c1f]/90 border border-white/[0.08] backdrop-blur-2xl space-y-3.5 shadow-2xl">
+                      /* Split Payment Form (Cash + UPI + Card) - Single clean container, no double nesting */
+                      <div className="p-4 rounded-2xl bg-white/[0.025] border border-white/[0.08] space-y-3 shadow-xl">
                         <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08]">
                           <span className="text-xs font-bold text-neutral-200 flex items-center gap-2">
-                            <span className="p-1 rounded-lg bg-[#FA2D48]/10 text-[#FA2D48] border border-[#FA2D48]/20">
+                            <span className="p-1 rounded-lg bg-white/[0.06] text-white border border-white/10">
                               <ArrowRightLeft className="h-3.5 w-3.5" />
                             </span>
                             <span>Split Allocation</span>
                           </span>
-                          <span className="font-mono text-xs font-bold text-neutral-200 bg-white/[0.06] px-3 py-1 rounded-full border border-white/[0.08]">
-                            Target: <span className="text-white">₹{currentNetTotal.toFixed(2)}</span>
+                          <span className="font-mono text-xs font-bold text-neutral-300 bg-white/[0.06] px-2.5 py-1 rounded-full border border-white/[0.08]">
+                            Target: <span className="text-white font-black">₹{currentNetTotal.toFixed(2)}</span>
                           </span>
                         </div>
 
                         <div className="space-y-2">
                           {/* Cash Portion */}
-                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
-                            <div className="w-20 px-2.5 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                          <div className="flex items-center gap-2 p-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                            <div className="w-20 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
                               <Banknote className="h-3.5 w-3.5" />
                               <span>Cash</span>
                             </div>
@@ -3945,7 +4241,7 @@ export default function CashierDashboard() {
                                 type="number"
                                 value={splitCash}
                                 onChange={(e) => setSplitCash(e.target.value)}
-                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
+                                className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] focus:border-white/30 text-xs font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 placeholder="0.00"
                               />
                             </div>
@@ -3956,15 +4252,15 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitCash(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white hover:text-black text-neutral-300 border border-white/[0.08] text-xs font-semibold tracking-wide transition-all active:scale-95 cursor-pointer whitespace-nowrap"
                             >
-                              Fill Rem.
+                              Auto Fill
                             </button>
                           </div>
 
                           {/* UPI Portion */}
-                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
-                            <div className="w-20 px-2.5 py-2 rounded-xl border border-sky-500/20 bg-sky-500/10 text-sky-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                          <div className="flex items-center gap-2 p-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                            <div className="w-20 px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/10 text-sky-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
                               <QrCode className="h-3.5 w-3.5" />
                               <span>UPI</span>
                             </div>
@@ -3976,7 +4272,7 @@ export default function CashierDashboard() {
                                 type="number"
                                 value={splitUpi}
                                 onChange={(e) => setSplitUpi(e.target.value)}
-                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
+                                className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] focus:border-white/30 text-xs font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 placeholder="0.00"
                               />
                             </div>
@@ -3987,15 +4283,15 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitUpi(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white hover:text-black text-neutral-300 border border-white/[0.08] text-xs font-semibold tracking-wide transition-all active:scale-95 cursor-pointer whitespace-nowrap"
                             >
-                              Fill Rem.
+                              Auto Fill
                             </button>
                           </div>
 
                           {/* Card Portion */}
-                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
-                            <div className="w-20 px-2.5 py-2 rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
+                          <div className="flex items-center gap-2 p-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                            <div className="w-20 px-2.5 py-1.5 rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-400 flex items-center gap-1.5 text-xs font-bold shrink-0">
                               <CreditCard className="h-3.5 w-3.5" />
                               <span>Card</span>
                             </div>
@@ -4007,7 +4303,7 @@ export default function CashierDashboard() {
                                 type="number"
                                 value={splitCard}
                                 onChange={(e) => setSplitCard(e.target.value)}
-                                className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
+                                className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] focus:border-white/30 text-xs font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 placeholder="0.00"
                               />
                             </div>
@@ -4018,14 +4314,14 @@ export default function CashierDashboard() {
                                 const rem = Math.max(0, parseFloat((currentNetTotal - other).toFixed(2)));
                                 setSplitCard(rem > 0 ? (Number.isInteger(rem) ? String(rem) : rem.toFixed(2)) : "0");
                               }}
-                              className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                              className="shrink-0 px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white hover:text-black text-neutral-300 border border-white/[0.08] text-xs font-semibold tracking-wide transition-all active:scale-95 cursor-pointer whitespace-nowrap"
                             >
-                              Fill Rem.
+                              Auto Fill
                             </button>
                           </div>
                         </div>
 
-                        {/* Status Footer: No bar, clean Apple badge */}
+                        {/* Status Footer: Clean balanced indicator */}
                         {(() => {
                           const cashVal = Number(splitCash) || 0;
                           const upiVal = Number(splitUpi) || 0;
@@ -4056,14 +4352,13 @@ export default function CashierDashboard() {
                           );
                         })()}
                       </div>
-                      </div>
                     )}
 
                     {/* Settle Button */}
                     <button
                       disabled={isSettling}
                       onClick={handleExecuteSettlement}
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#FA2D48] to-[#ff3b56] hover:from-[#ff3b56] hover:to-[#ff526c] disabled:opacity-50 text-white font-['Outfit'] font-black text-sm tracking-wider uppercase transition-all duration-200 active:scale-[0.99] shadow-xl shadow-[#FA2D48]/30 flex items-center justify-center gap-2 cursor-pointer mt-3"
+                      className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 hover:from-rose-500 hover:to-rose-500 disabled:opacity-50 text-white font-['Outfit'] font-black text-sm tracking-wider uppercase transition-all duration-200 active:scale-[0.99] shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2 cursor-pointer mt-2"
                     >
                       {isSettling ? (
                         <span>Processing Settlement...</span>
@@ -4156,229 +4451,446 @@ export default function CashierDashboard() {
         </div>
       )}
 
-      {/* ================= MODAL 3: DIRECT TABLE ORDER ENTRY (ADD DISHES) ================= */}
+      {/* ================= MODAL 3: INDUSTRY-STANDARD TOUCH POS PUNCH TERMINAL ================= */}
       {punchTable && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-3xl bg-[#1c1c1f]/95 border border-white/[0.12] rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto backdrop-blur-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <PlusCircle className="h-5 w-5 text-[#FA2D48]" />
-                <h3 className="font-sans text-base font-bold text-white">
-                  Add Dishes to Table #{punchTable.tableNumber}
-                </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-[96vw] max-w-6xl h-[90vh] max-h-[820px] bg-[#111115] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl">
+            {/* Top Bar: Table & POS Session Metadata */}
+            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
+              <div className="flex items-center gap-3.5">
+                <span className="h-10 w-10 rounded-2xl bg-gradient-to-br from-rose-600/30 to-rose-900/40 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0 shadow-inner">
+                  <ChefHat className="h-5 w-5" />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-['Outfit'] text-xl font-black text-white tracking-tight">
+                      Table #{punchTable.tableNumber < 10 ? `0${punchTable.tableNumber}` : punchTable.tableNumber}
+                    </h2>
+                    <span className="rounded-full bg-white/[0.06] border border-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-300">
+                      {punchTable.capacity} Guests Max
+                    </span>
+                    {punchTable.activeSession && (
+                      <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[11px] font-mono font-bold text-emerald-400">
+                        {punchTable.activeSession.sessionCode}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-neutral-400 font-medium mt-0.5 block">
+                    Kitchen Order Ticket (KOT) Dispatch Station
+                  </span>
+                </div>
               </div>
-              <button
-                onClick={() => setPunchTable(null)}
-                className="h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPunchTable(null)}
+                  className="h-9 w-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-neutral-400 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+                  title="Close Terminal (Esc)"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Menu Browser */}
-              <div className="space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-300 z-10 pointer-events-none stroke-[2.2]" />
-                  <input
-                    type="text"
-                    value={punchSearch}
-                    onChange={(e) => setPunchSearch(e.target.value)}
-                    placeholder="Search dishes to add..."
-                    className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
-                  />
-                </div>
-
-                <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
-                  <button
-                    onClick={() => setPunchActiveCat("ALL")}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap cursor-pointer ${
-                      punchActiveCat === "ALL"
-                        ? "bg-[#FA2D48] text-white"
-                        : "bg-white/[0.04] text-neutral-400 hover:text-white"
-                    }`}
-                  >
-                    All
-                  </button>
-                  {categories.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => setPunchActiveCat(c.id)}
-                      className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap cursor-pointer ${
-                        punchActiveCat === c.id
-                          ? "bg-[#FA2D48] text-white"
-                          : "bg-white/[0.04] text-neutral-400 hover:text-white"
-                      }`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1">
-                  {filteredPunchDishes.map((dish) => {
-                    const cartEntry = punchCart.find((ci) => ci.item.id === dish.id);
-                    const isSoldOut =
-                      !dish.isAvailable ||
-                      (dish.inventory !== undefined && dish.inventory !== null && dish.inventory.remainingQty <= 0);
-                    const remaining =
-                      dish.inventory !== undefined && dish.inventory !== null ? dish.inventory.remainingQty : null;
-                    const isLowStock = remaining !== null && remaining > 0 && remaining <= 5 && !isSoldOut;
-
-                    return (
-                      <div
-                        key={dish.id}
-                        onClick={() => {
-                          if (isSoldOut) {
-                            toast.error(`"${dish.name}" is out of stock!`);
-                            return;
-                          }
-                          addToPunchCart(dish);
-                        }}
-                        className={`p-3 rounded-2xl border transition-all flex flex-col justify-between select-none ${
-                          isSoldOut
-                            ? "bg-white/[0.01] border-white/5 opacity-50 cursor-not-allowed"
-                            : cartEntry
-                            ? "bg-[#FA2D48]/10 border-[#FA2D48]/40 cursor-pointer shadow-md shadow-[#FA2D48]/10"
-                            : "bg-white/[0.03] hover:bg-white/[0.08] border-white/5 cursor-pointer"
-                        }`}
+            {/* Split POS Workspace */}
+            <div className="flex-1 flex flex-col md:flex-row min-h-0 min-w-0 overflow-hidden">
+              {/* Left Column: Menu Catalog Browser */}
+              <div className="flex-1 min-w-0 flex flex-col min-h-0 p-4 sm:p-5 md:border-r border-white/10 space-y-4">
+                {/* Search & Category Filter Toolbar */}
+                <div className="space-y-3 shrink-0">
+                  <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={punchSearch}
+                      onChange={(e) => setPunchSearch(e.target.value)}
+                      placeholder="Search menu by dish name or category..."
+                      className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-white/30 transition-all font-sans"
+                    />
+                    {punchSearch && (
+                      <button
+                        onClick={() => setPunchSearch("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-0.5 cursor-pointer"
                       >
-                        <div>
-                          <div className="flex items-start justify-between gap-1">
-                            <span className={`text-xs font-bold block line-clamp-1 ${isSoldOut ? "text-neutral-500" : "text-white"}`}>
-                              {dish.name}
-                            </span>
-                            {isSoldOut ? (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/30 shrink-0">
-                                Sold Out
-                              </span>
-                            ) : isLowStock ? (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#FA2D48]/15 border border-[#FA2D48]/35 text-[#FA2D48] text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm">
-                                <Flame className="h-2.5 w-2.5 fill-[#FA2D48]" />
-                                {remaining} left
-                              </span>
-                            ) : null}
-                          </div>
-
-                          <span className="font-['Outfit'] text-xs font-black text-[#FA2D48] mt-1 block">
-                            ₹{Number(dish.price).toFixed(2)}
-                          </span>
-                        </div>
-
-                        {cartEntry && (
-                          <div className="mt-2 text-right">
-                            <span className="px-2 py-0.5 rounded-full bg-[#FA2D48] text-white text-[10px] font-black">
-                              Qty: {cartEntry.quantity}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Selected Order Basket */}
-              <div className="bg-white/[0.03] p-4.5 rounded-3xl border border-white/5 flex flex-col justify-between space-y-3">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <span className="text-xs font-bold text-neutral-300 uppercase tracking-wide">Selected Items</span>
-                    <button
-                      onClick={() => setPunchCart([])}
-                      className="text-[11px] text-[#FA2D48] font-bold hover:underline cursor-pointer"
-                    >
-                      Clear
-                    </button>
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
 
-                  <div
-                    className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-none"
-                    style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.12) transparent" }}
-                  >
-                    {punchCart.length === 0 ? (
-                      <div className="text-center py-8 text-xs text-neutral-500">
-                        No dishes selected. Tap dishes on the left to add.
-                      </div>
-                    ) : (
-                      punchCart.map((ci) => {
-                        const liveDish = categories.flatMap((c) => c.menuItems).find((d) => d.id === ci.item.id) || ci.item;
-                        const liveRemaining = liveDish.inventory !== undefined && liveDish.inventory !== null ? liveDish.inventory.remainingQty : null;
-                        const isMaxReached = liveRemaining !== null && ci.quantity >= liveRemaining;
+                  {/* Category Pills with Count Badges */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                    <button
+                      onClick={() => setPunchActiveCat("ALL")}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+                        punchActiveCat === "ALL"
+                          ? "bg-white text-black shadow-md"
+                          : "bg-white/[0.04] text-neutral-400 hover:text-white border border-white/[0.06]"
+                      }`}
+                    >
+                      <span>All Items</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${punchActiveCat === "ALL" ? "bg-black/10 text-black font-black" : "bg-white/[0.08] text-neutral-400"}`}>
+                        {categories.reduce((acc, c) => acc + c.menuItems.length, 0)}
+                      </span>
+                    </button>
+                    {categories.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => setPunchActiveCat(c.id)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+                          punchActiveCat === c.id
+                            ? "bg-white text-black shadow-md"
+                            : "bg-white/[0.04] text-neutral-400 hover:text-white border border-white/[0.06]"
+                        }`}
+                      >
+                        <span>{c.name}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${punchActiveCat === c.id ? "bg-black/10 text-black font-black" : "bg-white/[0.08] text-neutral-400"}`}>
+                          {c.menuItems.length}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dish Grid: 3-column POS touch layout with Photos & Veg/Non-Veg */}
+                <div
+                  className="flex-1 overflow-y-auto pr-1 scrollbar-none"
+                  style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
+                >
+                  {filteredPunchDishes.length === 0 ? (
+                    <div className="py-20 text-center text-xs text-neutral-500 font-mono">
+                      No dishes found matching your search.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 pb-2">
+                      {filteredPunchDishes.map((dish) => {
+                        const cartEntry = punchCart.find((ci) => ci.item.id === dish.id);
+                        const isVeg = !/chicken|meat|fish|beef|pork|egg|mutton|prawn|seafood/i.test(dish.name);
+                        const isSoldOut =
+                          !dish.isAvailable ||
+                          (dish.inventory !== undefined && dish.inventory !== null && dish.inventory.remainingQty <= 0);
+                        const remaining =
+                          dish.inventory !== undefined && dish.inventory !== null ? dish.inventory.remainingQty : null;
+                        const isLowStock = remaining !== null && remaining > 0 && remaining <= 5 && !isSoldOut;
 
                         return (
                           <div
-                            key={ci.item.id}
-                            className="p-2.5 rounded-2xl bg-white/[0.04] flex items-center justify-between gap-2"
+                            key={dish.id}
+                            onClick={() => {
+                              if (isSoldOut) {
+                                toast.error(`"${dish.name}" is out of stock!`);
+                                return;
+                              }
+                              addToPunchCart(dish);
+                            }}
+                            className={`group relative flex flex-col justify-between min-w-0 rounded-2xl p-3 border transition-all duration-200 select-none overflow-hidden cursor-pointer ${
+                              isSoldOut
+                                ? "bg-white/[0.02] border-white/[0.04] opacity-50 cursor-not-allowed"
+                                : cartEntry
+                                ? "bg-white/[0.06] border-rose-500/50 ring-1 ring-rose-500/30 shadow-lg shadow-rose-950/20"
+                                : "bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.06] hover:border-white/[0.18]"
+                            }`}
                           >
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-xs font-bold text-white block truncate">
-                                  {ci.item.name}
-                                </span>
-                                {liveRemaining !== null && liveRemaining <= 5 && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#FA2D48]/15 border border-[#FA2D48]/35 text-[#FA2D48] text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm">
-                                    <Flame className="h-2.5 w-2.5 fill-[#FA2D48]" />
-                                    Only {liveRemaining} left
-                                  </span>
-                                )}
+                            {/* Dish Artwork Area */}
+                            <div className="aspect-[16/10] w-full rounded-xl bg-black/40 overflow-hidden mb-2.5 relative border border-white/[0.06]">
+                              <img
+                                src={
+                                  dish.imageUrl?.startsWith("http")
+                                    ? dish.imageUrl
+                                    : `${UPLOADS_BASE}/${dish.imageUrl?.replace(/^\/+/, "")}`
+                                }
+                                alt={dish.name}
+                                className={`h-full w-full object-cover transition-transform duration-300 ${
+                                  isSoldOut ? "grayscale" : "group-hover:scale-105"
+                                }`}
+                                onError={(e: any) => {
+                                  e.target.src =
+                                    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80";
+                                }}
+                              />
+
+                              {/* Veg / Non-Veg Indicator Badge */}
+                              <div className="absolute top-1.5 left-1.5 z-10">
+                                <div
+                                  className={`h-4 w-4 rounded-md border flex items-center justify-center bg-black/80 backdrop-blur-md ${
+                                    isVeg ? "border-emerald-500" : "border-rose-500"
+                                  }`}
+                                  title={isVeg ? "Vegetarian" : "Non-Vegetarian"}
+                                >
+                                  <span className={`h-1.5 w-1.5 rounded-full ${isVeg ? "bg-emerald-400" : "bg-rose-500"}`} />
+                                </div>
                               </div>
-                              <span className="text-[10px] text-neutral-400 font-mono">
-                                ₹{Number(ci.item.price).toFixed(2)} × {ci.quantity}
-                              </span>
+
+                              {/* Out of Stock Overlay */}
+                              {isSoldOut && (
+                                <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-1 z-20">
+                                  <span className="text-[9px] font-black uppercase tracking-wider text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-500/30">
+                                    Sold Out
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Low Stock Badge */}
+                              {isLowStock && (
+                                <div className="absolute bottom-1.5 left-1.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md border border-amber-500/30 text-amber-400 text-[9px] font-bold">
+                                  <Flame className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                                  <span>{remaining} left</span>
+                                </div>
+                              )}
+
+                              {/* Cart Count Badge on Photo */}
+                              {cartEntry && (
+                                <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black shadow-md shadow-rose-600/40">
+                                  <span>×{cartEntry.quantity}</span>
+                                </div>
+                              )}
                             </div>
 
-                            <div className="flex items-center gap-1.5">
+                            {/* Dish Details */}
+                            <div>
+                              <span className={`text-xs font-bold block line-clamp-1 leading-snug ${isSoldOut ? "text-neutral-500" : "text-white"}`}>
+                                {dish.name}
+                              </span>
+
+                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
+                                <span className="font-['Outfit'] text-sm font-black text-white">
+                                  ₹{Number(dish.price).toFixed(2)}
+                                </span>
+
+                                {/* Card Stepper or Quick Add Button */}
+                                {cartEntry ? (
+                                  <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center gap-1 bg-white/[0.08] p-0.5 rounded-lg border border-white/10 shrink-0"
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => updatePunchQty(dish.id, -1)}
+                                      className="h-5 w-5 rounded bg-white/[0.06] hover:bg-white/20 text-white flex items-center justify-center text-xs active:scale-90 transition-colors"
+                                    >
+                                      <Minus className="h-2.5 w-2.5" />
+                                    </button>
+                                    <span className="font-mono text-xs font-bold text-white px-1">
+                                      {cartEntry.quantity}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => updatePunchQty(dish.id, 1)}
+                                      disabled={remaining !== null && cartEntry.quantity >= remaining}
+                                      className="h-5 w-5 rounded bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-white flex items-center justify-center text-xs active:scale-90 transition-colors"
+                                    >
+                                      <Plus className="h-2.5 w-2.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="h-6 w-6 rounded-lg bg-white/[0.06] group-hover:bg-white group-hover:text-black text-neutral-300 flex items-center justify-center text-xs transition-colors cursor-pointer shrink-0"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Live KOT Docket Panel */}
+              <div className="w-full md:w-80 lg:w-96 shrink-0 flex flex-col min-h-0 min-w-0 bg-white/[0.02] border-t md:border-t-0 border-white/10 overflow-hidden">
+                {/* Docket Header */}
+                <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02] gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="p-1.5 rounded-lg bg-white/[0.06] text-white border border-white/10 shrink-0">
+                      <Receipt className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider truncate">
+                        KOT Ticket
+                      </h3>
+                      <span className="text-[10px] text-neutral-400 block font-mono truncate">
+                        {punchCart.reduce((sum, ci) => sum + ci.quantity, 0)} Items Added
+                      </span>
+                    </div>
+                  </div>
+
+                  {punchCart.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPunchCart([])}
+                      className="shrink-0 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-rose-500/20 text-[11px] font-semibold text-neutral-400 hover:text-rose-400 border border-white/[0.06] cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+
+                {/* Docket Item Rows (Scrollable) */}
+                <div
+                  className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-2.5 scrollbar-none"
+                  style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
+                >
+                  {punchCart.length === 0 ? (
+                    <div className="h-full py-16 flex flex-col items-center justify-center text-center gap-3 text-neutral-500 px-4">
+                      <div className="h-12 w-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
+                        <ShoppingBag className="h-6 w-6 text-neutral-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-neutral-400">Order Basket is Empty</p>
+                        <p className="text-[11px] text-neutral-500 mt-0.5">
+                          Tap any dish on the left menu to punch items into this KOT ticket.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    punchCart.map((ci) => {
+                      const liveDish = categories.flatMap((c) => c.menuItems).find((d) => d.id === ci.item.id) || ci.item;
+                      const liveRemaining = liveDish.inventory !== undefined && liveDish.inventory !== null ? liveDish.inventory.remainingQty : null;
+                      const isMaxReached = liveRemaining !== null && ci.quantity >= liveRemaining;
+                      const isVeg = !/chicken|meat|fish|beef|pork|egg|mutton|prawn|seafood/i.test(ci.item.name);
+
+                      return (
+                        <div
+                          key={ci.item.id}
+                          className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/10 space-y-2 transition-all min-w-0"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start gap-2 min-w-0 flex-1">
+                              <span
+                                className={`h-3 w-3 rounded-sm border flex items-center justify-center mt-0.5 shrink-0 ${
+                                  isVeg ? "border-emerald-500" : "border-rose-500"
+                                }`}
+                              >
+                                <span className={`h-1 w-1 rounded-full ${isVeg ? "bg-emerald-400" : "bg-rose-500"}`} />
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs font-bold text-white block truncate" title={ci.item.name}>
+                                  {ci.item.name}
+                                </span>
+                                <span className="text-[11px] text-neutral-400 font-mono block">
+                                  ₹{Number(ci.item.price).toFixed(2)} each
+                                </span>
+                              </div>
+                            </div>
+
+                            <span className="font-mono text-xs font-bold text-white shrink-0 ml-1">
+                              ₹{(Number(ci.item.price) * ci.quantity).toFixed(2)}
+                            </span>
+                          </div>
+
+                          {/* Stepper Toolbar */}
+                          <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
+                            <span className="text-[10px] text-neutral-500 font-mono">
+                              Qty: {ci.quantity}
+                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
                               <button
                                 type="button"
                                 onClick={() => updatePunchQty(ci.item.id, -1)}
-                                className="h-6 w-6 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs active:scale-90 cursor-pointer transition-colors"
+                                className="h-6 w-6 rounded-lg bg-white/[0.06] hover:bg-white/[0.15] text-neutral-300 hover:text-white flex items-center justify-center text-xs active:scale-95 cursor-pointer transition-colors shrink-0"
                               >
-                                -
+                                <Minus className="h-3 w-3" />
                               </button>
-                              <span className="w-5 text-center text-xs font-bold text-white font-mono">
+                              <span className="w-5 text-center text-xs font-bold text-white font-mono shrink-0">
                                 {ci.quantity}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => updatePunchQty(ci.item.id, 1)}
                                 disabled={isMaxReached}
-                                className={`h-6 w-6 rounded-lg text-white flex items-center justify-center text-xs font-bold transition-colors ${
+                                className={`h-6 w-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all shrink-0 ${
                                   isMaxReached
-                                    ? "bg-neutral-700/60 opacity-50 cursor-not-allowed"
-                                    : "bg-[#FA2D48] hover:bg-[#ff3b56] cursor-pointer active:scale-90"
+                                    ? "bg-neutral-800 text-neutral-600 cursor-not-allowed opacity-50"
+                                    : "bg-white/[0.08] hover:bg-white hover:text-black text-white cursor-pointer active:scale-95"
                                 }`}
                               >
-                                +
+                                <Plus className="h-3 w-3" />
                               </button>
                             </div>
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
 
-                  {/* Kitchen Special Note */}
+                {/* Sticky Docket Footer */}
+                <div className="p-3.5 sm:p-4 border-t border-white/10 bg-[#111115] space-y-3 shrink-0">
+                  {/* Quick Preset Modifier Chips */}
                   <div>
-                    <label className="text-[10px] text-neutral-400 uppercase font-semibold block mb-1">
-                      Kitchen Instructions / Notes
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[10px] text-neutral-400 uppercase font-mono font-bold flex items-center gap-1">
+                        <ChefHat className="h-3 w-3 text-neutral-400" />
+                        <span>Kitchen Instruction</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center gap-1 overflow-x-auto pb-1.5 scrollbar-none">
+                      {["Less Spicy", "No Onion", "Extra Spicy", "Urgent", "Pack Separate"].map((chip) => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => {
+                            setPunchNotes((prev) => (prev ? `${prev}, ${chip}` : chip));
+                          }}
+                          className="px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-white/[0.1] text-[10px] text-neutral-300 hover:text-white border border-white/[0.06] whitespace-nowrap cursor-pointer transition-all active:scale-95 shrink-0"
+                        >
+                          +{chip}
+                        </button>
+                      ))}
+                    </div>
+
                     <input
                       type="text"
                       value={punchNotes}
                       onChange={(e) => setPunchNotes(e.target.value)}
-                      placeholder="e.g. Extra spicy, less oil"
-                      className="w-full px-3 py-1.5 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none"
+                      placeholder="Type custom prep notes..."
+                      className="w-full px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-white/25 transition-all font-sans"
                     />
                   </div>
-                </div>
 
-                <div className="pt-3 border-t border-white/10">
+                  {/* KOT Financials Bar */}
+                  <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-[10px] uppercase font-mono text-neutral-400 font-bold block truncate">
+                        Estimated KOT Total
+                      </span>
+                      <span className="text-xs text-neutral-300 font-mono block truncate">
+                        {punchCart.reduce((sum, ci) => sum + ci.quantity, 0)} Items Added
+                      </span>
+                    </div>
+                    <span className="font-['Outfit'] text-2xl font-black text-white tracking-tight shrink-0">
+                      ₹{punchCart.reduce((sum, ci) => sum + (Number(ci.item.price) || 0) * ci.quantity, 0).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Dispatch Button */}
                   <button
                     disabled={punchCart.length === 0 || isPunching}
                     onClick={handleExecutePunch}
-                    className="w-full py-3 rounded-full bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white font-bold text-xs tracking-wide transition-all cursor-pointer shadow-lg shadow-[#FA2D48]/30"
+                    className={`w-full py-3.5 rounded-2xl text-xs font-['Outfit'] font-black tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-2 ${
+                      punchCart.length === 0 || isPunching
+                        ? "bg-white/[0.05] text-neutral-500 border border-white/[0.05] cursor-not-allowed"
+                        : "bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 hover:from-rose-500 hover:to-rose-400 text-white shadow-xl shadow-rose-600/30 active:scale-[0.99] cursor-pointer"
+                    }`}
                   >
-                    {isPunching ? "Sending to Kitchen..." : "Dispatch Order to Kitchen"}
+                    {isPunching ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        <span>Dispatching KOT to Kitchen...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChefHat className="h-4 w-4" />
+                        <span>
+                          Dispatch KOT • ₹{punchCart.reduce((sum, ci) => sum + (Number(ci.item.price) || 0) * ci.quantity, 0).toFixed(2)}
+                        </span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -4730,14 +5242,14 @@ export default function CashierDashboard() {
 
                 {/* Items Summary */}
                 <div className="text-left space-y-1 py-1">
-                  <div className="flex justify-between font-bold border-b border-white/15 print:border-neutral-300 pb-1 text-[11px] text-neutral-300 print:text-black">
-                    <span>ITEM</span>
-                    <span>QTY</span>
+                  <div className="grid grid-cols-12 gap-2 font-bold border-b border-white/15 print:border-neutral-300 pb-1 text-[11px] text-neutral-300 print:text-black">
+                    <span className="col-span-9 text-left">ITEM</span>
+                    <span className="col-span-3 text-right">QTY</span>
                   </div>
                   {activeReceipt.items?.map((item: any, idx: number) => (
-                    <div key={idx} className="flex justify-between text-xs py-0.5 text-neutral-200 print:text-black">
-                      <span className="truncate max-w-[200px] font-semibold">{item.name}</span>
-                      <span className="font-mono font-bold">× {item.quantity}</span>
+                    <div key={idx} className="grid grid-cols-12 gap-2 text-xs py-0.5 text-neutral-200 print:text-black items-center">
+                      <span className="col-span-9 truncate font-semibold text-left">{item.name}</span>
+                      <span className="col-span-3 text-right font-mono font-bold">× {item.quantity}</span>
                     </div>
                   ))}
                 </div>
@@ -4787,20 +5299,23 @@ export default function CashierDashboard() {
 
                 {/* Items Big List */}
                 <div className="text-left space-y-1.5 py-1">
-                  <div className="flex justify-between font-bold border-b border-white/15 print:border-neutral-400 pb-1 text-xs text-neutral-300 print:text-black">
-                    <span>QTY</span>
-                    <span>DISH NAME & INSTRUCTIONS</span>
+                  <div className="grid grid-cols-12 gap-2 font-bold border-b border-white/15 print:border-neutral-400 pb-1 text-xs text-neutral-300 print:text-black">
+                    <span className="col-span-2 text-center">QTY</span>
+                    <span className="col-span-10 text-left">DISH NAME & INSTRUCTIONS</span>
                   </div>
                   {activeReceipt.items?.map((item: any, idx: number) => (
                     <div key={idx} className="border-b border-white/5 print:border-neutral-200 pb-1">
-                      <div className="flex items-baseline gap-2 text-sm font-black">
-                        <span className="font-mono text-base text-white print:text-black">{item.quantity}×</span>
-                        <span className="text-neutral-200 print:text-black">{item.name}</span>
+                      <div className="grid grid-cols-12 gap-2 items-baseline text-sm font-black">
+                        <span className="col-span-2 font-mono text-base text-white print:text-black text-center">{item.quantity}×</span>
+                        <span className="col-span-10 text-neutral-200 print:text-black text-left">{item.name}</span>
                       </div>
                       {item.notes && (
-                        <span className="text-[11px] text-amber-400 print:text-neutral-600 italic block pl-6">
-                          * {item.notes}
-                        </span>
+                        <div className="grid grid-cols-12 gap-2">
+                          <span className="col-span-2"></span>
+                          <span className="col-span-10 text-[11px] text-amber-400 print:text-neutral-600 italic">
+                            * {item.notes}
+                          </span>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -4857,57 +5372,63 @@ export default function CashierDashboard() {
                 </div>
 
                 {/* Items Table */}
-                <div className="text-left space-y-1 py-1">
-                  <div className="flex justify-between font-bold border-b border-white/15 print:border-neutral-300 pb-1 text-neutral-300 print:text-black">
-                    <span>ITEM</span>
-                    <span>QTY</span>
-                    <span>PRICE</span>
+                <div className="text-left space-y-1.5 py-1">
+                  <div className="grid grid-cols-12 gap-1 font-bold border-b border-white/15 print:border-neutral-300 pb-1 text-neutral-300 print:text-black text-[11px]">
+                    <span className="col-span-6 text-left">ITEM</span>
+                    <span className="col-span-2 text-center">QTY</span>
+                    <span className="col-span-4 text-right">PRICE</span>
                   </div>
                   {activeReceipt.items?.map((item: any, idx: number) => (
-                    <div key={idx} className="flex justify-between text-[11px] text-neutral-200 print:text-black">
-                      <span className="truncate max-w-[140px]">{item.name}</span>
-                      <span className="font-mono">× {item.quantity}</span>
-                      <span className="font-mono">₹{(item.price * item.quantity).toFixed(2)}</span>
+                    <div key={idx} className="grid grid-cols-12 gap-1 text-[11px] text-neutral-200 print:text-black items-center py-0.5">
+                      <span className="col-span-6 truncate text-left font-medium" title={item.name}>
+                        {item.name}
+                      </span>
+                      <span className="col-span-2 text-center font-mono font-semibold">
+                        × {item.quantity}
+                      </span>
+                      <span className="col-span-4 text-right font-mono tabular-nums font-semibold">
+                        ₹{(item.price * item.quantity).toFixed(2)}
+                      </span>
                     </div>
                   ))}
                 </div>
 
                 {/* Totals */}
-                <div className="border-t border-dashed border-white/15 print:border-neutral-400 pt-2 text-left space-y-1">
+                <div className="border-t border-dashed border-white/15 print:border-neutral-400 pt-2 text-left space-y-1.5">
                   <div className="flex justify-between text-neutral-400 print:text-neutral-600">
                     <span>Subtotal:</span>
-                    <span className="text-white print:text-black">₹{Number(activeReceipt.subtotal).toFixed(2)}</span>
+                    <span className="text-white print:text-black font-mono tabular-nums">₹{Number(activeReceipt.subtotal).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-neutral-400 print:text-neutral-600">
                     <span>GST (5%):</span>
-                    <span className="text-white print:text-black">₹{Number(activeReceipt.taxAmount).toFixed(2)}</span>
+                    <span className="text-white print:text-black font-mono tabular-nums">₹{Number(activeReceipt.taxAmount).toFixed(2)}</span>
                   </div>
                   {activeReceipt.packagingCharge > 0 && (
                     <div className="flex justify-between text-neutral-400 print:text-neutral-600">
                       <span>Packaging Fee:</span>
-                      <span className="text-white print:text-black">₹{Number(activeReceipt.packagingCharge).toFixed(2)}</span>
+                      <span className="text-white print:text-black font-mono tabular-nums">₹{Number(activeReceipt.packagingCharge).toFixed(2)}</span>
                     </div>
                   )}
                   {activeReceipt.discount > 0 && (
                     <div className="flex justify-between text-emerald-400 print:text-neutral-600">
                       <span>Discount:</span>
-                      <span>-₹{Number(activeReceipt.discount).toFixed(2)}</span>
+                      <span className="font-mono tabular-nums">-₹{Number(activeReceipt.discount).toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-black text-sm border-t border-white/15 print:border-neutral-400 pt-1 text-white print:text-black">
+                  <div className="flex justify-between font-black text-sm border-t border-white/15 print:border-neutral-400 pt-1.5 text-white print:text-black">
                     <span>{activeReceipt.isProforma ? "AMOUNT DUE:" : "NET TOTAL:"}</span>
-                    <span className="font-mono">₹{Number(activeReceipt.grandTotal).toFixed(2)}</span>
+                    <span className="font-mono tabular-nums text-base">₹{Number(activeReceipt.grandTotal).toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Payment Methods (If Settled) */}
                 {!activeReceipt.isProforma && activeReceipt.payments && activeReceipt.payments.length > 0 && (
-                  <div className="border-t border-b border-dashed border-white/15 print:border-neutral-400 py-1.5 text-left text-[11px]">
+                  <div className="border-t border-b border-dashed border-white/15 print:border-neutral-400 py-1.5 text-left text-[11px] space-y-1">
                     <span className="font-bold block text-neutral-300 print:text-black">PAID VIA:</span>
                     {activeReceipt.payments.map((p: any, idx: number) => (
                       <div key={idx} className="flex justify-between text-neutral-300 print:text-black">
                         <span>• {p.method}:</span>
-                        <span className="font-mono">₹{Number(p.amount).toFixed(2)}</span>
+                        <span className="font-mono tabular-nums">₹{Number(p.amount).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>

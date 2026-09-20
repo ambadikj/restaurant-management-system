@@ -136,7 +136,7 @@ export const updateCashierTableStatus = async (req: Request, res: Response): Pro
 export const requestTableAccess = async (req: Request, res: Response): Promise<void> => {
   try {
     const tableNumber = Number(req.params.tableNumber);
-    const { guestCount } = req.body;
+    const { guestCount, sessionCode } = req.body;
 
     const table = await prisma.restaurantTable.findUnique({
       where: { tableNumber },
@@ -152,18 +152,22 @@ export const requestTableAccess = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    // If table already has an active session, access is automatically granted!
-    if (table.sessions.length > 0 && table.status === "OCCUPIED") {
-      res.json({
-        authorized: true,
-        alreadyActive: true,
-        message: "Table session is already active",
-        session: table.sessions[0],
-      });
-      return;
+    // If client provides a valid sessionCode that matches an active session for this table,
+    // they are already authorized from a previous cashier approval during this meal.
+    if (sessionCode && table.sessions.length > 0) {
+      const existingSession = table.sessions.find((s) => s.sessionCode === sessionCode);
+      if (existingSession) {
+        res.json({
+          authorized: true,
+          alreadyActive: true,
+          message: "Table session is active and verified",
+          session: existingSession,
+        });
+        return;
+      }
     }
 
-    // Record pending access request
+    // Otherwise, this is a new scan / unauthorized access. Register request & alert Cashier terminal.
     const requestItem: AccessRequest = {
       tableNumber,
       requestedAt: new Date(),
@@ -177,12 +181,13 @@ export const requestTableAccess = async (req: Request, res: Response): Promise<v
       requestedAt: requestItem.requestedAt,
       guestCount: requestItem.guestCount,
       capacity: table.capacity,
+      status: table.status,
     });
 
     res.json({
       authorized: false,
       pendingApproval: true,
-      message: "Access request sent to cashier. Please wait a moment.",
+      message: "Access request sent to cashier. Please wait for staff authorization.",
     });
   } catch (error) {
     console.error("Error requesting table access:", error);

@@ -123,29 +123,59 @@ export default function CustomerMenu() {
   };
 
   // Table Access Gatekeeping State
-  const [isAccessGranted, setIsAccessGranted] = useState<boolean>(true);
+  const getStoredSessionCode = () => {
+    try {
+      return sessionStorage.getItem(`table_session_${tableIdentifier}`);
+    } catch {
+      return null;
+    }
+  };
+
+  const [isAccessGranted, setIsAccessGranted] = useState<boolean>(() => {
+    if (isTakeawayParam) return true;
+    try {
+      const stored = sessionStorage.getItem(`table_session_${tableIdentifier}`);
+      return Boolean(stored);
+    } catch {
+      return false;
+    }
+  });
   const [isAccessDeclined, setIsAccessDeclined] = useState<boolean>(false);
+  const [isRequestingAccess, setIsRequestingAccess] = useState<boolean>(false);
   const [sessionSettledInfo, setSessionSettledInfo] = useState<any | null>(null);
 
-  const checkAndRequestAccess = async (tblData: any) => {
-    if (isTakeawayParam || !tblData) {
+  const checkAndRequestAccess = async (_tblData?: any) => {
+    if (isTakeawayParam) {
       setIsAccessGranted(true);
       return;
     }
 
-    if (tblData.status === "AVAILABLE" && !tblData.activeSession) {
-      setIsAccessGranted(false);
-      setIsAccessDeclined(false);
-      try {
-        await axios.post(
-          `http://${BACKEND_HOST}:5000/api/cashier/table/${tableIdentifier}/request-access`,
-          {}
-        );
-      } catch (err) {
-        console.error("Access request notice error:", err);
+    const storedCode = getStoredSessionCode();
+
+    setIsRequestingAccess(true);
+    try {
+      const res = await axios.post(
+        `http://${BACKEND_HOST}:5000/api/cashier/table/${tableIdentifier}/request-access`,
+        { sessionCode: storedCode }
+      );
+
+      if (res.data?.authorized && res.data?.session?.sessionCode) {
+        // Already active & authorized for this diner
+        sessionStorage.setItem(`table_session_${tableIdentifier}`, res.data.session.sessionCode);
+        setIsAccessGranted(true);
+        setIsAccessDeclined(false);
+      } else {
+        // Needs cashier approval
+        setIsAccessGranted(false);
+        setIsAccessDeclined(false);
       }
-    } else {
-      setIsAccessGranted(true);
+    } catch (err) {
+      console.error("Access request notice error:", err);
+      if (!storedCode) {
+        setIsAccessGranted(false);
+      }
+    } finally {
+      setIsRequestingAccess(false);
     }
   };
 
@@ -340,6 +370,11 @@ export default function CustomerMenu() {
 
     // Real-time: Cashier approves table access
     const handleAccessGranted = (data: any) => {
+      if (data?.sessionCode) {
+        try {
+          sessionStorage.setItem(`table_session_${tableIdentifier}`, data.sessionCode);
+        } catch {}
+      }
       setIsAccessGranted(true);
       setIsAccessDeclined(false);
       toast.success(data?.message || "Table access authorized! Welcome to Serve_Sync.");
@@ -348,6 +383,9 @@ export default function CustomerMenu() {
 
     // Real-time: Cashier declines table access
     const handleAccessDeclined = (data: any) => {
+      try {
+        sessionStorage.removeItem(`table_session_${tableIdentifier}`);
+      } catch {}
       setIsAccessGranted(false);
       setIsAccessDeclined(true);
       toast.error(data?.message || "Table access was declined by staff.");
@@ -355,6 +393,10 @@ export default function CustomerMenu() {
 
     // Real-time: Cashier settles bill
     const handleSessionSettled = (data: any) => {
+      try {
+        sessionStorage.removeItem(`table_session_${tableIdentifier}`);
+      } catch {}
+      setIsAccessGranted(false);
       setSessionSettledInfo(data);
       setCart([]);
       toast.success("Bill settled! Thank you for dining with us.");
@@ -601,30 +643,32 @@ export default function CustomerMenu() {
             </div>
           </div>
 
-          {/* Action Icons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
-              title="Search menu"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-
-            {!isTakeawayParam && (
+          {/* Action Icons (Only visible when access granted) */}
+          {isAccessGranted && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => handleServiceRequest("CALL_WAITER")}
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
-                title="Call waiter"
+                title="Search menu"
               >
-                <Bell className="h-4 w-4 text-[#FF4D4D]" />
+                <Search className="h-4 w-4" />
               </button>
-            )}
-          </div>
+
+              {!isTakeawayParam && (
+                <button
+                  onClick={() => handleServiceRequest("CALL_WAITER")}
+                  className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
+                  title="Call waiter"
+                >
+                  <Bell className="h-4 w-4 text-[#FF4D4D]" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Collapsible Search Bar */}
-        {isSearchOpen && (
+        {isAccessGranted && isSearchOpen && (
           <div className="w-full max-w-3xl mx-auto mt-2.5 pt-2 border-t border-[#212121] animate-in slide-in-from-top-2 duration-200">
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#AAAAAA]" />
@@ -653,12 +697,22 @@ export default function CustomerMenu() {
       {!isTakeawayParam && !isAccessGranted ? (
         <div className="w-full max-w-md mx-auto px-6 py-16 text-center space-y-6 animate-in fade-in duration-300">
           <div className="relative mx-auto w-24 h-24 rounded-3xl bg-[#141416] border border-white/10 flex items-center justify-center shadow-2xl">
-            <div className="absolute inset-0 rounded-3xl border border-amber-500/40 animate-ping opacity-60" />
+            <div
+              className={`absolute inset-0 rounded-3xl border ${
+                isAccessDeclined ? "border-rose-500/40" : "border-amber-500/40 animate-ping"
+              } opacity-60`}
+            />
             <BrandCrest className="h-12 w-12 text-white" />
           </div>
 
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-black uppercase tracking-wider">
+            <div
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+                isAccessDeclined
+                  ? "bg-rose-500/15 border border-rose-500/30 text-rose-400"
+                  : "bg-amber-500/15 border border-amber-500/30 text-amber-400"
+              }`}
+            >
               <Clock className="h-3 w-3" />
               <span>{isAccessDeclined ? "Authorization Declined" : "Authorization Pending"}</span>
             </div>
@@ -669,7 +723,7 @@ export default function CustomerMenu() {
             </h1>
             <p className="text-xs text-[#AAAAAA] leading-relaxed max-w-xs mx-auto">
               {isAccessDeclined
-                ? "Access to this table was not approved by staff. Please speak with our restaurant cashier or host."
+                ? "Access to this table was declined by restaurant staff. Please speak with our cashier or dining host."
                 : "A scan notification has been sent to the cashier terminal. Please sit comfortably while staff authorizes your table session."}
             </p>
           </div>
@@ -677,10 +731,11 @@ export default function CustomerMenu() {
           <div className="pt-2 flex flex-col items-center gap-3">
             <button
               onClick={() => checkAndRequestAccess(tableInfo)}
-              className="px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs active:scale-95 shadow-lg flex items-center gap-2 cursor-pointer"
+              disabled={isRequestingAccess}
+              className="px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs active:scale-95 shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-60"
             >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>Resend Authorization Request</span>
+              <RefreshCw className={`h-3.5 w-3.5 ${isRequestingAccess ? "animate-spin" : ""}`} />
+              <span>{isRequestingAccess ? "Checking Status..." : "Resend Authorization Request"}</span>
             </button>
             <span className="text-[11px] text-[#666666]">
               Real-time synchronization active • Will auto-unlock when approved
