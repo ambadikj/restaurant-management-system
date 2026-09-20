@@ -812,13 +812,13 @@ const getShiftStartCutoff = (): Date => {
  */
 export const getSettledBillsHistory = async (req: Request, res: Response): Promise<void> => {
   try {
+    const isAllTime = req.query.range === "all";
     const shiftCutoff = getShiftStartCutoff();
 
     const sessions = await prisma.diningSession.findMany({
-      where: {
-        status: "COMPLETED",
-        endTime: { gte: shiftCutoff },
-      },
+      where: isAllTime
+        ? { status: "COMPLETED" }
+        : { status: "COMPLETED", endTime: { gte: shiftCutoff } },
       orderBy: { endTime: "desc" },
       include: {
         table: true,
@@ -878,13 +878,13 @@ export const getSettledBillsHistory = async (req: Request, res: Response): Promi
  */
 export const getCashierStats = async (req: Request, res: Response): Promise<void> => {
   try {
+    const isAllTime = req.query.range === "all";
     const shiftCutoff = getShiftStartCutoff();
 
     const payments = await prisma.payment.findMany({
-      where: {
-        paymentStatus: "PAID",
-        paidAt: { gte: shiftCutoff },
-      },
+      where: isAllTime
+        ? { paymentStatus: "PAID" }
+        : { paymentStatus: "PAID", paidAt: { gte: shiftCutoff } },
     });
 
     let totalRevenue = 0;
@@ -909,10 +909,9 @@ export const getCashierStats = async (req: Request, res: Response): Promise<void
     });
 
     const settledSessionsCount = await prisma.diningSession.count({
-      where: {
-        status: "COMPLETED",
-        endTime: { gte: shiftCutoff },
-      },
+      where: isAllTime
+        ? { status: "COMPLETED" }
+        : { status: "COMPLETED", endTime: { gte: shiftCutoff } },
     });
 
     res.json({
@@ -930,6 +929,7 @@ export const getCashierStats = async (req: Request, res: Response): Promise<void
     res.status(500).json({ message: "Failed to calculate cashier metrics" });
   }
 };
+
 
 /**
  * POST /api/cashier/table/transfer
