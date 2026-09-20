@@ -824,17 +824,6 @@ export default function CashierDashboard() {
     // Live access request when guest scans QR
     const handleAccessRequest = (data: PendingAccessItem) => {
       playChime();
-      toast(
-        () => (
-          <div className="flex flex-col gap-1.5">
-            <span className="font-bold text-white">QR Access Requested</span>
-            <span className="text-xs text-neutral-400">
-              Table #{data.tableNumber} is waiting for authorization.
-            </span>
-          </div>
-        ),
-        { duration: 6000 }
-      );
       setPendingRequests((prev) => {
         const filtered = prev.filter((r) => r.tableNumber !== data.tableNumber);
         return [

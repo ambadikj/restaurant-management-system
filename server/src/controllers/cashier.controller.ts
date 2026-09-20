@@ -168,21 +168,24 @@ export const requestTableAccess = async (req: Request, res: Response): Promise<v
     }
 
     // Otherwise, this is a new scan / unauthorized access. Register request & alert Cashier terminal.
-    const requestItem: AccessRequest = {
-      tableNumber,
-      requestedAt: new Date(),
-      guestCount: guestCount ? Number(guestCount) : undefined,
-    };
-    pendingAccessRequests.set(tableNumber, requestItem);
+    const isAlreadyPending = pendingAccessRequests.has(tableNumber);
+    if (!isAlreadyPending) {
+      const requestItem: AccessRequest = {
+        tableNumber,
+        requestedAt: new Date(),
+        guestCount: guestCount ? Number(guestCount) : undefined,
+      };
+      pendingAccessRequests.set(tableNumber, requestItem);
 
-    // Broadcast live access request alert to Cashier & Staff
-    emitToStaff("cashier:access_request", {
-      tableNumber,
-      requestedAt: requestItem.requestedAt,
-      guestCount: requestItem.guestCount,
-      capacity: table.capacity,
-      status: table.status,
-    });
+      // Broadcast live access request alert to Cashier & Staff once
+      emitToStaff("cashier:access_request", {
+        tableNumber,
+        requestedAt: requestItem.requestedAt,
+        guestCount: requestItem.guestCount,
+        capacity: table.capacity,
+        status: table.status,
+      });
+    }
 
     res.json({
       authorized: false,
