@@ -891,52 +891,52 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* KPI Overview Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
-          <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-            Gross Revenue
+      {/* KPI Overview Bar - Single Bar Divided into 4 with Unified Header */}
+      <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-[#FA2D48]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+              Executive Shift Turnover & Performance Metrics
+            </span>
           </div>
-          <div className="mt-1 text-2xl font-bold text-white font-mono">
-            ₹{totalRevenue.toFixed(2)}
-          </div>
-          <div className="mt-0.5 text-[10px] text-emerald-400 font-medium flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" />
-            <span>{rangeFilter === "today" ? "Current shift intake" : "All-time verified intake"}</span>
-          </div>
+          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            LIVE AUDITED
+          </span>
         </div>
 
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
-          <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-            Orders Fulfilled
+        <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08] text-xs">
+          {/* Segment 1: Gross Revenue */}
+          <div className="py-2 lg:py-0 lg:pr-5 space-y-1">
+            <span className="text-[11px] text-neutral-400 font-sans block">Gross Sales Turnover</span>
+            <span className="text-2xl font-black text-white block font-mono">₹{totalRevenue.toFixed(2)}</span>
+            <span className="text-[10px] text-neutral-500 font-sans block">Net food volume: ₹{grossFoodSales.toFixed(2)}</span>
           </div>
-          <div className="mt-1 text-2xl font-bold text-white font-mono">
-            {settledCount}
-          </div>
-          <div className="mt-0.5 text-[10px] text-neutral-400">
-            Avg ticket ₹{avgTicket.toFixed(2)}
-          </div>
-        </div>
 
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
-          <div className="text-[11px] font-semibold text-[#FA2D48] uppercase tracking-wider">
-            Tax Collected (GST)
+          {/* Segment 2: Orders Fulfilled */}
+          <div className="py-2 lg:py-0 lg:px-5 space-y-1">
+            <span className="text-[11px] text-neutral-400 font-sans block">Orders Fulfilled</span>
+            <span className="text-2xl font-black text-white block font-mono">{settledCount}</span>
+            <span className="text-[10px] text-neutral-500 font-sans block">Dine-in: {dineInCount} • Takeaway: {takeawayCount}</span>
           </div>
-          <div className="mt-1 text-2xl font-bold text-[#FA2D48] font-mono">
-            ₹{taxCollected.toFixed(2)}
-          </div>
-          <div className="mt-0.5 text-[10px] text-neutral-400">5.0% flat dining GST</div>
-        </div>
 
-        <div className="rounded-2xl bg-[#1c1c1f]/70 border border-white/[0.07] p-4.5 backdrop-blur-xl">
-          <div className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">
-            Guest Satisfaction
+          {/* Segment 3: Average Ticket Size */}
+          <div className="py-2 lg:py-0 lg:px-5 space-y-1">
+            <span className="text-[11px] text-neutral-400 font-sans block">Average Ticket Size</span>
+            <span className="text-2xl font-black text-white block font-mono">₹{avgTicket.toFixed(2)}</span>
+            <span className="text-[10px] text-neutral-500 font-sans block">Per settled guest invoice</span>
           </div>
-          <div className="mt-1 text-2xl font-bold text-amber-400 font-mono">
-            {avgRating} / 5.0
-          </div>
-          <div className="mt-0.5 text-[10px] text-neutral-400">
-            {displayReviewsCount} verified review{displayReviewsCount === 1 ? "" : "s"}
+
+          {/* Segment 4: Guest Satisfaction */}
+          <div className="py-2 lg:py-0 lg:pl-5 space-y-1">
+            <span className="text-[11px] text-neutral-400 font-sans block">Guest Satisfaction</span>
+            <span className="text-2xl font-black text-amber-400 block font-mono">
+              {avgRating} <span className="text-sm text-neutral-500 font-sans font-normal">/ 5.0</span>
+            </span>
+            <span className="text-[10px] text-neutral-500 font-sans block">
+              {displayReviewsCount} verified review{displayReviewsCount === 1 ? "" : "s"}
+            </span>
           </div>
         </div>
       </div>
@@ -950,13 +950,13 @@ export default function Reports() {
         history={history}
       />
 
-      {/* Statutory 5% Dining GST Tax Audit & Register Reconciliation Strip */}
+      {/* Statutory 5% Dining GST Tax Audit & Register Reconciliation Strip (Matching Screenshot) */}
       <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
           <div className="flex items-center gap-2">
             <Receipt className="h-4 w-4 text-[#FA2D48]" />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
-              Tax Reconciliation & Register Audit (5% Dining GST)
+              TAX RECONCILIATION & REGISTER AUDIT (5% DINING GST)
             </span>
           </div>
           <span className="rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 text-[10px] font-mono text-emerald-400">
@@ -965,27 +965,27 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08] text-xs">
-          <div className="py-2 lg:px-5 space-y-1">
+          <div className="py-2 lg:py-0 lg:pr-5 space-y-1">
             <span className="text-[11px] text-neutral-400 font-sans block">Gross Food Sales (Pre-Tax)</span>
-            <span className="text-xl font-black text-white block font-mono">₹{grossFoodSales.toFixed(2)}</span>
+            <span className="text-2xl font-black text-white block font-mono">₹{grossFoodSales.toFixed(2)}</span>
             <span className="text-[10px] text-neutral-500 font-sans block">Tax-exclusive food volume</span>
           </div>
 
-          <div className="py-2 lg:px-5 space-y-1">
+          <div className="py-2 lg:py-0 lg:px-5 space-y-1">
             <span className="text-[11px] text-neutral-400 font-sans block">CGST (2.5%)</span>
-            <span className="text-xl font-black text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-2xl font-black text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
             <span className="text-[10px] text-neutral-500 font-sans block">Central Govt remittance</span>
           </div>
 
-          <div className="py-2 lg:px-5 space-y-1">
+          <div className="py-2 lg:py-0 lg:px-5 space-y-1">
             <span className="text-[11px] text-neutral-400 font-sans block">SGST (2.5%)</span>
-            <span className="text-xl font-black text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-2xl font-black text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
             <span className="text-[10px] text-neutral-500 font-sans block">State Govt remittance</span>
           </div>
 
-          <div className="py-2 lg:px-5 space-y-1">
+          <div className="py-2 lg:py-0 lg:pl-5 space-y-1">
             <span className="text-[11px] text-neutral-400 font-sans block">Total GST Remittance</span>
-            <span className="text-xl font-black text-white block font-mono">₹{taxCollected.toFixed(2)}</span>
+            <span className="text-2xl font-black text-white block font-mono">₹{taxCollected.toFixed(2)}</span>
             <span className="text-[10px] text-emerald-400 font-sans block font-semibold">Physical Cash: ₹{cashTotal.toFixed(2)}</span>
           </div>
         </div>
