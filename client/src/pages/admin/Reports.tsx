@@ -1067,23 +1067,23 @@ export default function Reports() {
               </button>
             </div>
 
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            {/* Search Bar - Apple Music Pill */}
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-neutral-400" />
               <input
                 type="text"
                 placeholder="Search invoice, table, payment, or dish..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-1.5 rounded-2xl bg-black/40 border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48] transition-colors"
+                className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] transition-all focus:outline-none"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white cursor-pointer"
+                  className="absolute right-3 top-2.5 text-neutral-400 hover:text-white cursor-pointer"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
               )}
             </div>
