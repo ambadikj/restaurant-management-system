@@ -11,7 +11,6 @@ import {
   ShoppingBag,
   FileText,
   TrendingUp,
-  ArrowLeft,
 } from "lucide-react";
 import { BrandLogo, BrandCrest } from "@/components/BrandLogo";
 import {
@@ -129,26 +128,10 @@ export function AppSidebar() {
 
   const visibleSections = useMemo(() => {
     if (isCashier || isCashierRoute) {
-      if (!isCashier && userRole === "ADMIN") {
-        return [
-          ...cashierNavSections,
-          {
-            label: "NAVIGATION",
-            items: [
-              {
-                title: "Admin Console",
-                url: "/admin/menu",
-                icon: ArrowLeft,
-                badge: null,
-              },
-            ],
-          },
-        ];
-      }
       return cashierNavSections;
     }
     return adminNavSections;
-  }, [isCashier, isCashierRoute, userRole]);
+  }, [isCashier, isCashierRoute]);
 
   return (
     <Sidebar
