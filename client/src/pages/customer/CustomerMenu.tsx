@@ -23,7 +23,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import SwipeableToaster from "@/components/SwipeableToaster";
@@ -695,51 +694,67 @@ export default function CustomerMenu() {
 
       {/* ================= MAIN CONTAINER OR AUTHORIZATION GATEWAY ================= */}
       {!isTakeawayParam && !isAccessGranted ? (
-        <div className="w-full max-w-md mx-auto px-6 py-16 text-center space-y-6 animate-in fade-in duration-300">
-          <div className="relative mx-auto w-24 h-24 rounded-3xl bg-[#141416] border border-white/10 flex items-center justify-center shadow-2xl">
+        <div className="w-full max-w-sm mx-auto px-6 py-24 sm:py-28 text-center space-y-7 animate-in fade-in duration-300">
+          {/* Minimal Brand & Pulse Crest */}
+          <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+            {/* Subtle soft pulse halo */}
             <div
-              className={`absolute inset-0 rounded-3xl border ${
-                isAccessDeclined ? "border-rose-500/40" : "border-amber-500/40 animate-ping"
-              } opacity-60`}
+              className={`absolute inset-0 rounded-full ${
+                isAccessDeclined
+                  ? "bg-rose-500/10 border border-rose-500/20"
+                  : "bg-[#FA2D48]/10 border border-[#FA2D48]/20 animate-pulse"
+              }`}
             />
-            <BrandCrest className="h-12 w-12 text-white" />
+            <div className="relative flex items-center justify-center h-14 w-14 rounded-full bg-[#121214] border border-white/[0.08] shadow-2xl">
+              <BrandCrest className="h-7 w-7 text-white" />
+            </div>
           </div>
 
-          <div className="space-y-2">
+          {/* Minimal Typography */}
+          <div className="space-y-2.5">
             <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide ${
                 isAccessDeclined
-                  ? "bg-rose-500/15 border border-rose-500/30 text-rose-400"
-                  : "bg-amber-500/15 border border-amber-500/30 text-amber-400"
+                  ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                  : "bg-white/[0.06] text-neutral-300 border border-white/10"
               }`}
             >
-              <Clock className="h-3 w-3" />
-              <span>{isAccessDeclined ? "Authorization Declined" : "Authorization Pending"}</span>
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  isAccessDeclined ? "bg-rose-400" : "bg-[#FA2D48] animate-pulse"
+                }`}
+              />
+              <span>{isAccessDeclined ? "Access Declined" : "Authorization Pending"}</span>
             </div>
-            <h1 className="font-['Outfit'] text-2xl font-black text-white">
+
+            <h1 className="font-['Outfit'] text-2xl sm:text-[26px] font-black text-white tracking-tight">
               {isAccessDeclined
                 ? "Table Access Declined"
-                : `Waiting for Table #${tableIdentifier} Access`}
+                : `Table #${!isNaN(Number(tableIdentifier)) && Number(tableIdentifier) < 10 ? `0${Number(tableIdentifier)}` : tableIdentifier}`}
             </h1>
-            <p className="text-xs text-[#AAAAAA] leading-relaxed max-w-xs mx-auto">
+
+            <p className="text-xs text-[#8E8E93] leading-relaxed max-w-xs mx-auto">
               {isAccessDeclined
-                ? "Access to this table was declined by restaurant staff. Please speak with our cashier or dining host."
-                : "A scan notification has been sent to the cashier terminal. Please sit comfortably while staff authorizes your table session."}
+                ? "Your dining session request was declined by staff. Please speak with your server or cashier."
+                : "Your table request has been sent to the cashier. The menu will unlock automatically once approved."}
             </p>
           </div>
 
-          <div className="pt-2 flex flex-col items-center gap-3">
+          {/* Minimal Action & Status */}
+          <div className="pt-1 flex flex-col items-center gap-3.5">
             <button
               onClick={() => checkAndRequestAccess(tableInfo)}
               disabled={isRequestingAccess}
-              className="px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs active:scale-95 shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-60"
+              className="px-5 py-2 rounded-full bg-[#1e1e22] hover:bg-[#2a2a2e] border border-white/10 text-neutral-200 hover:text-white text-xs font-semibold transition-all active:scale-95 shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${isRequestingAccess ? "animate-spin" : ""}`} />
-              <span>{isRequestingAccess ? "Checking Status..." : "Resend Authorization Request"}</span>
+              <RefreshCw className={`h-3.5 w-3.5 text-neutral-400 ${isRequestingAccess ? "animate-spin" : ""}`} />
+              <span>{isRequestingAccess ? "Checking..." : "Check Status"}</span>
             </button>
-            <span className="text-[11px] text-[#666666]">
-              Real-time synchronization active • Will auto-unlock when approved
-            </span>
+
+            <div className="flex items-center gap-1.5 text-[11px] text-[#666666] font-mono">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/80" />
+              <span>Real-time sync active</span>
+            </div>
           </div>
         </div>
       ) : (
