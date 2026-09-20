@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Star,
+  Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import SwipeableToaster from "@/components/SwipeableToaster";
@@ -142,6 +144,62 @@ export default function CustomerMenu() {
   const [isAccessDeclined, setIsAccessDeclined] = useState<boolean>(false);
   const [isRequestingAccess, setIsRequestingAccess] = useState<boolean>(false);
   const [sessionSettledInfo, setSessionSettledInfo] = useState<any | null>(null);
+
+  // Post-Payment Review & Rating States
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewHoverRating, setReviewHoverRating] = useState<number>(0);
+  const [selectedReviewTags, setSelectedReviewTags] = useState<string[]>([]);
+  const [reviewFeedback, setReviewFeedback] = useState<string>("");
+  const [reviewerName, setReviewerName] = useState<string>("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState<boolean>(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState<boolean>(false);
+
+  const REVIEW_TAG_OPTIONS = [
+    "Delicious Food 🍕",
+    "Lightning Fast ⚡",
+    "Friendly Staff 😊",
+    "Cozy Ambience ✨",
+    "Clean & Fresh 🌿",
+    "Great Value 💎",
+  ];
+
+  const handleToggleReviewTag = (tag: string) => {
+    setSelectedReviewTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleSubmitReview = async () => {
+    if (!sessionSettledInfo) return;
+    setIsSubmittingReview(true);
+    try {
+      await axios.post(`${API_BASE}/review`, {
+        tableNumber: sessionSettledInfo.tableNumber,
+        sessionCode: sessionSettledInfo.sessionCode,
+        rating: reviewRating,
+        feedback: reviewFeedback.trim() || undefined,
+        tags: selectedReviewTags,
+        customerName: reviewerName.trim() || undefined,
+      });
+
+      setReviewSubmitted(true);
+      toast.success("Thank you! Your review has been received.");
+    } catch (err) {
+      console.error("Failed to submit review:", err);
+      toast.error("Failed to submit review. Please try again.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleCloseReviewModal = () => {
+    setSessionSettledInfo(null);
+    setReviewSubmitted(false);
+    setReviewFeedback("");
+    setSelectedReviewTags([]);
+    setReviewerName("");
+    setReviewRating(5);
+  };
 
   const checkAndRequestAccess = async (_tblData?: any) => {
     if (isTakeawayParam) {
@@ -397,6 +455,8 @@ export default function CustomerMenu() {
       } catch {}
       setIsAccessGranted(false);
       setSessionSettledInfo(data);
+      setReviewSubmitted(false);
+      setReviewRating(5);
       setCart([]);
       toast.success("Bill settled! Thank you for dining with us.");
       loadMenuAndTable();
@@ -1809,26 +1869,193 @@ export default function CustomerMenu() {
         </div>
       )}
 
-      {/* ================= BILL SETTLED NOTICE MODAL ================= */}
+      {/* ================= POST-PAYMENT CUSTOMER REVIEW MODAL ================= */}
       {sessionSettledInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-[#141417] border border-emerald-500/30 rounded-3xl p-6 shadow-2xl text-center space-y-4">
-            <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 className="h-7 w-7" />
-            </div>
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Bill Paid & Settled</span>
-              <h3 className="font-['Outfit'] text-xl font-black text-white">Thank You for Dining!</h3>
-              <p className="text-xs text-[#AAAAAA] leading-relaxed">
-                Your dining session has been completed and settled with the cashier. We look forward to serving you again soon!
-              </p>
-            </div>
-            <button
-              onClick={() => setSessionSettledInfo(null)}
-              className="w-full py-3 rounded-full bg-white text-black font-bold text-xs active:scale-95 shadow-lg cursor-pointer"
-            >
-              Close & Finish
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#141417] border border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 relative overflow-hidden my-auto">
+            {/* Ambient Background Warmth */}
+            <div className="absolute -top-24 -right-24 w-52 h-52 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-52 h-52 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            {!reviewSubmitted ? (
+              <div className="relative z-10 space-y-4.5">
+                {/* Header Badge & Close Button */}
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Table {sessionSettledInfo.tableNumber || tableIdentifier} • Bill Paid
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCloseReviewModal}
+                    className="h-7 w-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                    title="Close"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {/* Title */}
+                <div className="space-y-1">
+                  <h3 className="font-['Outfit'] text-2xl font-black text-white tracking-tight">
+                    How was your experience?
+                  </h3>
+                  <p className="text-xs text-[#8E8E93] leading-relaxed">
+                    Your dining session is complete! Let our chefs and crew know how we did.
+                  </p>
+                </div>
+
+                {/* Interactive 5-Star Rating */}
+                <div className="rounded-2xl bg-[#0e0e11] border border-white/5 p-4 text-center space-y-2">
+                  <div className="flex items-center justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const currentVal = reviewHoverRating || reviewRating;
+                      const isFilled = star <= currentVal;
+                      return (
+                        <button
+                          key={star}
+                          type="button"
+                          onMouseEnter={() => setReviewHoverRating(star)}
+                          onMouseLeave={() => setReviewHoverRating(0)}
+                          onClick={() => setReviewRating(star)}
+                          className="p-1 cursor-pointer transition-transform duration-150 hover:scale-125 active:scale-95 focus:outline-none"
+                          title={`${star} Star${star > 1 ? "s" : ""}`}
+                        >
+                          <Star
+                            className={`h-7 w-7 sm:h-8 sm:w-8 transition-colors ${
+                              isFilled
+                                ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.5)]"
+                                : "text-neutral-600 hover:text-neutral-400"
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Dynamic Rating Label */}
+                  <div className="text-xs font-bold transition-all duration-200">
+                    {reviewRating === 5 && (
+                      <span className="text-amber-300">🌟 Outstanding Experience!</span>
+                    )}
+                    {reviewRating === 4 && (
+                      <span className="text-amber-400">✨ Very Good!</span>
+                    )}
+                    {reviewRating === 3 && (
+                      <span className="text-neutral-300">🙂 Good & Pleasant</span>
+                    )}
+                    {reviewRating === 2 && (
+                      <span className="text-orange-400">😐 Could Be Better</span>
+                    )}
+                    {reviewRating === 1 && (
+                      <span className="text-rose-400">😕 Needs Improvement</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Aspect Tags */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider block">
+                    What did you love? (Tap to select)
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {REVIEW_TAG_OPTIONS.map((tag) => {
+                      const isSelected = selectedReviewTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleToggleReviewTag(tag)}
+                          className={`text-[11px] font-semibold px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-amber-500/20 border-amber-400/50 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                              : "bg-white/[0.04] border-white/10 text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.08]"
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Optional Feedback Comment */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider block">
+                    Your Review & Comments
+                  </label>
+                  <textarea
+                    value={reviewFeedback}
+                    onChange={(e) => setReviewFeedback(e.target.value)}
+                    placeholder="Tell us what you loved, dish highlights, or suggestions..."
+                    rows={3}
+                    className="w-full bg-[#0e0e11] border border-white/10 focus:border-amber-400/50 rounded-2xl p-3 text-xs text-white placeholder:text-neutral-600 focus:outline-none transition-colors resize-none"
+                  />
+                </div>
+
+                {/* Optional Name */}
+                <div>
+                  <input
+                    type="text"
+                    value={reviewerName}
+                    onChange={(e) => setReviewerName(e.target.value)}
+                    placeholder="Your Name (Optional)"
+                    className="w-full bg-[#0e0e11] border border-white/10 focus:border-amber-400/50 rounded-full px-4 py-2.5 text-xs text-white placeholder:text-neutral-600 focus:outline-none transition-colors"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="button"
+                    disabled={isSubmittingReview}
+                    onClick={handleSubmitReview}
+                    className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 text-black font-black text-xs active:scale-98 shadow-lg shadow-orange-500/25 hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmittingReview ? (
+                      <RefreshCw className="h-4 w-4 animate-spin text-black" />
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        <span>Submit Review</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCloseReviewModal}
+                    className="w-full py-1.5 text-center text-xs font-semibold text-neutral-500 hover:text-neutral-300 transition-colors cursor-pointer"
+                  >
+                    Skip for now
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Success Confirmation Screen */
+              <div className="relative z-10 text-center py-4 space-y-4 animate-in zoom-in-95 duration-200">
+                <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.3)]">
+                  <Sparkles className="h-8 w-8 fill-amber-400/20" />
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">
+                    Feedback Received
+                  </span>
+                  <h3 className="font-['Outfit'] text-2xl font-black text-white">
+                    Thank You{reviewerName ? `, ${reviewerName}` : ""}!
+                  </h3>
+                  <p className="text-xs text-[#AAAAAA] leading-relaxed max-w-xs mx-auto">
+                    Your review has been shared directly with our culinary team and floor staff. We hope to see you again soon!
+                  </p>
+                </div>
+                <button
+                  onClick={handleCloseReviewModal}
+                  className="w-full py-3.5 rounded-full bg-white text-black font-bold text-xs active:scale-95 shadow-xl hover:bg-neutral-200 transition-all cursor-pointer"
+                >
+                  Close & Finish
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

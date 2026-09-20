@@ -140,6 +140,7 @@ model DiningSession {
   table    RestaurantTable @relation(fields: [tableId], references: [id])
   orders   Order[]
   payments Payment[]
+  reviews  Review[]
 
   @@index([tableId])
 }
@@ -187,3 +188,19 @@ model Payment {
 
   @@index([diningSessionId])
 }
+
+model Review {
+  id              Int            @id @default(autoincrement())
+  diningSessionId Int?
+  tableNumber     Int?
+  sessionCode     String?
+  customerName    String?
+  rating          Int
+  feedback        String?
+  tags            String[]       @default([])
+  createdAt       DateTime       @default(now())
+
+  diningSession   DiningSession? @relation(fields: [diningSessionId], references: [id], onDelete: SetNull)
+
+  @@index([diningSessionId])
+}

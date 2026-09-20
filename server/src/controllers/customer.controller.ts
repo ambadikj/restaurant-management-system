@@ -439,3 +439,94 @@ export const requestService = async (req: Request, res: Response): Promise<void>
     res.status(500).json({ message: "Failed to alert staff." });
   }
 };
+
+/**
+ * POST /api/customer/review
+ * Customer submits post-payment dining review & rating
+ */
+export const submitReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { tableNumber, sessionCode, rating, feedback, tags, customerName } = req.body;
+
+    const parsedRating = Math.max(1, Math.min(5, Number(rating) || 5));
+    const parsedTable = tableNumber && !isNaN(Number(tableNumber)) ? Number(tableNumber) : null;
+    const finalTags = Array.isArray(tags) ? tags : [];
+
+    // Attempt to link to session if sessionCode exists
+    let sessionId: number | null = null;
+    if (sessionCode) {
+      const session = await prisma.diningSession.findUnique({
+        where: { sessionCode: String(sessionCode) },
+      });
+      if (session) {
+        sessionId = session.id;
+      }
+    }
+
+    const review = await prisma.review.create({
+      data: {
+        diningSessionId: sessionId,
+        tableNumber: parsedTable,
+        sessionCode: sessionCode ? String(sessionCode) : null,
+        customerName: customerName ? String(customerName).trim() : null,
+        rating: parsedRating,
+        feedback: feedback ? String(feedback).trim() : null,
+        tags: finalTags,
+      },
+    });
+
+    // Notify staff/cashier in real time
+    emitToStaff("customer:review", {
+      id: review.id,
+      tableNumber: parsedTable || "Takeaway",
+      sessionCode: review.sessionCode,
+      rating: review.rating,
+      feedback: review.feedback,
+      tags: review.tags,
+      customerName: review.customerName || `Guest at Table ${parsedTable || "Counter"}`,
+      createdAt: review.createdAt,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Thank you for your valuable feedback!",
+      review,
+    });
+  } catch (error) {
+    console.error("Error submitting customer review:", error);
+    res.status(500).json({ message: "Failed to submit review." });
+  }
+};
+
+/**
+ * GET /api/customer/reviews
+ * Fetch recent reviews for reports and feedback audits
+ */
+export const getReviews = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const reviews = await prisma.review.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: {
+        diningSession: {
+          select: {
+            sessionCode: true,
+            totalAmount: true,
+            payments: {
+              select: {
+                paymentMethod: true,
+                amount: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json(reviews);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    res.status(500).json({ message: "Failed to load reviews." });
+  }
+};
+
