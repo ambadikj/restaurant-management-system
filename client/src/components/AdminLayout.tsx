@@ -108,15 +108,6 @@ export default function AdminLayout() {
       });
     };
 
-    // Customer QR Scan Request
-    const handleAccessRequestAlert = (data: any) => {
-      addAlert({
-        type: "service",
-        title: `QR Scan • Table #${data.tableNumber}`,
-        description: `Customer scanned QR and requested dining session access.`,
-      });
-    };
-
     // Auto-86 depletion or stock out
     const handleStockUpdate = (data: any) => {
       if (data.remainingQty === 0 || data.isAvailable === false) {
@@ -141,7 +132,6 @@ export default function AdminLayout() {
 
     socket.on("order:new", handleNewOrder);
     socket.on("service:alert", handleServiceAlert);
-    socket.on("cashier:access_request", handleAccessRequestAlert);
     socket.on("inventory:stock_update", handleStockUpdate);
     socket.on("order:status_update", handleKitchenUpdate);
 
@@ -150,7 +140,6 @@ export default function AdminLayout() {
       socket.off("disconnect", onDisconnect);
       socket.off("order:new", handleNewOrder);
       socket.off("service:alert", handleServiceAlert);
-      socket.off("cashier:access_request", handleAccessRequestAlert);
       socket.off("inventory:stock_update", handleStockUpdate);
       socket.off("order:status_update", handleKitchenUpdate);
     };
