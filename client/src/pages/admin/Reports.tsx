@@ -964,29 +964,29 @@ export default function Reports() {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
-            <span className="text-[10px] text-neutral-400 font-sans block">Gross Food Sales (Pre-Tax)</span>
-            <span className="text-base font-bold text-white block font-mono">₹{grossFoodSales.toFixed(2)}</span>
-            <span className="text-[9px] text-neutral-500 font-sans block">Tax-exclusive food volume</span>
+        <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08] text-xs">
+          <div className="py-2 lg:px-5 space-y-1">
+            <span className="text-[11px] text-neutral-400 font-sans block">Gross Food Sales (Pre-Tax)</span>
+            <span className="text-xl font-black text-white block font-mono">₹{grossFoodSales.toFixed(2)}</span>
+            <span className="text-[10px] text-neutral-500 font-sans block">Tax-exclusive food volume</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
-            <span className="text-[10px] text-neutral-400 font-sans block">CGST (2.5%)</span>
-            <span className="text-base font-bold text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
-            <span className="text-[9px] text-neutral-500 font-sans block">Central Govt remittance</span>
+          <div className="py-2 lg:px-5 space-y-1">
+            <span className="text-[11px] text-neutral-400 font-sans block">CGST (2.5%)</span>
+            <span className="text-xl font-black text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-[10px] text-neutral-500 font-sans block">Central Govt remittance</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
-            <span className="text-[10px] text-neutral-400 font-sans block">SGST (2.5%)</span>
-            <span className="text-base font-bold text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
-            <span className="text-[9px] text-neutral-500 font-sans block">State Govt remittance</span>
+          <div className="py-2 lg:px-5 space-y-1">
+            <span className="text-[11px] text-neutral-400 font-sans block">SGST (2.5%)</span>
+            <span className="text-xl font-black text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-[10px] text-neutral-500 font-sans block">State Govt remittance</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-0.5">
-            <span className="text-[10px] text-neutral-400 font-sans block">Total GST Remittance</span>
-            <span className="text-base font-bold text-white block font-mono">₹{taxCollected.toFixed(2)}</span>
-            <span className="text-[9px] text-emerald-400 font-sans block">Physical Cash: ₹{cashTotal.toFixed(2)}</span>
+          <div className="py-2 lg:px-5 space-y-1">
+            <span className="text-[11px] text-neutral-400 font-sans block">Total GST Remittance</span>
+            <span className="text-xl font-black text-white block font-mono">₹{taxCollected.toFixed(2)}</span>
+            <span className="text-[10px] text-emerald-400 font-sans block font-semibold">Physical Cash: ₹{cashTotal.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -1006,9 +1006,6 @@ export default function Reports() {
                   Live Feed
                 </span>
               </div>
-              <p className="text-xs text-neutral-400 mt-0.5">
-                Complete audit trail of settled invoices eligible for thermal print preview, tax verification, and guest feedback.
-              </p>
             </div>
 
             <span className="text-xs font-mono text-neutral-400 self-start sm:self-auto bg-white/[0.04] px-3 py-1 rounded-full border border-white/5">
