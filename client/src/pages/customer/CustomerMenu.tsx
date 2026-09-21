@@ -702,38 +702,27 @@ export default function CustomerMenu() {
           </div>
 
           {/* Action Icons (Only visible when access granted) */}
-          <div className="flex items-center gap-2">
-            <a
-              href={`/waiter?table=${tableIdentifier}`}
-              className="text-[10px] font-bold text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2.5 py-1.5 rounded-full flex items-center gap-1 transition"
-              title="Switch to Waiter Portal"
-            >
-              <UtensilsCrossed className="h-3 w-3" />
-              <span>Waiter View</span>
-            </a>
+          {isAccessGranted && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
+                title="Search menu"
+              >
+                <Search className="h-4 w-4" />
+              </button>
 
-            {isAccessGranted && (
-              <>
+              {!isTakeawayParam && (
                 <button
-                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                  onClick={() => handleServiceRequest("CALL_WAITER")}
                   className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
-                  title="Search menu"
+                  title="Call waiter"
                 >
-                  <Search className="h-4 w-4" />
+                  <Bell className="h-4 w-4 text-[#FF4D4D]" />
                 </button>
-
-                {!isTakeawayParam && (
-                  <button
-                    onClick={() => handleServiceRequest("CALL_WAITER")}
-                    className="h-9 w-9 rounded-full bg-[#212121] hover:bg-[#303030] text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
-                    title="Call waiter"
-                  >
-                    <Bell className="h-4 w-4 text-[#FF4D4D]" />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Collapsible Search Bar */}

@@ -11,7 +11,6 @@ import {
   ShoppingBag,
   FileText,
   TrendingUp,
-  UserCheck,
 } from "lucide-react";
 import { BrandLogo, BrandCrest } from "@/components/BrandLogo";
 import {
@@ -44,12 +43,6 @@ const adminNavSections = [
         url: "/admin/tables",
         icon: QrCode,
         badge: null,
-      },
-      {
-        title: "Waiter Portal",
-        url: "/waiter",
-        icon: UserCheck,
-        badge: "Floor",
       },
     ],
   },

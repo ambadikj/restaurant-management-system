@@ -188,6 +188,20 @@ export default function TablesQR() {
     }
   };
 
+  const handleShowWaiterQR = async () => {
+    try {
+      const res = await axiosInstance.get("/tables/waiter/qr");
+      setSelectedQR({
+        title: "Waiter Portal QR Standee",
+        url: res.data.url,
+        imgUrl: res.data.qrCode,
+        tableNumber: "WAITER",
+      });
+    } catch (err) {
+      alert("Error generating waiter QR code");
+    }
+  };
+
   const handlePrintQR = () => {
     if (!selectedQR) return;
     const printWindow = window.open("", "_blank");
@@ -368,6 +382,15 @@ export default function TablesQR() {
             >
               <ShoppingBag className="h-4 w-4 text-[#FA2D48]" />
               <span>Takeaway QR</span>
+            </button>
+
+            <button
+              onClick={handleShowWaiterQR}
+              className="flex items-center gap-2 rounded-full px-4.5 py-2.5 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95"
+              title="Generate Waiter Portal Standee"
+            >
+              <UtensilsCrossed className="h-4 w-4 text-amber-400" />
+              <span>Waiter QR</span>
             </button>
 
             <button
@@ -677,17 +700,6 @@ export default function TablesQR() {
                       <Printer className="h-3.5 w-3.5 text-neutral-400" />
                       <span>Standee QR</span>
                     </button>
-
-                    <a
-                      href={`/waiter?table=${table.tableNumber}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="h-8 px-2.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 text-xs font-semibold flex items-center justify-center gap-1 border border-amber-500/20 transition-all cursor-pointer"
-                      title="Open Waiter Terminal for this table"
-                    >
-                      <UtensilsCrossed className="h-3 w-3" />
-                      <span>Waiter</span>
-                    </a>
 
                     <a
                       href={liveMenuUrl}
