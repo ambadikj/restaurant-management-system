@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   X,
   ExternalLink,
+  UtensilsCrossed,
 } from "lucide-react";
 
 interface RestaurantTable {
@@ -676,6 +677,17 @@ export default function TablesQR() {
                       <Printer className="h-3.5 w-3.5 text-neutral-400" />
                       <span>Standee QR</span>
                     </button>
+
+                    <a
+                      href={`/waiter?table=${table.tableNumber}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="h-8 px-2.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 text-xs font-semibold flex items-center justify-center gap-1 border border-amber-500/20 transition-all cursor-pointer"
+                      title="Open Waiter Terminal for this table"
+                    >
+                      <UtensilsCrossed className="h-3 w-3" />
+                      <span>Waiter</span>
+                    </a>
 
                     <a
                       href={liveMenuUrl}

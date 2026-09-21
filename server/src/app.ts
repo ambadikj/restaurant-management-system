@@ -9,6 +9,7 @@ import tableRoutes from "./routes/table.routes";
 import customerRoutes from "./routes/customer.routes";
 import kitchenRoutes from "./routes/kitchen.routes";
 import cashierRoutes from "./routes/cashier.routes";
+import waiterRoutes from "./routes/waiter.routes";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/tables", tableRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/kitchen", kitchenRoutes);
 app.use("/api/cashier", cashierRoutes);
+app.use("/api/waiter", waiterRoutes);
 
 app.get("/", (req, res) => {
   res.json({

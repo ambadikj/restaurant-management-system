@@ -12,6 +12,7 @@ import TablesQR from "./pages/admin/TablesQR";
 import Reports from "./pages/admin/Reports";
 import KitchenDashboard from "./pages/kitchen/KitchenDashboard";
 import CashierDashboard from "./pages/cashier/CashierDashboard";
+import WaiterDashboard from "./pages/waiter/WaiterDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +28,9 @@ function App() {
           {/* Public Customer Contactless Menu & Ordering (QR Landing) */}
           <Route path="/menu" element={<CustomerMenu />} />
           <Route path="/customer" element={<Navigate to="/menu" replace />} />
+
+          {/* Public Waiter Portal & Floor Dispatcher (QR / Direct Access) */}
+          <Route path="/waiter" element={<WaiterDashboard />} />
 
           {/* Protected Cashier POS Module */}
           <Route
