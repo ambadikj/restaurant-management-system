@@ -222,8 +222,8 @@ export default function Employees() {
       {/* Header Bar */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
         {/* Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-600/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-slate-400/5 blur-3xl" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
@@ -233,7 +233,7 @@ export default function Employees() {
           {/* Add Member Button */}
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all active:scale-95 hover:scale-[1.02] self-start md:self-auto cursor-pointer"
+            className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-indigo-500 hover:bg-indigo-400 text-white shadow-md shadow-indigo-950/30 transition-all active:scale-95 hover:scale-[1.02] self-start md:self-auto cursor-pointer"
           >
             <UserPlus className="h-4 w-4" />
             <span>Add Member</span>
@@ -262,7 +262,7 @@ export default function Employees() {
                 onClick={() => setSelectedRoleFilter(r)}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   isSelected
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -348,7 +348,7 @@ export default function Employees() {
                       <td className="py-4 pl-6 pr-4">
                         <div className="flex items-center gap-3.5">
                           {/* Avatar Medallion */}
-                          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-indigo-600/25 shrink-0">
+                          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-400 text-white font-bold text-xs flex items-center justify-center shadow-sm shadow-indigo-950/20 shrink-0">
                             {user.fullName
                               .split(" ")
                               .map((n) => n[0])
@@ -556,7 +556,7 @@ export default function Employees() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/30 hover:opacity-95 transition-all"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md shadow-indigo-950/30 hover:opacity-95 transition-all"
                 >
                   Create Member
                 </button>
@@ -653,7 +653,7 @@ export default function Employees() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/30 hover:opacity-95 transition-all"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md shadow-indigo-950/30 hover:opacity-95 transition-all"
                 >
                   Save Changes
                 </button>

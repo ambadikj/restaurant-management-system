@@ -173,7 +173,7 @@ const ShiftAnalyticsCharts = ({
       <div className="lg:col-span-6 p-6 rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
         <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/25 to-indigo-600/15 text-purple-400 border border-purple-500/30 shadow-lg shadow-purple-500/10">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/15 to-indigo-500/10 text-purple-300 border border-purple-500/20 shadow-sm">
               <PieChartIcon className="h-4 w-4" />
             </div>
             <div>
@@ -360,13 +360,13 @@ const ShiftAnalyticsCharts = ({
       {/* 6 cols: Hourly Revenue Curve / Bar Chart */}
       <div className="lg:col-span-6 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between">
         {/* Subtle Ambient Glow */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-indigo-600/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-indigo-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-slate-400/5 blur-3xl" />
 
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500/25 to-violet-600/15 text-indigo-400 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-indigo-400/10 text-indigo-300 border border-indigo-400/20 shadow-sm shadow-indigo-950/20">
                 <TrendingUp className="h-4 w-4 stroke-[2.5]" />
               </div>
               <div>
@@ -394,7 +394,7 @@ const ShiftAnalyticsCharts = ({
                   <span className="text-xs font-['Outfit'] font-extrabold text-white">
                     {peakHour.time}
                   </span>
-                  <span className="px-2 py-0.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 font-['Outfit'] text-xs font-black text-indigo-400 tracking-tight">
+                  <span className="px-2 py-0.5 rounded-lg bg-indigo-500/10 border border-indigo-400/25 font-['Outfit'] text-xs font-bold text-indigo-300 tracking-tight">
                     ₹{Number(peakHour.revenue).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -433,12 +433,12 @@ const ShiftAnalyticsCharts = ({
                 >
                   <defs>
                     <linearGradient id="reportsBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#6366F1" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="#6366F1" stopOpacity={0.25} />
+                      <stop offset="0%" stopColor="#818CF8" stopOpacity={0.85} />
+                      <stop offset="100%" stopColor="#A5B4FC" stopOpacity={0.2} />
                     </linearGradient>
                     <linearGradient id="reportsPeakBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#818CF8" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#6366F1" stopOpacity={0.65} />
+                      <stop offset="0%" stopColor="#A5B4FC" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#818CF8" stopOpacity={0.6} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -873,8 +873,8 @@ export default function Reports() {
       {/* Header Bar - Apple Music Editorial Hero (Standard across Admin Pages) */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
         {/* Modern Stripe / Linear Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-600/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-slate-400/5 blur-3xl" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -934,7 +934,7 @@ export default function Reports() {
               type="button"
               onClick={handleExportCSV}
               disabled={isExporting || history.length === 0}
-              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all active:scale-95 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-indigo-500 hover:bg-indigo-400 text-white shadow-md shadow-indigo-950/30 transition-all active:scale-95 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
               {isExporting ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
@@ -1078,7 +1078,7 @@ export default function Reports() {
                 onClick={() => setTypeFilter("all")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "all"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold"
+                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -1093,7 +1093,7 @@ export default function Reports() {
                 onClick={() => setTypeFilter("table")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "table"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold"
+                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -1108,7 +1108,7 @@ export default function Reports() {
                 onClick={() => setTypeFilter("takeaway")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "takeaway"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold"
+                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >

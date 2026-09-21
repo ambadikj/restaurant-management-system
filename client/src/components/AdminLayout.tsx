@@ -151,11 +151,11 @@ export default function AdminLayout() {
 
   return (
     <SidebarProvider className="dark">
-      <div className="relative flex min-h-screen w-full bg-[#0d0e15] text-neutral-100 font-sans antialiased selection:bg-indigo-600 selection:text-white overflow-hidden">
+      <div className="relative flex min-h-screen w-full bg-[#0d0e15] text-neutral-100 font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-200 overflow-hidden">
         {/* Modern Stripe / Linear Fintech Ambient Mesh Glow */}
-        <div className="pointer-events-none fixed -top-40 -left-40 h-96 w-96 rounded-full bg-indigo-600/15 blur-3xl" />
-        <div className="pointer-events-none fixed top-1/4 -right-40 h-[28rem] w-[28rem] rounded-full bg-violet-600/12 blur-3xl" />
-        <div className="pointer-events-none fixed -bottom-40 left-1/3 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="pointer-events-none fixed -top-40 -left-40 h-96 w-96 rounded-full bg-indigo-400/8 blur-3xl" />
+        <div className="pointer-events-none fixed top-1/4 -right-40 h-[28rem] w-[28rem] rounded-full bg-slate-400/6 blur-3xl" />
+        <div className="pointer-events-none fixed -bottom-40 left-1/3 h-80 w-80 rounded-full bg-indigo-300/5 blur-3xl" />
 
         {/* Apple Music Frosted Sidebar */}
         <AppSidebar />
@@ -172,7 +172,7 @@ export default function AdminLayout() {
                 <div
                   className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white shadow-md ${
                     alert.type === "order"
-                      ? "bg-gradient-to-tr from-indigo-600 to-violet-600 shadow-indigo-600/30"
+                      ? "bg-gradient-to-tr from-indigo-500 to-indigo-400 shadow-indigo-950/40"
                       : alert.type === "service"
                       ? "bg-gradient-to-tr from-amber-500 to-orange-500 shadow-amber-500/30"
                       : alert.type === "kitchen"

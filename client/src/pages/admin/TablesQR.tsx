@@ -225,7 +225,7 @@ export default function TablesQR() {
                 color: #ffffff;
               }
               .standee {
-                border: 2px solid #6366F1;
+                border: 2px solid #818CF8;
                 border-radius: 24px;
                 padding: 40px 32px;
                 max-width: 360px;
@@ -236,7 +236,7 @@ export default function TablesQR() {
               .brand {
                 font-size: 24px;
                 font-weight: 800;
-                color: #6366F1;
+                color: #818CF8;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
               }
@@ -267,7 +267,7 @@ export default function TablesQR() {
               .seats {
                 font-size: 13px;
                 font-weight: 600;
-                color: #818CF8;
+                color: #A5B4FC;
                 margin-bottom: 12px;
               }
               .instructions {
@@ -365,8 +365,8 @@ export default function TablesQR() {
       {/* Header Bar - Modern Stripe / Linear Editorial Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
         {/* Modern Stripe / Linear Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-600/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-slate-400/5 blur-3xl" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
@@ -403,7 +403,7 @@ export default function TablesQR() {
 
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all active:scale-95 hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-indigo-500 hover:bg-indigo-400 text-white shadow-md shadow-indigo-950/30 transition-all active:scale-95 hover:scale-[1.02]"
             >
               <PlusCircle className="h-4 w-4" />
               <span>Add Table</span>
@@ -420,7 +420,7 @@ export default function TablesQR() {
           onClick={() => setStatusFilter("ALL")}
           className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
             statusFilter === "ALL"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+              ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
               : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
           }`}
         >
@@ -616,7 +616,7 @@ export default function TablesQR() {
 
                   {/* Solid Hover Backdrop so no text bleeds through */}
                   <div className="absolute inset-0 bg-[#161619]/95 backdrop-blur-sm opacity-0 group-hover/qr:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2 z-20">
-                    <div className="h-9 w-9 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/40">
+                    <div className="h-9 w-9 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-md shadow-indigo-950/30">
                       <Printer className="h-4.5 w-4.5" />
                     </div>
                     <span className="text-xs font-bold text-white tracking-wide">
@@ -769,7 +769,7 @@ export default function TablesQR() {
                       onClick={() => setCapacity(seats.toString())}
                       className={`py-2 text-xs font-bold rounded-xl border transition-all ${
                         capacity === seats.toString()
-                          ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/30"
+                          ? "bg-indigo-500/90 text-white border-indigo-400/40 shadow-sm shadow-indigo-950/20"
                           : "bg-white/[0.05] text-neutral-300 border-white/[0.08] hover:bg-white/[0.1] hover:text-white"
                       }`}
                     >
@@ -800,7 +800,7 @@ export default function TablesQR() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/30 hover:opacity-95 transition-all"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md shadow-indigo-950/30 hover:opacity-95 transition-all"
                 >
                   Create Table {nextTableNumber}
                 </button>
@@ -862,7 +862,7 @@ export default function TablesQR() {
               </button>
               <button
                 onClick={handlePrintQR}
-                className="flex-1 h-9 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-1.5 hover:opacity-95 transition-all"
+                className="flex-1 h-9 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-400 text-xs font-semibold text-white shadow-md shadow-indigo-950/30 flex items-center justify-center gap-1.5 hover:opacity-95 transition-all"
               >
                 <Printer className="h-4 w-4" />
                 <span>Print Standee</span>
