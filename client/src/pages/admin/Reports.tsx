@@ -173,7 +173,7 @@ const ShiftAnalyticsCharts = ({
       <div className="lg:col-span-6 p-6 rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
         <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/15 to-indigo-500/10 text-purple-300 border border-purple-500/20 shadow-sm">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/15 to-violet-500/10 text-purple-300 border border-purple-500/20 shadow-sm">
               <PieChartIcon className="h-4 w-4" />
             </div>
             <div>
@@ -360,13 +360,13 @@ const ShiftAnalyticsCharts = ({
       {/* 6 cols: Hourly Revenue Curve / Bar Chart */}
       <div className="lg:col-span-6 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between">
         {/* Subtle Ambient Glow */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-indigo-400/8 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-slate-400/5 blur-3xl" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-purple-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-400/5 blur-3xl" />
 
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-indigo-400/10 text-indigo-300 border border-indigo-400/20 shadow-sm shadow-indigo-950/20">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-violet-500/15 to-purple-400/10 text-violet-300 border border-violet-400/20 shadow-sm shadow-purple-950/20">
                 <TrendingUp className="h-4 w-4 stroke-[2.5]" />
               </div>
               <div>
@@ -394,13 +394,13 @@ const ShiftAnalyticsCharts = ({
                   <span className="text-xs font-['Outfit'] font-extrabold text-white">
                     {peakHour.time}
                   </span>
-                  <span className="px-2 py-0.5 rounded-lg bg-indigo-500/10 border border-indigo-400/25 font-['Outfit'] text-xs font-bold text-indigo-300 tracking-tight">
+                  <span className="px-2 py-0.5 rounded-lg bg-purple-500/10 border border-purple-400/25 font-['Outfit'] text-xs font-bold text-purple-300 tracking-tight">
                     ₹{Number(peakHour.revenue).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono backdrop-blur-xl">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
                   <span>Live Auditing</span>
                 </div>
               )}
@@ -410,7 +410,7 @@ const ShiftAnalyticsCharts = ({
           {hourlyRevenueData.length === 0 || hourlyRevenueData.every((d) => d.revenue === 0) ? (
             <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-3">
               <div className="relative">
-                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-lg shadow-indigo-500/10">
+                <div className="h-12 w-12 rounded-2xl bg-purple-500/10 border border-purple-400/20 flex items-center justify-center text-purple-300 shadow-sm">
                   <TrendingUp className="h-6 w-6 stroke-[1.8]" />
                 </div>
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 animate-ping" />
@@ -433,12 +433,12 @@ const ShiftAnalyticsCharts = ({
                 >
                   <defs>
                     <linearGradient id="reportsBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#818CF8" stopOpacity={0.85} />
-                      <stop offset="100%" stopColor="#A5B4FC" stopOpacity={0.2} />
+                      <stop offset="0%" stopColor="#A78BFA" stopOpacity={0.85} />
+                      <stop offset="100%" stopColor="#C4B5FD" stopOpacity={0.2} />
                     </linearGradient>
                     <linearGradient id="reportsPeakBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#A5B4FC" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="#818CF8" stopOpacity={0.6} />
+                      <stop offset="0%" stopColor="#C4B5FD" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#A78BFA" stopOpacity={0.6} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -872,9 +872,9 @@ export default function Reports() {
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       {/* Header Bar - Apple Music Editorial Hero (Standard across Admin Pages) */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
-        {/* Modern Stripe / Linear Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-400/8 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-slate-400/5 blur-3xl" />
+        {/* Soft Lavender & Violet Slate Ambient Bloom Halos */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-purple-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -934,7 +934,7 @@ export default function Reports() {
               type="button"
               onClick={handleExportCSV}
               disabled={isExporting || history.length === 0}
-              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-indigo-500 hover:bg-indigo-400 text-white shadow-md shadow-indigo-950/30 transition-all active:scale-95 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-violet-500 hover:bg-violet-400 text-white shadow-md shadow-purple-950/30 transition-all active:scale-95 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
               {isExporting ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
@@ -951,7 +951,7 @@ export default function Reports() {
       <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-indigo-400" />
+            <TrendingUp className="h-4 w-4 text-purple-300" />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
               Executive Shift Turnover & Performance Metrics
             </span>
@@ -1010,7 +1010,7 @@ export default function Reports() {
       <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
           <div className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-indigo-400" />
+            <Receipt className="h-4 w-4 text-purple-300" />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
               TAX RECONCILIATION & REGISTER AUDIT (5% DINING GST)
             </span>
@@ -1029,13 +1029,13 @@ export default function Reports() {
 
           <div className="py-2 lg:py-0 lg:px-5 space-y-1">
             <span className="text-[11px] text-neutral-400 font-sans block">CGST (2.5%)</span>
-            <span className="text-2xl font-black text-indigo-400 block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-2xl font-black text-purple-300 block font-mono">₹{halfTax.toFixed(2)}</span>
             <span className="text-[10px] text-neutral-500 font-sans block">Central Govt remittance</span>
           </div>
 
           <div className="py-2 lg:py-0 lg:px-5 space-y-1">
             <span className="text-[11px] text-neutral-400 font-sans block">SGST (2.5%)</span>
-            <span className="text-2xl font-black text-indigo-400 block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-2xl font-black text-purple-300 block font-mono">₹{halfTax.toFixed(2)}</span>
             <span className="text-[10px] text-neutral-500 font-sans block">State Govt remittance</span>
           </div>
 
@@ -1078,7 +1078,7 @@ export default function Reports() {
                 onClick={() => setTypeFilter("all")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "all"
-                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20 font-bold"
+                    ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -1093,7 +1093,7 @@ export default function Reports() {
                 onClick={() => setTypeFilter("table")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "table"
-                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20 font-bold"
+                    ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -1108,7 +1108,7 @@ export default function Reports() {
                 onClick={() => setTypeFilter("takeaway")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "takeaway"
-                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20 font-bold"
+                    ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -1128,7 +1128,7 @@ export default function Reports() {
                 placeholder="Search invoice, table, payment, or dish..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 transition-all focus:outline-none"
+                className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 transition-all focus:outline-none"
               />
               {searchQuery && (
                 <button
@@ -1181,7 +1181,7 @@ export default function Reports() {
                       {/* Table / Type */}
                       <td className="px-3 py-4 text-neutral-300">
                         {s.tableNumber === "Takeaway" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-indigo-500/15 px-2 py-0.5 border border-indigo-500/25 text-indigo-400 text-[11px] font-sans font-bold">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-purple-500/15 px-2 py-0.5 border border-purple-400/25 text-purple-300 text-[11px] font-sans font-bold">
                             <ShoppingBag className="h-3 w-3" />
                             <span>Takeaway</span>
                           </span>

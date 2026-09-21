@@ -213,17 +213,17 @@ export default function Employees() {
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       {/* Toast Notification */}
       {successMsg && (
-        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-indigo-500/10 animate-in fade-in slide-in-from-top-3">
-          <CheckCircle2 className="h-4 w-4 text-indigo-400" />
+        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-purple-950/20 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="h-4 w-4 text-purple-300" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {/* Header Bar */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
-        {/* Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-400/8 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-slate-400/5 blur-3xl" />
+        {/* Soft Lavender & Violet Slate Ambient Bloom Halos */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-purple-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
@@ -233,7 +233,7 @@ export default function Employees() {
           {/* Add Member Button */}
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-indigo-500 hover:bg-indigo-400 text-white shadow-md shadow-indigo-950/30 transition-all active:scale-95 hover:scale-[1.02] self-start md:self-auto cursor-pointer"
+            className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-violet-500 hover:bg-violet-400 text-white shadow-md shadow-purple-950/30 transition-all active:scale-95 hover:scale-[1.02] self-start md:self-auto cursor-pointer"
           >
             <UserPlus className="h-4 w-4" />
             <span>Add Member</span>
@@ -262,7 +262,7 @@ export default function Employees() {
                 onClick={() => setSelectedRoleFilter(r)}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   isSelected
-                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                    ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -287,7 +287,7 @@ export default function Employees() {
             placeholder="Search staff, username, email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 transition-all focus:outline-none"
+            className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 transition-all focus:outline-none"
           />
           {searchQuery && (
             <button
@@ -348,7 +348,7 @@ export default function Employees() {
                       <td className="py-4 pl-6 pr-4">
                         <div className="flex items-center gap-3.5">
                           {/* Avatar Medallion */}
-                          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-400 text-white font-bold text-xs flex items-center justify-center shadow-sm shadow-indigo-950/20 shrink-0">
+                          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-violet-500 to-purple-400 text-white font-bold text-xs flex items-center justify-center shadow-sm shadow-purple-950/20 shrink-0">
                             {user.fullName
                               .split(" ")
                               .map((n) => n[0])
@@ -371,7 +371,7 @@ export default function Employees() {
                       <td className="px-4 py-4">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1 text-xs font-semibold text-neutral-200">
                           {roleName === "admin" && (
-                            <Shield className="h-3 w-3 text-indigo-400 shrink-0" />
+                            <Shield className="h-3 w-3 text-purple-300 shrink-0" />
                           )}
                           {roleName === "cashier" && (
                             <ReceiptText className="h-3 w-3 text-sky-400 shrink-0" />
@@ -480,7 +480,7 @@ export default function Employees() {
                   placeholder="e.g. Aaliya Khalid"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -495,7 +495,7 @@ export default function Employees() {
                     placeholder="aaliya_k"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -507,7 +507,7 @@ export default function Employees() {
                     value={roleId}
                     onChange={(e) => setRoleId(e.target.value)}
                     required
-                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   >
                     {roles.map((r) => (
                       <option key={r.id} value={r.id}>
@@ -528,7 +528,7 @@ export default function Employees() {
                   placeholder="aaliya@restaurant.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -542,7 +542,7 @@ export default function Employees() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -556,7 +556,7 @@ export default function Employees() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md shadow-indigo-950/30 hover:opacity-95 transition-all"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-violet-500 to-purple-400 text-white shadow-md shadow-purple-950/30 hover:opacity-95 transition-all"
                 >
                   Create Member
                 </button>
@@ -595,7 +595,7 @@ export default function Employees() {
                   required
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -607,7 +607,7 @@ export default function Employees() {
                   value={editRoleId}
                   onChange={(e) => setEditRoleId(e.target.value)}
                   required
-                  className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 >
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -626,7 +626,7 @@ export default function Employees() {
                   required
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -639,7 +639,7 @@ export default function Employees() {
                   placeholder="Leave blank to keep unchanged"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -653,7 +653,7 @@ export default function Employees() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md shadow-indigo-950/30 hover:opacity-95 transition-all"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-violet-500 to-purple-400 text-white shadow-md shadow-purple-950/30 hover:opacity-95 transition-all"
                 >
                   Save Changes
                 </button>

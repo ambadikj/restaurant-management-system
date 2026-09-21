@@ -20,8 +20,8 @@ export function BrandLogo({ className = "h-5 w-5", size = 20 }: BrandLogoProps) 
     >
       <defs>
         <linearGradient id="brand-grad" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#818CF8" />
-          <stop offset="1" stopColor="#A5B4FC" />
+          <stop stopColor="#A78BFA" />
+          <stop offset="1" stopColor="#C4B5FD" />
         </linearGradient>
       </defs>
 
@@ -42,7 +42,7 @@ export function BrandLogo({ className = "h-5 w-5", size = 20 }: BrandLogoProps) 
       />
 
       {/* Top Precision Sync Node */}
-      <circle cx="12" cy="3.5" r="1.5" fill="#818CF8" />
+      <circle cx="12" cy="3.5" r="1.5" fill="#A78BFA" />
 
       {/* Center Subtle Dynamic Sync Pulse Dot */}
       <circle cx="12" cy="11.5" r="1.25" fill="#FFFFFF" opacity="0.9" />

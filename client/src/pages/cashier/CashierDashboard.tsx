@@ -283,7 +283,7 @@ const ShiftAnalyticsCharts = ({
       <div className="lg:col-span-6 p-6 rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl flex flex-col justify-between">
         <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/15 to-indigo-500/10 text-purple-300 border border-purple-500/20 shadow-sm shadow-purple-950/20">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500/15 to-violet-500/10 text-purple-300 border border-purple-500/20 shadow-sm shadow-purple-950/20">
               <PieChartIcon className="h-4 w-4" />
             </div>
             <div>
@@ -470,13 +470,13 @@ const ShiftAnalyticsCharts = ({
       {/* 6 cols: Hourly Revenue Curve / Area Chart (Redesigned) */}
       <div className="lg:col-span-6 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between">
         {/* Subtle Ambient Glow */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-indigo-400/8 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-slate-400/5 blur-3xl" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-purple-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-400/5 blur-3xl" />
 
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-indigo-400/10 text-indigo-300 border border-indigo-400/20 shadow-sm shadow-indigo-950/20">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-violet-500/15 to-purple-400/10 text-violet-300 border border-violet-400/20 shadow-sm shadow-purple-950/20">
                 <TrendingUp className="h-4 w-4 stroke-[2.5]" />
               </div>
               <div>
@@ -507,13 +507,13 @@ const ShiftAnalyticsCharts = ({
                     {peakHour.time}
                   </span>
 
-                  <span className="px-2 py-0.5 rounded-lg bg-indigo-500/10 border border-indigo-400/25 font-['Outfit'] text-xs font-bold text-indigo-300 tracking-tight">
+                  <span className="px-2 py-0.5 rounded-lg bg-purple-500/10 border border-purple-400/25 font-['Outfit'] text-xs font-bold text-purple-300 tracking-tight">
                     ₹{Number(peakHour.revenue).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono backdrop-blur-xl">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
                   <span>Live Audit</span>
                 </div>
               )}
@@ -523,7 +523,7 @@ const ShiftAnalyticsCharts = ({
           {hourlyRevenueData.length === 0 || hourlyRevenueData.every((d) => d.revenue === 0) ? (
             <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-3">
               <div className="relative">
-                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-400/20 flex items-center justify-center text-indigo-300 shadow-sm shadow-indigo-950/20">
+                <div className="h-12 w-12 rounded-2xl bg-purple-500/10 border border-purple-400/20 flex items-center justify-center text-purple-300 shadow-sm shadow-purple-950/20">
                   <TrendingUp className="h-6 w-6 stroke-[1.8]" />
                 </div>
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 animate-ping" />
@@ -546,12 +546,12 @@ const ShiftAnalyticsCharts = ({
                 >
                   <defs>
                     <linearGradient id="cashierBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#818CF8" stopOpacity={0.85} />
-                      <stop offset="100%" stopColor="#A5B4FC" stopOpacity={0.2} />
+                      <stop offset="0%" stopColor="#A78BFA" stopOpacity={0.85} />
+                      <stop offset="100%" stopColor="#C4B5FD" stopOpacity={0.2} />
                     </linearGradient>
                     <linearGradient id="cashierPeakBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#A5B4FC" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="#818CF8" stopOpacity={0.6} />
+                      <stop offset="0%" stopColor="#C4B5FD" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#A78BFA" stopOpacity={0.6} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -1851,10 +1851,10 @@ export default function CashierDashboard() {
       <div className="relative rounded-[24px] bg-[#0c0c14]/95 border border-white/[0.09] shadow-2xl backdrop-blur-2xl overflow-visible z-20">
         {/* Extremity Ambient Glows */}
         <div className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none">
-          {/* Left soft indigo glow */}
-          <div className="absolute top-0 left-0 w-80 h-full bg-gradient-to-r from-indigo-400/10 via-indigo-400/3 to-transparent blur-2xl" />
-          {/* Right slate/indigo glow */}
-          <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-slate-400/8 via-indigo-400/4 to-transparent blur-2xl" />
+          {/* Left soft lavender glow */}
+          <div className="absolute top-0 left-0 w-80 h-full bg-gradient-to-r from-purple-400/10 via-purple-400/3 to-transparent blur-2xl" />
+          {/* Right violet slate glow */}
+          <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-violet-400/8 via-purple-400/4 to-transparent blur-2xl" />
         </div>
 
         {/* The Row: Left Title & Right Action Zone */}
@@ -1890,7 +1890,7 @@ export default function CashierDashboard() {
                         : pendingRequests[0].tableNumber}
                     </span>
                     {pendingRequests.length > 1 && (
-                      <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/35 text-indigo-400 font-bold text-[10px] font-mono group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                      <span className="px-1.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/35 text-purple-300 font-bold text-[10px] font-mono group-hover:bg-purple-500 group-hover:text-white transition-all">
                         +{pendingRequests.length - 1}
                       </span>
                     )}
@@ -1915,11 +1915,11 @@ export default function CashierDashboard() {
                   Decline
                 </button>
 
-                {/* Primary Action: High-emphasis Soft Periwinkle pill */}
+                {/* Primary Action: High-emphasis Soft Lavender pill */}
                 <button
                   type="button"
                   onClick={() => handleApproveAccess(pendingRequests[0].tableNumber)}
-                  className="px-4 py-2 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold transition-all shadow-md shadow-indigo-950/30 active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                  className="px-4 py-2 rounded-full bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold transition-all shadow-md shadow-purple-950/30 active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <CheckCircle2 className="h-4 w-4 stroke-[2.5]" />
                   <span>Approve</span>
@@ -1947,8 +1947,8 @@ export default function CashierDashboard() {
                     <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
                       <div className="flex items-center gap-2">
                         <span className="relative flex h-2.5 w-2.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500" />
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-400" />
                         </span>
                         <span className="font-['Outfit'] font-extrabold text-sm text-white tracking-wide">
                           QR Scan Requests
@@ -1967,7 +1967,7 @@ export default function CashierDashboard() {
                                 await handleApproveAccess(req.tableNumber);
                               }
                             }}
-                            className="px-2.5 py-1 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white text-[11px] font-black transition-all shadow-sm shadow-indigo-950/20 active:scale-95 cursor-pointer flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-full bg-violet-500 hover:bg-violet-400 text-white text-[11px] font-black transition-all shadow-sm shadow-purple-950/20 active:scale-95 cursor-pointer flex items-center gap-1"
                             title="Approve all waiting requests"
                           >
                             <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
@@ -2014,7 +2014,7 @@ export default function CashierDashboard() {
                             <button
                               type="button"
                               onClick={() => handleApproveAccess(req.tableNumber)}
-                              className="px-3.5 py-1.5 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold transition-all shadow-sm shadow-indigo-950/20 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                              className="px-3.5 py-1.5 rounded-full bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold transition-all shadow-sm shadow-purple-950/20 active:scale-95 flex items-center gap-1.5 cursor-pointer"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
                               <span>Approve</span>
@@ -2038,7 +2038,7 @@ export default function CashierDashboard() {
                   onClick={() => setTakeawaySubTab("register")}
                   className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     takeawaySubTab === "register"
-                      ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                      ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                       : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
                   }`}
                 >
@@ -2053,7 +2053,7 @@ export default function CashierDashboard() {
                   }}
                   className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
                     takeawaySubTab === "queue"
-                      ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                      ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                       : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
                   }`}
                 >
@@ -2082,7 +2082,7 @@ export default function CashierDashboard() {
                 onClick={() => setFloorFilter("ALL")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   floorFilter === "ALL"
-                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                    ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -2157,7 +2157,7 @@ export default function CashierDashboard() {
                 value={tableSearch}
                 onChange={(e) => setTableSearch(e.target.value)}
                 placeholder="Search table #..."
-                className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-indigo-500 backdrop-blur-xl"
+                className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-purple-400 backdrop-blur-xl"
               />
             </div>
           </div>
@@ -2420,7 +2420,7 @@ export default function CashierDashboard() {
                             title="Settle & Checkout Bill"
                             className={`py-2.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md cursor-pointer ${
                               isBilling
-                                ? "bg-gradient-to-r from-indigo-500 to-indigo-400 hover:opacity-95 text-white shadow-md shadow-indigo-950/30"
+                                ? "bg-gradient-to-r from-violet-500 to-purple-400 hover:opacity-95 text-white shadow-md shadow-purple-950/30"
                                 : "bg-white text-black hover:bg-neutral-200"
                             }`}
                           >
@@ -2590,7 +2590,7 @@ export default function CashierDashboard() {
                       value={takeawaySearch}
                       onChange={(e) => setTakeawaySearch(e.target.value)}
                       placeholder="Search dishes for takeaway by name..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-indigo-500 backdrop-blur-xl"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-purple-400 backdrop-blur-xl"
                     />
                   </div>
 
@@ -2600,7 +2600,7 @@ export default function CashierDashboard() {
                       onClick={() => setTakeawayActiveCat("ALL")}
                       className={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                         takeawayActiveCat === "ALL"
-                          ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                          ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                           : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                       }`}
                     >
@@ -2612,7 +2612,7 @@ export default function CashierDashboard() {
                         onClick={() => setTakeawayActiveCat(cat.id)}
                         className={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                           takeawayActiveCat === cat.id
-                            ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                            ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                             : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                         }`}
                       >
@@ -2648,7 +2648,7 @@ export default function CashierDashboard() {
                           isSoldOut
                             ? "opacity-60 cursor-not-allowed border-white/[0.05]"
                             : cartEntry
-                            ? "cursor-pointer border-indigo-400/40 ring-1 ring-indigo-400/25 shadow-sm"
+                            ? "cursor-pointer border-purple-400/40 ring-1 ring-purple-400/25 shadow-sm"
                             : "cursor-pointer border-white/[0.08] hover:border-white/[0.25]"
                         }`}
                       >
@@ -2703,7 +2703,7 @@ export default function CashierDashboard() {
 
                           {/* In-Tray Quantity Badge */}
                           {cartEntry && (
-                            <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-500 text-white text-[11px] font-black shadow-md shadow-indigo-950/30 backdrop-blur-md animate-in zoom-in-50 duration-200">
+                            <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-violet-500 text-white text-[11px] font-black shadow-md shadow-purple-950/30 backdrop-blur-md animate-in zoom-in-50 duration-200">
                               <span>×{cartEntry.quantity}</span>
                             </div>
                           )}
@@ -2711,7 +2711,7 @@ export default function CashierDashboard() {
                           {/* Apple Music Hover Center Play/Add Button */}
                           {!isSoldOut && (
                             <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
-                              <div className="h-10 w-10 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-md shadow-indigo-950/30 transform scale-90 group-hover:scale-100 transition-transform">
+                              <div className="h-10 w-10 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md shadow-purple-950/30 transform scale-90 group-hover:scale-100 transition-transform">
                                 <Plus className="h-5 w-5" />
                               </div>
                             </div>
@@ -2720,7 +2720,7 @@ export default function CashierDashboard() {
 
                         {/* Dish Details */}
                         <div className="flex flex-col justify-between flex-1">
-                          <h4 className="font-['Outfit'] text-sm font-extrabold text-white line-clamp-1 group-hover:text-indigo-300 transition-colors">
+                          <h4 className="font-['Outfit'] text-sm font-extrabold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">
                             {dish.name}
                           </h4>
 
@@ -2766,7 +2766,7 @@ export default function CashierDashboard() {
                                   className={`h-6 w-6 rounded-lg text-white flex items-center justify-center transition-colors ${
                                     remaining !== null && cartEntry.quantity >= remaining
                                       ? "bg-neutral-700/60 opacity-50 cursor-not-allowed"
-                                      : "bg-indigo-500 hover:bg-indigo-400 cursor-pointer"
+                                      : "bg-violet-500 hover:bg-violet-400 cursor-pointer"
                                   }`}
                                 >
                                   <Plus className="h-3 w-3" />
@@ -2779,7 +2779,7 @@ export default function CashierDashboard() {
                                   e.stopPropagation();
                                   addToTakeawayCart(dish);
                                 }}
-                                className="h-7 px-3 rounded-xl bg-white/[0.08] group-hover:bg-indigo-500 group-hover:text-white text-neutral-300 text-xs font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
+                                className="h-7 px-3 rounded-xl bg-white/[0.08] group-hover:bg-violet-500 group-hover:text-white text-neutral-300 text-xs font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
                               >
                                 <Plus className="h-3 w-3" />
                                 <span>Add</span>
@@ -2798,7 +2798,7 @@ export default function CashierDashboard() {
                 <div className="space-y-3.5">
                   <div className="flex items-center justify-between pb-3 border-b border-white/10">
                     <div className="flex items-center gap-2">
-                      <ShoppingBag className="h-4 w-4 text-indigo-400" />
+                      <ShoppingBag className="h-4 w-4 text-purple-300" />
                       <h3 className="font-sans text-sm font-bold text-white uppercase tracking-wider">
                         Takeaway Tray ({takeawayCart.reduce((sum, ci) => sum + ci.quantity, 0)})
                       </h3>
@@ -2806,7 +2806,7 @@ export default function CashierDashboard() {
                     {takeawayCart.length > 0 && (
                       <button
                         onClick={() => setTakeawayCart([])}
-                        className="text-xs text-indigo-400 font-bold hover:underline cursor-pointer"
+                        className="text-xs text-purple-300 font-bold hover:underline cursor-pointer"
                       >
                         Clear Tray
                       </button>
@@ -2824,7 +2824,7 @@ export default function CashierDashboard() {
                         value={takeawayCustomerName}
                         onChange={(e) => setTakeawayCustomerName(e.target.value)}
                         placeholder="e.g. Rahul Sharma"
-                        className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-purple-400"
                       />
                     </div>
                     <div>
@@ -2836,7 +2836,7 @@ export default function CashierDashboard() {
                         value={takeawayCustomerPhone}
                         onChange={(e) => setTakeawayCustomerPhone(e.target.value)}
                         placeholder="e.g. 9876543210"
-                        className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-purple-400"
                       />
                     </div>
                   </div>
@@ -2848,7 +2848,7 @@ export default function CashierDashboard() {
                       value={takeawayNotes}
                       onChange={(e) => setTakeawayNotes(e.target.value)}
                       placeholder="Kitchen instruction (e.g. Pack gravy separately, extra tissues)..."
-                      className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-purple-400"
                     />
                   </div>
 
@@ -2907,7 +2907,7 @@ export default function CashierDashboard() {
                                   className={`h-6 w-6 rounded-lg text-white flex items-center justify-center text-xs active:scale-90 font-bold transition-colors ${
                                     isMaxReached
                                       ? "bg-neutral-700/60 opacity-50 cursor-not-allowed"
-                                      : "bg-indigo-500 hover:bg-indigo-400 shadow-sm shadow-indigo-950/20 cursor-pointer"
+                                      : "bg-violet-500 hover:bg-violet-400 shadow-sm shadow-purple-950/20 cursor-pointer"
                                   }`}
                                 >
                                   <Plus className="h-3 w-3" />
@@ -2973,7 +2973,7 @@ export default function CashierDashboard() {
                             onClick={() => setTakeawayDiscountValue(pct)}
                             className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                               takeawayDiscountValue === pct
-                                ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                                ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                                 : "bg-white/[0.04] text-neutral-400 hover:text-white border border-white/5"
                             }`}
                           >
@@ -3139,7 +3139,7 @@ export default function CashierDashboard() {
                       <div className="p-4 rounded-3xl bg-[#1c1c1f]/90 border border-white/[0.08] backdrop-blur-2xl space-y-3.5 shadow-2xl">
                         <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08]">
                           <span className="text-xs font-bold text-neutral-200 flex items-center gap-2">
-                            <span className="p-1 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            <span className="p-1 rounded-lg bg-purple-500/10 text-purple-300 border border-purple-400/20">
                               <ArrowRightLeft className="h-3.5 w-3.5" />
                             </span>
                             <span>Split Allocation</span>
@@ -3190,7 +3190,7 @@ export default function CashierDashboard() {
                                     }))
                                   }
                                   placeholder="0.00"
-                                  className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
+                                  className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-purple-400 focus:ring-1 focus:ring-purple-400/25 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 />
                               </div>
                               <button
@@ -3207,7 +3207,7 @@ export default function CashierDashboard() {
                                     };
                                   });
                                 }}
-                                className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-indigo-500 text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                                className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-violet-500 text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                               >
                                 Fill Rem.
                               </button>
@@ -3247,7 +3247,7 @@ export default function CashierDashboard() {
                       (takeawayPaymentMode === "SPLIT" && Math.abs(takeawaySplitRemaining) > 1.0)
                     }
                     onClick={handleSettleTakeaway}
-                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-indigo-400 hover:opacity-95 text-white font-sans font-bold text-xs tracking-wide transition-all active:scale-98 shadow-md shadow-indigo-950/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-400 hover:opacity-95 text-white font-sans font-bold text-xs tracking-wide transition-all active:scale-98 shadow-md shadow-purple-950/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {isSubmittingTakeaway ? (
                       <span>Punching & Printing Token...</span>
@@ -3280,7 +3280,7 @@ export default function CashierDashboard() {
                       onClick={() => setTakeawayQueueFilter(filter.id as any)}
                       className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                         takeawayQueueFilter === filter.id
-                          ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                          ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                           : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                       }`}
                     >
@@ -3297,7 +3297,7 @@ export default function CashierDashboard() {
                       value={takeawayQueueSearch}
                       onChange={(e) => setTakeawayQueueSearch(e.target.value)}
                       placeholder="Search token #, customer, phone..."
-                      className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-indigo-500 backdrop-blur-xl"
+                      className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-purple-400 backdrop-blur-xl"
                     />
                   </div>
                   <button
@@ -3308,7 +3308,7 @@ export default function CashierDashboard() {
                     className="p-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/10 transition-all cursor-pointer shrink-0 active:scale-95"
                   >
                     <RefreshCw
-                      className={`h-3.5 w-3.5 ${isLoadingTakeawayOrders ? "animate-spin text-indigo-400" : ""}`}
+                      className={`h-3.5 w-3.5 ${isLoadingTakeawayOrders ? "animate-spin text-purple-300" : ""}`}
                     />
                   </button>
                 </div>
@@ -3408,7 +3408,7 @@ export default function CashierDashboard() {
                             </div>
                             {ord.customerPhone && (
                               <span className="font-mono text-[11px] text-neutral-400 flex items-center gap-1">
-                                <Phone className="h-3 w-3 text-indigo-400" />
+                                <Phone className="h-3 w-3 text-purple-300" />
                                 {ord.customerPhone}
                               </span>
                             )}
@@ -3495,7 +3495,7 @@ export default function CashierDashboard() {
                           <div className="grid grid-cols-4 gap-1.5">
                             <button
                               onClick={() => handleOpenEditTokenModal(ord)}
-                              className="py-1.5 px-2 rounded-xl bg-white/[0.05] hover:bg-indigo-500 text-neutral-200 hover:text-white border border-white/10 hover:border-transparent flex items-center justify-center gap-1 text-[10px] font-bold transition-all cursor-pointer"
+                              className="py-1.5 px-2 rounded-xl bg-white/[0.05] hover:bg-violet-500 text-neutral-200 hover:text-white border border-white/10 hover:border-transparent flex items-center justify-center gap-1 text-[10px] font-bold transition-all cursor-pointer"
                               title="Edit Customer Info or Cooking Notes"
                             >
                               <Edit3 className="h-3 w-3" />
@@ -3514,7 +3514,7 @@ export default function CashierDashboard() {
                               onClick={() => handlePrintTakeawayKOT(ord)}
                               className="py-1.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 text-[10px] font-bold transition-all cursor-pointer"
                             >
-                              <ChefHat className="h-3 w-3 text-indigo-400" />
+                              <ChefHat className="h-3 w-3 text-purple-300" />
                               <span>KOT</span>
                             </button>
 
@@ -3589,7 +3589,7 @@ export default function CashierDashboard() {
                           </td>
                           <td className="py-4 px-5 font-bold text-white">
                             {bill.tableNumber === "Takeaway" ? (
-                              <span className="inline-flex items-center gap-1 text-indigo-400">
+                              <span className="inline-flex items-center gap-1 text-purple-300">
                                 <ShoppingBag className="h-3 w-3" />
                                 <span>Takeaway</span>
                               </span>
@@ -3846,7 +3846,7 @@ export default function CashierDashboard() {
                 }}
                 className="px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 text-xs font-semibold flex items-center gap-1.5 border border-white/10 cursor-pointer"
               >
-                <PlusCircle className="h-3.5 w-3.5 text-indigo-400" />
+                <PlusCircle className="h-3.5 w-3.5 text-purple-300" />
                 <span>Add Dishes</span>
               </button>
 
@@ -4372,7 +4372,7 @@ export default function CashierDashboard() {
           <div className="w-full max-w-md bg-[#1c1c1f]/95 border border-white/[0.12] rounded-3xl p-6 shadow-2xl space-y-4 backdrop-blur-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <ArrowRightLeft className="h-5 w-5 text-indigo-400" />
+                <ArrowRightLeft className="h-5 w-5 text-purple-300" />
                 <h3 className="font-sans text-base font-bold text-white">
                   Transfer Table #{transferSourceTable.tableNumber}
                 </h3>
@@ -4431,7 +4431,7 @@ export default function CashierDashboard() {
               <button
                 disabled={!transferDestTableNumber || isTransferring}
                 onClick={handleExecuteTransfer}
-                className="px-5 py-2 rounded-full bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-indigo-950/30"
+                className="px-5 py-2 rounded-full bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-purple-950/30"
               >
                 {isTransferring ? "Transferring..." : "Confirm Transfer"}
               </button>
@@ -4895,7 +4895,7 @@ export default function CashierDashboard() {
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2.5">
-                <span className="p-2 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <span className="p-2 rounded-2xl bg-purple-500/10 text-purple-300 border border-purple-400/20">
                   <Edit3 className="h-4 w-4" />
                 </span>
                 <div>
@@ -4927,7 +4927,7 @@ export default function CashierDashboard() {
                   value={editCustomerName}
                   onChange={(e) => setEditCustomerName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400/25 transition-all"
                 />
               </div>
 
@@ -4940,7 +4940,7 @@ export default function CashierDashboard() {
                   value={editCustomerPhone}
                   onChange={(e) => setEditCustomerPhone(e.target.value)}
                   placeholder="e.g. 9876543210"
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400/25 transition-all"
                 />
               </div>
 
@@ -4953,7 +4953,7 @@ export default function CashierDashboard() {
                   value={editOrderNotes}
                   onChange={(e) => setEditOrderNotes(e.target.value)}
                   placeholder="e.g. Extra spicy, pack separately, extra napkins..."
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400/25 transition-all resize-none"
                 />
               </div>
 
@@ -4986,7 +4986,7 @@ export default function CashierDashboard() {
                 type="button"
                 disabled={isSavingTokenEdit}
                 onClick={handleSaveTokenEdit}
-                className="px-5 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold transition-all shadow-md shadow-indigo-950/30 active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                className="px-5 py-2 rounded-xl bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold transition-all shadow-md shadow-purple-950/30 active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
                 {isSavingTokenEdit ? (
                   <span>Saving...</span>
@@ -5045,7 +5045,7 @@ export default function CashierDashboard() {
                         });
                       }
                     }}
-                    className="px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-indigo-500 text-neutral-300 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-violet-500 text-neutral-300 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                     title="Edit Customer Info or Cooking Notes"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
@@ -5209,7 +5209,7 @@ export default function CashierDashboard() {
                   <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 print:text-neutral-400 block">
                     YOUR PICKUP TOKEN
                   </span>
-                  <span className="text-4xl font-black font-mono tracking-widest text-indigo-400 print:text-white block my-1 drop-shadow-[0_0_12px_rgba(99,102,241,0.35)] print:drop-shadow-none">
+                  <span className="text-4xl font-black font-mono tracking-widest text-purple-300 print:text-white block my-1 drop-shadow-[0_0_12px_rgba(167,139,250,0.35)] print:drop-shadow-none">
                     {activeReceipt.orderNumber || "TK-0000"}
                   </span>
                   <span className="text-xs text-neutral-200 print:text-neutral-300 block font-semibold">
@@ -5245,7 +5245,7 @@ export default function CashierDashboard() {
 
                 {activeReceipt.notes && (
                   <div className="text-[10px] text-left p-2 bg-white/[0.04] border border-white/10 rounded-xl text-neutral-300 print:bg-neutral-100 print:border-neutral-200 print:text-black">
-                    <span className="font-bold block text-indigo-400 print:text-neutral-600">NOTE:</span>
+                    <span className="font-bold block text-purple-300 print:text-neutral-600">NOTE:</span>
                     <span>{activeReceipt.notes}</span>
                   </div>
                 )}
@@ -5271,7 +5271,7 @@ export default function CashierDashboard() {
                 <div className="border-b border-dashed border-white/15 print:border-neutral-400 py-1.5 text-left text-xs space-y-0.5">
                   <div className="flex justify-between font-bold">
                     <span>STATION: TAKEAWAY</span>
-                    <span className="text-sm font-black font-mono text-indigo-400 print:text-black">
+                    <span className="text-sm font-black font-mono text-purple-300 print:text-black">
                       TOKEN: {activeReceipt.orderNumber}
                     </span>
                   </div>

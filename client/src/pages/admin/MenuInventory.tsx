@@ -371,17 +371,17 @@ export default function MenuInventory() {
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       {/* Toast Notification - Apple Music Glass Toast */}
       {successMsg && (
-        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-indigo-500/10 animate-in fade-in slide-in-from-top-3">
-          <CheckCircle2 className="h-4 w-4 text-indigo-400" />
+        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-purple-950/20 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="h-4 w-4 text-purple-300" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {/* Header Bar - Apple Music Editorial Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
-        {/* Apple Music Signature Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-400/8 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-slate-400/5 blur-3xl" />
+        {/* Soft Lavender & Violet Slate Ambient Bloom Halos */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-purple-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
@@ -409,7 +409,7 @@ export default function MenuInventory() {
 
             <button
               onClick={() => setIsAddMenuModalOpen(true)}
-              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-indigo-500 hover:bg-indigo-400 text-white shadow-md shadow-indigo-950/30 transition-all active:scale-95 hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-violet-500 hover:bg-violet-400 text-white shadow-md shadow-purple-950/30 transition-all active:scale-95 hover:scale-[1.02]"
             >
               <PlusCircle className="h-4 w-4" />
               <span>Add Dish</span>
@@ -427,7 +427,7 @@ export default function MenuInventory() {
             onClick={() => setActiveCategoryFilter("ALL")}
             className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
               activeCategoryFilter === "ALL"
-                ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                 : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
             }`}
           >
@@ -450,7 +450,7 @@ export default function MenuInventory() {
                 onClick={() => setActiveCategoryFilter(cat.id)}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   isSelected
-                    ? "bg-indigo-500/90 text-white shadow-sm shadow-indigo-950/20"
+                    ? "bg-violet-500/90 text-white shadow-sm shadow-purple-950/20"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -475,7 +475,7 @@ export default function MenuInventory() {
             placeholder="Search dishes, ingredients..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 transition-all focus:outline-none"
+            className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 transition-all focus:outline-none"
           />
           {searchQuery && (
             <button
@@ -510,7 +510,7 @@ export default function MenuInventory() {
               return (
                 <div
                   key={item.id}
-                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#1c1c1f]/80 hover:bg-[#232328] border transition-all duration-300 backdrop-blur-xl hover:shadow-2xl hover:shadow-indigo-500/10 ${
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#1c1c1f]/80 hover:bg-[#232328] border transition-all duration-300 backdrop-blur-xl hover:shadow-2xl hover:shadow-purple-950/20 ${
                     isDepleted
                       ? "border-red-500/30 opacity-80"
                       : "border-white/[0.08] hover:border-white/[0.2]"
@@ -695,7 +695,7 @@ export default function MenuInventory() {
                   placeholder="e.g. Truffle Tagliatelle"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -709,7 +709,7 @@ export default function MenuInventory() {
                   placeholder="Handcrafted pasta ribbons tossed in black truffle cream sauce with shaved parmesan."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -722,7 +722,7 @@ export default function MenuInventory() {
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     required
-                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -744,7 +744,7 @@ export default function MenuInventory() {
                     placeholder="24.50"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -761,7 +761,7 @@ export default function MenuInventory() {
                     placeholder="50"
                     value={dailyLimit}
                     onChange={(e) => setDailyLimit(e.target.value)}
-                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -788,7 +788,7 @@ export default function MenuInventory() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full px-6 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md shadow-indigo-950/30 hover:opacity-95 transition-all"
+                  className="rounded-full px-6 py-2 text-xs font-semibold bg-gradient-to-r from-violet-500 to-purple-400 text-white shadow-md shadow-purple-950/30 hover:opacity-95 transition-all"
                 >
                   Create Dish
                 </button>
@@ -827,7 +827,7 @@ export default function MenuInventory() {
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -840,7 +840,7 @@ export default function MenuInventory() {
                   rows={2}
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -853,7 +853,7 @@ export default function MenuInventory() {
                     value={editCategoryId}
                     onChange={(e) => setEditCategoryId(e.target.value)}
                     required
-                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3 text-xs rounded-xl bg-[#222226] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -874,7 +874,7 @@ export default function MenuInventory() {
                     required
                     value={editPrice}
                     onChange={(e) => setEditPrice(e.target.value)}
-                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -890,7 +890,7 @@ export default function MenuInventory() {
                     required
                     value={editDailyLimit}
                     onChange={(e) => setEditDailyLimit(e.target.value)}
-                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -904,7 +904,7 @@ export default function MenuInventory() {
                     required
                     value={editRemainingQty}
                     onChange={(e) => setEditRemainingQty(e.target.value)}
-                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full h-10 px-3.5 text-xs font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -931,7 +931,7 @@ export default function MenuInventory() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full px-6 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md shadow-indigo-950/30 hover:opacity-95 transition-all"
+                  className="rounded-full px-6 py-2 text-xs font-semibold bg-gradient-to-r from-violet-500 to-purple-400 text-white shadow-md shadow-purple-950/30 hover:opacity-95 transition-all"
                 >
                   Save Changes
                 </button>
@@ -996,7 +996,7 @@ export default function MenuInventory() {
                   placeholder="e.g. Starters, Signature Desserts"
                   value={catName}
                   onChange={(e) => setCatName(e.target.value)}
-                  className="w-full h-9 px-3 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-9 px-3 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -1008,14 +1008,14 @@ export default function MenuInventory() {
                   placeholder="Appetizers, sides, and finger foods"
                   value={catDesc}
                   onChange={(e) => setCatDesc(e.target.value)}
-                  className="w-full h-9 px-3 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full h-9 px-3 text-xs rounded-xl bg-white/[0.06] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-purple-400 focus:outline-none transition-colors"
                 />
               </div>
 
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full h-9 rounded-full text-xs font-semibold bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md shadow-indigo-950/25 hover:opacity-95 transition-all"
+                  className="w-full h-9 rounded-full text-xs font-semibold bg-gradient-to-r from-violet-500 to-purple-400 text-white shadow-md shadow-purple-950/25 hover:opacity-95 transition-all"
                 >
                   Create Category
                 </button>

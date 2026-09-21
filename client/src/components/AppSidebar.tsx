@@ -214,7 +214,7 @@ export function AppSidebar() {
                         tooltip={item.title}
                         className={`group relative flex items-center rounded-xl text-xs transition-colors duration-200 group-data-[collapsible=icon]:!h-9 group-data-[collapsible=icon]:!w-9 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:mx-auto ${
                           isActive
-                            ? "bg-gradient-to-r from-indigo-500/85 to-indigo-400/85 text-white shadow-sm shadow-indigo-950/30 font-semibold border border-indigo-300/20"
+                            ? "bg-gradient-to-r from-violet-500/85 to-purple-400/85 text-white shadow-sm shadow-purple-950/30 font-semibold border border-purple-300/20"
                             : "text-neutral-400 hover:text-white hover:bg-white/[0.06]"
                         }`}
                       >
@@ -262,11 +262,11 @@ export function AppSidebar() {
       {/* User Profile & Session Footer */}
       <SidebarFooter className="p-3 border-t border-white/[0.06] group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:border-t-transparent">
         <div className="flex items-center gap-2.5 rounded-xl bg-white/[0.03] p-2 border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.1] transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:border-none">
-          {/* Avatar with Soft Indigo gradient */}
+          {/* Avatar with Soft Lavender gradient */}
           <button
             onClick={handleLogout}
             title={`Logged in as ${user.fullName} (${user.role}) • Click to log out`}
-            className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-400 text-white text-xs font-bold shadow-sm shadow-indigo-950/20 transition-transform hover:scale-105 active:scale-95"
+            className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-violet-500 to-purple-400 text-white text-xs font-bold shadow-sm shadow-purple-950/20 transition-transform hover:scale-105 active:scale-95"
           >
             {getInitials(user.fullName)}
           </button>
