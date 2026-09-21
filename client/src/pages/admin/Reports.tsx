@@ -519,7 +519,7 @@ export default function Reports() {
       const [statsRes, historyRes, reviewsRes] = await Promise.all([
         axiosInstance.get(`/cashier/stats?range=${rangeFilter}`).catch(() => ({ data: null })),
         axiosInstance.get(`/cashier/history?range=${rangeFilter}`).catch(() => ({ data: [] })),
-        axiosInstance.get(`/customer/reviews`).catch(() => ({ data: [] })),
+        axiosInstance.get(`/customer/reviews?range=${rangeFilter}`).catch(() => ({ data: [] })),
       ]);
 
       if (statsRes?.data) setStats(statsRes.data);

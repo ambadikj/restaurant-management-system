@@ -522,9 +522,18 @@ export const submitReview = async (req: Request, res: Response): Promise<void> =
  */
 export const getReviews = async (req: Request, res: Response): Promise<void> => {
   try {
+    const isAllTime = req.query.range === "all";
+    const now = new Date();
+    const cutoff = new Date(now);
+    if (now.getHours() < 5) {
+      cutoff.setDate(cutoff.getDate() - 1);
+    }
+    cutoff.setHours(5, 0, 0, 0);
+
     const reviews = await prisma.review.findMany({
+      where: isAllTime ? {} : { createdAt: { gte: cutoff } },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: isAllTime ? 100 : 50,
       include: {
         diningSession: {
           select: {
