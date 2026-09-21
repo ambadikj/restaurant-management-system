@@ -49,6 +49,14 @@ interface SettledBill {
   itemsCount: number;
   payments: { method: string; amount: number }[];
   items: { name: string; quantity: number; price: number; subtotal: number }[];
+  review?: {
+    id?: number;
+    rating: number;
+    feedback?: string | null;
+    tags?: string[];
+    customerName?: string | null;
+    createdAt?: string;
+  } | null;
 }
 
 interface ReviewItem {
@@ -88,6 +96,13 @@ interface ActiveReceiptData {
   items?: { name: string; quantity: number; price: number; subtotal: number }[];
   customerName?: string;
   notes?: string;
+  review?: {
+    id?: number;
+    rating: number;
+    feedback?: string | null;
+    tags?: string[];
+    customerName?: string | null;
+  } | null;
 }
 
 /* ─────────────────────────── CHART TOOLTIP ─────────────────────────── */
@@ -530,6 +545,25 @@ export default function Reports() {
 
     const handleNewReview = (newReview: any) => {
       setReviews((prev) => [newReview, ...prev]);
+      if (newReview.sessionCode) {
+        setHistory((prev) =>
+          prev.map((s) =>
+            s.sessionCode === newReview.sessionCode
+              ? {
+                  ...s,
+                  review: {
+                    id: newReview.id,
+                    rating: newReview.rating,
+                    feedback: newReview.feedback,
+                    tags: newReview.tags,
+                    customerName: newReview.customerName,
+                    createdAt: newReview.createdAt,
+                  },
+                }
+              : s
+          )
+        );
+      }
     };
 
     socket.on("cashier:bill_settled", handleBillSettled);
@@ -723,8 +757,20 @@ export default function Reports() {
         const tbl = String(b.tableNumber).toLowerCase();
         const matchPayments = b.payments?.some((p) => p.method.toLowerCase().includes(q));
         const matchItems = b.items?.some((i) => i.name.toLowerCase().includes(q));
+        const matchFeedback = b.review?.feedback?.toLowerCase().includes(q);
+        const matchCustomer = b.review?.customerName?.toLowerCase().includes(q);
+        const matchTags = b.review?.tags?.some((t) => t.toLowerCase().includes(q));
 
-        if (!inv.includes(q) && !code.includes(q) && !tbl.includes(q) && !matchPayments && !matchItems) {
+        if (
+          !inv.includes(q) &&
+          !code.includes(q) &&
+          !tbl.includes(q) &&
+          !matchPayments &&
+          !matchItems &&
+          !matchFeedback &&
+          !matchCustomer &&
+          !matchTags
+        ) {
           return false;
         }
       }
@@ -754,6 +800,8 @@ export default function Reports() {
         "SGST 2.5% (INR)",
         "5% GST Total (INR)",
         "Grand Total (INR)",
+        "Guest Rating (Stars)",
+        "Guest Feedback",
       ];
 
       const rows = history.map((s) => {
@@ -764,6 +812,12 @@ export default function Reports() {
         const cgst = tax / 2;
         const sgst = tax / 2;
         const dateStr = s.endTime ? new Date(s.endTime).toLocaleString() : new Date(s.startTime).toLocaleString();
+        const ratingStr = s.review ? `${s.review.rating} / 5` : "Unrated";
+        const feedbackStr = s.review?.feedback
+          ? `"${s.review.feedback.replace(/"/g, '""')}"`
+          : s.review?.tags?.length
+          ? `"${s.review.tags.join(" • ")}"`
+          : '""';
 
         return [
           s.invoiceNumber,
@@ -777,6 +831,8 @@ export default function Reports() {
           sgst.toFixed(2),
           tax.toFixed(2),
           total.toFixed(2),
+          `"${ratingStr}"`,
+          feedbackStr,
         ];
       });
 
@@ -1105,10 +1161,10 @@ export default function Reports() {
             <tbody className="divide-y divide-white/[0.05]">
               {filteredHistory.length > 0 ? (
                 filteredHistory.map((s) => {
-                  // Find review matching this session or table
-                  const matchingReview = reviews.find(
-                    (r) => r.sessionCode === s.sessionCode || String(r.tableNumber) === String(s.tableNumber)
-                  );
+                  // Find review matching this exact session (prefer direct bill review, fallback to exact sessionCode match only)
+                  const matchingReview =
+                    s.review ||
+                    (s.sessionCode ? reviews.find((r) => r.sessionCode === s.sessionCode) : null);
 
                   return (
                     <tr key={s.id} className="hover:bg-white/[0.04] transition-colors">
@@ -1187,17 +1243,45 @@ export default function Reports() {
                       {/* Guest Rating & Note */}
                       <td className="px-3 py-4">
                         {matchingReview ? (
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center text-amber-400 shrink-0">
-                              {Array.from({ length: matchingReview.rating || 5 }).map((_, i) => (
-                                <Star key={i} className="h-3 w-3 fill-amber-400" />
-                              ))}
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-0.5 shrink-0">
+                                {[1, 2, 3, 4, 5].map((starVal) => (
+                                  <Star
+                                    key={starVal}
+                                    className={`h-3 w-3 ${
+                                      starVal <= (matchingReview.rating || 5)
+                                        ? "fill-amber-400 text-amber-400"
+                                        : "fill-neutral-700/60 text-neutral-700/60"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="font-mono text-[11px] font-bold text-amber-400">
+                                {Number(matchingReview.rating || 5).toFixed(1)}
+                              </span>
                             </div>
-                            <span className="text-neutral-300 font-sans text-xs truncate max-w-[140px]" title={matchingReview.feedback || ""}>
-                              "{matchingReview.feedback || (matchingReview.tags?.length ? matchingReview.tags.join(" • ") : "Rated")}"
-                            </span>
+                            {matchingReview.feedback ? (
+                              <p
+                                className="text-neutral-300 font-sans text-xs truncate max-w-[170px]"
+                                title={matchingReview.feedback}
+                              >
+                                "{matchingReview.feedback}"
+                              </p>
+                            ) : matchingReview.tags && matchingReview.tags.length > 0 ? (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {matchingReview.tags.slice(0, 2).map((t, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-neutral-400"
+                                  >
+                                    {t}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
                             {matchingReview.customerName && (
-                              <span className="text-[10px] text-neutral-500 font-sans truncate max-w-[80px]">
+                              <span className="text-[10px] text-neutral-500 font-sans truncate max-w-[120px] block">
                                 — {matchingReview.customerName}
                               </span>
                             )}
@@ -1226,6 +1310,7 @@ export default function Reports() {
                               payments: s.payments,
                               items: s.items,
                               cashierName: user?.fullName || "Admin / Cashier",
+                              review: matchingReview,
                             })
                           }
                           className="px-3 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.16] text-white font-semibold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 border border-white/5 shadow-sm"
@@ -1238,47 +1323,6 @@ export default function Reports() {
                     </tr>
                   );
                 })
-              ) : reviews.length > 0 && searchQuery === "" && typeFilter === "all" ? (
-                reviews.map((r) => (
-                  <tr key={r.id} className="hover:bg-white/[0.04] transition-colors">
-                    <td className="py-4 pl-6 pr-3 font-semibold text-white">
-                      <div className="flex items-center gap-1.5">
-                        <FileText className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
-                        <span className="font-mono text-xs">{r.sessionCode || `REV-${r.id}`}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-4 text-neutral-300">
-                      <span className="rounded-md bg-white/[0.05] px-2 py-0.5 border border-white/[0.08]">
-                        {r.tableNumber ? `Table ${r.tableNumber}` : "Dine-In"}
-                      </span>
-                    </td>
-                    <td className="px-3 py-4 text-neutral-400 font-mono text-[11px]">
-                      {new Date(r.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </td>
-                    <td className="px-3 py-4 text-neutral-500 font-sans">—</td>
-                    <td className="px-3 py-4 text-neutral-300">Settled Bill</td>
-                    <td className="px-3 py-4 font-['Outfit'] font-black text-white text-sm">
-                      {r.diningSession?.totalAmount ? `₹${Number(r.diningSession.totalAmount).toFixed(2)}` : "Verified"}
-                    </td>
-                    <td className="px-3 py-4" colSpan={2}>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center text-amber-400 shrink-0">
-                          {Array.from({ length: r.rating || 5 }).map((_, i) => (
-                            <Star key={i} className="h-3 w-3 fill-amber-400" />
-                          ))}
-                        </div>
-                        <span className="text-neutral-300 font-sans text-xs truncate max-w-xs">
-                          "{r.feedback || (r.tags?.length ? r.tags.join(" • ") : "Rating Received")}"
-                        </span>
-                        {r.customerName && (
-                          <span className="text-[10px] text-neutral-500 font-sans font-medium">
-                            — {r.customerName}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
               ) : (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-neutral-500 font-sans">
@@ -1516,6 +1560,23 @@ export default function Reports() {
                         <span className="font-mono tabular-nums">₹{Number(p.amount).toFixed(2)}</span>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* Guest Rating (if available) */}
+                {activeReceipt.review && (
+                  <div className="border-b border-dashed border-white/15 print:border-neutral-400 py-1.5 text-left text-[11px] space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-neutral-300 print:text-black">GUEST RATING:</span>
+                      <span className="font-bold text-amber-400 print:text-black font-mono">
+                        {Number(activeReceipt.review.rating || 5).toFixed(1)} / 5.0 Stars
+                      </span>
+                    </div>
+                    {activeReceipt.review.feedback && (
+                      <p className="italic text-neutral-300 print:text-neutral-700 text-[10px]">
+                        "{activeReceipt.review.feedback}"
+                      </p>
+                    )}
                   </div>
                 )}
 

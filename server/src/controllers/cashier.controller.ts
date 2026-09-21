@@ -830,6 +830,10 @@ export const getSettledBillsHistory = async (req: Request, res: Response): Promi
           },
         },
         payments: true,
+        reviews: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
     });
 
@@ -840,6 +844,15 @@ export const getSettledBillsHistory = async (req: Request, res: Response): Promi
         (sum, o) => sum + o.orderItems.reduce((oiSum, oi) => oiSum + oi.quantity, 0),
         0
       );
+
+      const review = s.reviews && s.reviews.length > 0 ? {
+        id: s.reviews[0].id,
+        rating: s.reviews[0].rating,
+        feedback: s.reviews[0].feedback,
+        tags: s.reviews[0].tags,
+        customerName: s.reviews[0].customerName,
+        createdAt: s.reviews[0].createdAt,
+      } : null;
 
       return {
         id: s.id,
@@ -862,6 +875,7 @@ export const getSettledBillsHistory = async (req: Request, res: Response): Promi
             subtotal: Number(oi.subtotal),
           }))
         ),
+        review,
       };
     });
 

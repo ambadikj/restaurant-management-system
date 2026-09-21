@@ -452,14 +452,32 @@ export const submitReview = async (req: Request, res: Response): Promise<void> =
     const parsedTable = tableNumber && !isNaN(Number(tableNumber)) ? Number(tableNumber) : null;
     const finalTags = Array.isArray(tags) ? tags : [];
 
-    // Attempt to link to session if sessionCode exists
+    // Attempt to link to session if sessionCode exists, or fallback to latest session of table
     let sessionId: number | null = null;
-    if (sessionCode) {
+    let resolvedSessionCode: string | null = sessionCode ? String(sessionCode).trim() : null;
+
+    if (resolvedSessionCode) {
       const session = await prisma.diningSession.findUnique({
-        where: { sessionCode: String(sessionCode) },
+        where: { sessionCode: resolvedSessionCode },
       });
       if (session) {
         sessionId = session.id;
+      }
+    }
+
+    if (!sessionId && parsedTable) {
+      const recentSession = await prisma.diningSession.findFirst({
+        where: {
+          table: { tableNumber: parsedTable },
+          status: "COMPLETED",
+        },
+        orderBy: { endTime: "desc" },
+      });
+      if (recentSession) {
+        sessionId = recentSession.id;
+        if (!resolvedSessionCode) {
+          resolvedSessionCode = recentSession.sessionCode;
+        }
       }
     }
 
@@ -467,7 +485,7 @@ export const submitReview = async (req: Request, res: Response): Promise<void> =
       data: {
         diningSessionId: sessionId,
         tableNumber: parsedTable,
-        sessionCode: sessionCode ? String(sessionCode) : null,
+        sessionCode: resolvedSessionCode,
         customerName: customerName ? String(customerName).trim() : null,
         rating: parsedRating,
         feedback: feedback ? String(feedback).trim() : null,
