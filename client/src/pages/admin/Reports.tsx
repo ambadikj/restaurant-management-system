@@ -823,7 +823,7 @@ export default function Reports() {
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
-              End-of-Day (EOD) Reports
+              Sales & EOD Reports
             </h1>
             <button
               type="button"

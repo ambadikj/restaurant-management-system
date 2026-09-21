@@ -32,8 +32,9 @@ export const createTable = async (req: Request, res: Response): Promise<void> =>
         return;
       }
     } else {
-      // Find highest existing table number and increment by 1
+      // Find highest existing dining table number (< 900) and increment by 1
       const maxTable = await prisma.restaurantTable.findFirst({
+        where: { tableNumber: { lt: 900 } },
         orderBy: { tableNumber: 'desc' },
       });
       targetTableNumber = maxTable ? maxTable.tableNumber + 1 : 1;

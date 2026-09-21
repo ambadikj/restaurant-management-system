@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   X,
-  Flame,
   Minus,
   Plus,
   RotateCcw,
@@ -384,23 +383,10 @@ export default function MenuInventory() {
         <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-2">
-            {/* Apple Music Editorial Eyebrow Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] border border-white/[0.1] px-3 py-1 text-[11px] font-semibold text-neutral-300 backdrop-blur-md">
-              <Flame className="h-3 w-3 text-[#FA2D48] fill-[#FA2D48]" />
-              <span className="tracking-widest uppercase text-[10px] font-bold text-white/90">
-                Catalog & Kitchen Limits
-              </span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
-              Menu & Auto-86 Inventory
-            </h1>
-            <p className="text-xs sm:text-sm text-neutral-400 max-w-xl font-normal leading-relaxed">
-              Configure live price tags, dish artwork, batch limits, and real-time out-of-stock triggers.
-            </p>
-          </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
+            Menu Catalog
+          </h1>
 
           {/* Action Pills */}
           <div className="relative z-10 flex flex-wrap items-center gap-2.5">

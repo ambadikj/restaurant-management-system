@@ -213,39 +213,27 @@ export default function Employees() {
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       {/* Toast Notification */}
       {successMsg && (
-        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-[#FA2D48]/10 animate-in fade-in slide-in-from-top-3">
-          <CheckCircle2 className="h-4 w-4 text-[#FA2D48]" />
+        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1A0129]/95 border border-[#3A025B]/60 backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-[#520380]/20 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="h-4 w-4 text-[#A855F7]" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* Header Bar - Apple Music Editorial Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
+      {/* Header Bar */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#220135]/90 via-[#1A0129]/70 to-[#11001C]/50 border border-[#3A025B]/50 p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
         {/* Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#520380]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-[#3A025B]/30 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] border border-white/[0.1] px-3 py-1 text-[11px] font-semibold text-neutral-300 backdrop-blur-md">
-              <Shield className="h-3 w-3 text-[#FA2D48]" />
-              <span className="tracking-widest uppercase text-[10px] font-bold text-white/90">
-                Staff Directory & Access Control
-              </span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
-              Staff & RBAC Management
-            </h1>
-            <p className="text-xs sm:text-sm text-neutral-400 max-w-xl font-normal leading-relaxed">
-              Manage authorized staff members, role designations (Admin, POS Cashier, Kitchen), and access credentials.
-            </p>
-          </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
+            Employee Directory
+          </h1>
 
           {/* Add Member Button */}
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 hover:scale-[1.02] self-start md:self-auto"
+            className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-[#520380] hover:bg-[#6804A0] text-white shadow-lg shadow-[#520380]/35 transition-all active:scale-95 hover:scale-[1.02] self-start md:self-auto cursor-pointer"
           >
             <UserPlus className="h-4 w-4" />
             <span>Add Member</span>
@@ -255,7 +243,7 @@ export default function Employees() {
 
 
 
-      {/* Filter Tabs & Search Bar - Apple Music Pill Row */}
+      {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         {/* Role Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -274,8 +262,8 @@ export default function Employees() {
                 onClick={() => setSelectedRoleFilter(r)}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   isSelected
-                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
-                    : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
+                    ? "bg-[#520380] text-white shadow-md shadow-[#520380]/35 border border-[#7B1FA2]/30"
+                    : "bg-[#1A0129]/80 hover:bg-[#220135] text-neutral-300 border border-[#3A025B]/40"
                 }`}
               >
                 <span>{label}</span>
@@ -291,7 +279,7 @@ export default function Employees() {
           })}
         </div>
 
-        {/* Search Bar - Apple Music Pill */}
+        {/* Search Bar */}
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-neutral-400" />
           <input
@@ -299,7 +287,7 @@ export default function Employees() {
             placeholder="Search staff, username, email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] transition-all focus:outline-none"
+            className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-[#11001C]/80 hover:bg-[#1A0129] focus:bg-[#1A0129] text-white placeholder:text-neutral-500 border border-[#3A025B]/50 focus:border-[#520380] transition-all focus:outline-none"
           />
           {searchQuery && (
             <button
@@ -313,7 +301,7 @@ export default function Employees() {
       </div>
 
       {/* ================= STAFF TRACKLIST DIRECTORY ================= */}
-      <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 backdrop-blur-xl overflow-hidden shadow-2xl">
+      <div className="rounded-3xl border border-[#3A025B]/40 bg-[#1A0129]/90 backdrop-blur-xl overflow-hidden shadow-2xl shadow-[#11001C]/50">
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-left text-sm border-collapse min-w-[700px]">
             <colgroup>
@@ -323,7 +311,7 @@ export default function Employees() {
               <col className="w-[12%]" />
               <col className="w-[12%]" />
             </colgroup>
-            <thead className="border-b border-white/[0.07] bg-white/[0.02] text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+            <thead className="border-b border-[#3A025B]/30 bg-[#220135]/60 text-[10px] font-bold uppercase tracking-widest text-[#C77DFF]/70">
               <tr>
                 <th className="py-3.5 pl-6 pr-4">Team Member</th>
                 <th className="px-4 py-3.5">Assigned Role</th>
@@ -332,7 +320,7 @@ export default function Employees() {
                 <th className="py-3.5 pl-4 pr-6 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.05]">
+            <tbody className="divide-y divide-[#3A025B]/20">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="py-20 text-center text-xs text-neutral-500 font-mono">
@@ -352,7 +340,7 @@ export default function Employees() {
                   return (
                     <tr
                       key={user.id}
-                      className={`group hover:bg-white/[0.04] transition-colors ${
+                      className={`group hover:bg-[#220135]/40 transition-colors ${
                         !user.isActive ? "opacity-60 bg-white/[0.01]" : ""
                       }`}
                     >
@@ -360,7 +348,7 @@ export default function Employees() {
                       <td className="py-4 pl-6 pr-4">
                         <div className="flex items-center gap-3.5">
                           {/* Avatar Medallion */}
-                          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-[#FA2D48] to-[#FF4565] text-white font-bold text-xs flex items-center justify-center shadow-md shadow-[#FA2D48]/20 shrink-0">
+                          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-[#520380] to-[#7B1FA2] text-white font-bold text-xs flex items-center justify-center shadow-md shadow-[#520380]/25 shrink-0">
                             {user.fullName
                               .split(" ")
                               .map((n) => n[0])
@@ -381,9 +369,9 @@ export default function Employees() {
 
                       {/* Role */}
                       <td className="px-4 py-4">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-xs font-semibold text-neutral-200">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#3A025B]/50 bg-[#220135]/60 px-3 py-1 text-xs font-semibold text-neutral-200">
                           {roleName === "admin" && (
-                            <Shield className="h-3 w-3 text-[#FA2D48] shrink-0" />
+                            <Shield className="h-3 w-3 text-[#A855F7] shrink-0" />
                           )}
                           {roleName === "cashier" && (
                             <ReceiptText className="h-3 w-3 text-sky-400 shrink-0" />
@@ -423,20 +411,20 @@ export default function Employees() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => toggleStatus(user.id)}
-                            className="rounded-full px-2.5 py-1 text-[11px] font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white transition-colors"
+                            className="rounded-full px-2.5 py-1 text-[11px] font-semibold bg-[#220135]/60 hover:bg-[#220135] text-neutral-300 hover:text-white border border-[#3A025B]/40 transition-colors"
                           >
                             {user.isActive ? "Suspend" : "Activate"}
                           </button>
                           <button
                             onClick={() => openEditModal(user)}
-                            className="h-7 w-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+                            className="h-7 w-7 rounded-full bg-[#220135]/60 hover:bg-[#220135] flex items-center justify-center text-neutral-400 hover:text-white border border-[#3A025B]/40 transition-colors"
                             title="Edit Member"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => setDeleteConfirmUser(user)}
-                            className="h-7 w-7 rounded-full bg-white/[0.06] hover:bg-red-500/20 flex items-center justify-center text-neutral-400 hover:text-red-400 transition-colors"
+                            className="h-7 w-7 rounded-full bg-[#220135]/60 hover:bg-red-500/20 flex items-center justify-center text-neutral-400 hover:text-red-400 border border-[#3A025B]/40 transition-colors"
                             title="Delete Member"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -452,12 +440,12 @@ export default function Employees() {
         </div>
 
         {/* Table Footer Bar */}
-        <div className="border-t border-white/[0.07] bg-white/[0.01] px-6 py-3 text-xs text-neutral-400 flex items-center justify-between">
+        <div className="border-t border-[#3A025B]/30 bg-[#11001C]/40 px-6 py-3 text-xs text-neutral-400 flex items-center justify-between">
           <span>
             Showing {filteredUsers.length} of {users.length} members
           </span>
           <span className="text-[11px] text-neutral-500">
-            Apple Music Style RBAC Directory
+            RBAC Directory
           </span>
         </div>
       </div>

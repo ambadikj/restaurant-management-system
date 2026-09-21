@@ -33,13 +33,13 @@ const adminNavSections = [
     label: "OPERATIONS",
     items: [
       {
-        title: "Menu & Auto-86",
+        title: "Menu Catalog",
         url: "/admin/menu",
         icon: UtensilsCrossed,
         badge: "Live",
       },
       {
-        title: "Floor Plan & QR",
+        title: "Floor Plan & Tables",
         url: "/admin/tables",
         icon: QrCode,
         badge: null,
@@ -47,19 +47,19 @@ const adminNavSections = [
     ],
   },
   {
-    label: "ORGANIZATION & AUDIT",
+    label: "MANAGEMENT & AUDIT",
     items: [
       {
-        title: "Staff & RBAC",
+        title: "Employee Directory",
         url: "/admin/employees",
         icon: Shield,
         badge: null,
       },
       {
-        title: "EOD & Reports",
+        title: "Sales & EOD Reports",
         url: "/admin/reports",
         icon: Receipt,
-        badge: "Beta",
+        badge: null,
       },
     ],
   },
@@ -67,28 +67,28 @@ const adminNavSections = [
 
 const cashierNavSections = [
   {
-    label: "CASHIER POS",
+    label: "POINT OF SALE",
     items: [
       {
-        title: "Floor & Live Bills",
+        title: "Dine-In Billing",
         url: "/cashier?tab=floor",
         icon: Layers,
         badge: "Live",
       },
       {
-        title: "Takeaway POS",
+        title: "Takeaway & Counter",
         url: "/cashier?tab=takeaway",
         icon: ShoppingBag,
         badge: "Counter",
       },
       {
-        title: "Closed Bills Log",
+        title: "Settled Invoices",
         url: "/cashier?tab=history",
         icon: FileText,
         badge: null,
       },
       {
-        title: "Shift Metrics",
+        title: "Shift Summary",
         url: "/cashier?tab=stats",
         icon: TrendingUp,
         badge: null,
