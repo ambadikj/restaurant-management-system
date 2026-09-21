@@ -3,6 +3,23 @@ import prisma from "../prisma/client";
 import { emitToTable, emitToStaff, emitTableUpdate } from "../socket";
 import crypto from "crypto";
 
+/**
+ * ============================================================================
+ * CASHIER POINT OF SALE (POS) CONTROLLER (cashier.controller.ts)
+ * ============================================================================
+ * PURPOSE:
+ * Powers the Cashier workstation interface:
+ * 1. Live Floor Matrix: Real-time table status (AVAILABLE, OCCUPIED, BILLING, CLEANING).
+ * 2. QR Scan Approvals: Optional front-of-house customer table seating requests.
+ * 3. Dining Session Billing: Aggregates all rounds of orders into an itemized bill.
+ * 4. Bill Settlement: Processes payment via CASH, CARD, or UPI, archives session,
+ *    and prints official tax receipts.
+ * 5. Takeaway POS: Fast-track counter ordering without assigning a physical table.
+ * 6. Table Transfer: Moves active dining sessions between physical tables.
+ * 7. End-of-Day Financial Analytics: Gateway reconciliations and audit metrics.
+ * ============================================================================
+ */
+
 // In-memory store for real-time QR scan access requests waiting for cashier approval
 interface AccessRequest {
   tableNumber: number;

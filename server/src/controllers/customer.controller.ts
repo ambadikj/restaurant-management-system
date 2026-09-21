@@ -94,14 +94,29 @@ export const getTableInfo = async (req: Request, res: Response): Promise<void> =
 };
 
 /**
+ * ============================================================================
  * POST /api/customer/order
- * Place customer order, deduct inventory stock (Auto-86), link to dining session,
- * and broadcast real-time events via Socket.IO
+ * ============================================================================
+ * CORE BUSINESS LOGIC:
+ * 1. Validates table identity & active dining session (creates one if first order).
+ * 2. Pre-validates inventory stock to prevent overselling.
+ * 3. Atomic Database Transaction (prisma.$transaction):
+ *    - Inserts Order record (e.g. ORD-1001)
+ *    - Inserts OrderItem rows with locked snapshot pricing
+ *    - Deducts remainingQty from Inventory
+ *    - Auto-86 Trigger: If stock reaches 0, sets isAvailable = false
+ *    - Updates master DiningSession totalAmount
+ * 4. Broadcasts WebSocket events:
+ *    - "order:new" to Kitchen KDS (rings audio alert)
+ *    - "inventory:stock_update" to all client menus (grays out sold out items)
+ *    - "table:update" to Cashier POS (shows OCCUPIED status)
+ * ============================================================================
  */
 export const placeOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const { tableNumber, items, notes } = req.body;
 
+    // Step 1: Validate payload has at least one item
     if (!items || !Array.isArray(items) || items.length === 0) {
       res.status(400).json({ message: "Please select at least one item to order." });
       return;
@@ -151,7 +166,7 @@ export const placeOrder = async (req: Request, res: Response): Promise<void> => 
       }
     }
 
-    // Ensure an ACTIVE dining session exists for this table
+    // Step 2: Ensure an ACTIVE dining session exists for this table
     let activeSession = targetTable.sessions?.[0];
     if (!activeSession) {
       const sessionCode = `SESS-${Date.now().toString(36).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
@@ -164,7 +179,7 @@ export const placeOrder = async (req: Request, res: Response): Promise<void> => 
         },
       });
 
-      // Update table to OCCUPIED
+      // Update table to OCCUPIED on the floor
       if (!isTakeaway) {
         await prisma.restaurantTable.update({
           where: { id: targetTable.id },
@@ -179,7 +194,7 @@ export const placeOrder = async (req: Request, res: Response): Promise<void> => 
       }
     }
 
-    // Extract item IDs and validate in database
+    // Step 3: Extract item IDs and validate prices and stock in database
     const itemIds = items.map((i: any) => Number(i.menuItemId));
     const dbItems = await prisma.menuItem.findMany({
       where: { id: { in: itemIds } },
@@ -188,7 +203,7 @@ export const placeOrder = async (req: Request, res: Response): Promise<void> => 
 
     const itemMap = new Map(dbItems.map((item) => [item.id, item]));
 
-    // Pre-validate stock availability
+    // Step 4: Pre-validate stock availability (Prevent overselling)
     for (const orderItem of items) {
       const dbItem = itemMap.get(Number(orderItem.menuItemId));
       if (!dbItem) {
@@ -211,7 +226,7 @@ export const placeOrder = async (req: Request, res: Response): Promise<void> => 
       }
     }
 
-    // Execute atomic transaction: Create Order + OrderItems + Update Stock + Update Session
+    // Step 5: Execute atomic ACID transaction: Create Order + OrderItems + Update Stock + Update Session
     const orderNumber = `ORD-${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 90)}`;
     const updatedStockEvents: { menuItemId: number; remainingQty: number; isAvailable: boolean }[] = [];
 

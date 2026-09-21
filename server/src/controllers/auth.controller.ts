@@ -3,37 +3,52 @@ import prisma from '../prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
+/**
+ * ============================================================================
+ * AUTHENTICATION CONTROLLER (auth.controller.ts)
+ * ============================================================================
+ * PURPOSE:
+ * Handles user login authentication for staff members (Admin, Cashier, Kitchen).
+ * Uses bcrypt to verify hashed passwords stored in PostgreSQL, and generates
+ * signed JWT tokens with 12-hour expiration upon successful authentication.
+ * ============================================================================
+ */
 
+/**
+ * POST /api/auth/login
+ * Public endpoint: Authenticates staff credentials
+ */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body;
 
-    // 1. Find user and include their role
+    // Step 1: Query the user in PostgreSQL by unique username, including their Role
     const user = await prisma.user.findUnique({
       where: { username },
       include: { role: true }
     });
 
+    // Step 2: Validate user existence and check if account is active (not suspended)
     if (!user || !user.isActive) {
       res.status(401).json({ message: 'Invalid credentials or account disabled' });
       return;
     }
 
-    // 2. Verify password
+    // Step 3: Securely compare the plain-text password with the bcrypt hash stored in DB
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       res.status(401).json({ message: 'Invalid credentials' });
       return;
     }
 
-    // 3. Generate JWT
+    // Step 4: Generate a signed JSON Web Token (JWT) with user ID and Role payload
     const token = jwt.sign(
       { id: user.id, role: user.role.name },
       process.env.JWT_SECRET as string,
-      { expiresIn: '12h' } // Token lasts 12 hours
+      { expiresIn: '12h' } // Token is valid for 12 hours
     );
 
-    // 4. Return token and user data (excluding password)
+    // Step 5: Return token and public user metadata (password hash is strictly omitted)
     res.status(200).json({
       token,
       user: {
@@ -49,7 +64,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// We will use this with our middleware to get the currently logged-in user
+/**
+ * GET /api/auth/me
+ * Protected endpoint: Returns details of the currently authenticated user
+ */
 export const getCurrentUser = async (req: any, res: Response): Promise<void> => {
   try {
     const user = await prisma.user.findUnique({
