@@ -470,13 +470,13 @@ const ShiftAnalyticsCharts = ({
       {/* 6 cols: Hourly Revenue Curve / Area Chart (Redesigned) */}
       <div className="lg:col-span-6 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between">
         {/* Subtle Ambient Glow */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-[#FA2D48]/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-indigo-600/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
 
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#FA2D48]/25 to-rose-600/15 text-[#FA2D48] border border-[#FA2D48]/30 shadow-lg shadow-[#FA2D48]/10">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-600/25 to-violet-600/15 text-indigo-400 border border-indigo-500/30 shadow-lg shadow-indigo-600/10">
                 <TrendingUp className="h-4 w-4 stroke-[2.5]" />
               </div>
               <div>
@@ -507,13 +507,13 @@ const ShiftAnalyticsCharts = ({
                     {peakHour.time}
                   </span>
 
-                  <span className="px-2 py-0.5 rounded-lg bg-[#FA2D48]/15 border border-[#FA2D48]/30 font-['Outfit'] text-xs font-black text-[#FA2D48] tracking-tight">
+                  <span className="px-2 py-0.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 font-['Outfit'] text-xs font-black text-indigo-400 tracking-tight">
                     ₹{Number(peakHour.revenue).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono backdrop-blur-xl">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#FA2D48] animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
                   <span>Live Audit</span>
                 </div>
               )}
@@ -523,7 +523,7 @@ const ShiftAnalyticsCharts = ({
           {hourlyRevenueData.length === 0 || hourlyRevenueData.every((d) => d.revenue === 0) ? (
             <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-3">
               <div className="relative">
-                <div className="h-12 w-12 rounded-2xl bg-[#FA2D48]/10 border border-[#FA2D48]/20 flex items-center justify-center text-[#FA2D48] shadow-lg shadow-[#FA2D48]/10">
+                <div className="h-12 w-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-lg shadow-indigo-600/10">
                   <TrendingUp className="h-6 w-6 stroke-[1.8]" />
                 </div>
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 animate-ping" />
@@ -546,12 +546,12 @@ const ShiftAnalyticsCharts = ({
                 >
                   <defs>
                     <linearGradient id="cashierBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FA2D48" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="#FA2D48" stopOpacity={0.25} />
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#6366F1" stopOpacity={0.25} />
                     </linearGradient>
                     <linearGradient id="cashierPeakBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FF6B81" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#FA2D48" stopOpacity={0.65} />
+                      <stop offset="0%" stopColor="#818CF8" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#6366F1" stopOpacity={0.65} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -1851,8 +1851,8 @@ export default function CashierDashboard() {
       <div className="relative rounded-[24px] bg-[#0c0c14]/95 border border-white/[0.09] shadow-2xl backdrop-blur-2xl overflow-visible z-20">
         {/* Extremity Ambient Glows */}
         <div className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none">
-          {/* Left deep crimson glow */}
-          <div className="absolute top-0 left-0 w-80 h-full bg-gradient-to-r from-[#FA2D48]/22 via-[#FA2D48]/5 to-transparent blur-2xl" />
+          {/* Left deep indigo glow */}
+          <div className="absolute top-0 left-0 w-80 h-full bg-gradient-to-r from-indigo-600/20 via-indigo-600/5 to-transparent blur-2xl" />
           {/* Right purple/violet glow */}
           <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-violet-600/22 via-indigo-600/8 to-transparent blur-2xl" />
         </div>
@@ -1890,7 +1890,7 @@ export default function CashierDashboard() {
                         : pendingRequests[0].tableNumber}
                     </span>
                     {pendingRequests.length > 1 && (
-                      <span className="px-1.5 py-0.5 rounded-full bg-[#FA2D48]/20 border border-[#FA2D48]/35 text-[#FA2D48] font-bold text-[10px] font-mono group-hover:bg-[#FA2D48] group-hover:text-white transition-all">
+                      <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/35 text-indigo-400 font-bold text-[10px] font-mono group-hover:bg-indigo-600 group-hover:text-white transition-all">
                         +{pendingRequests.length - 1}
                       </span>
                     )}
@@ -1915,11 +1915,11 @@ export default function CashierDashboard() {
                   Decline
                 </button>
 
-                {/* Primary Action: High-emphasis neon coral/red pill */}
+                {/* Primary Action: High-emphasis Electric Indigo pill */}
                 <button
                   type="button"
                   onClick={() => handleApproveAccess(pendingRequests[0].tableNumber)}
-                  className="px-4 py-2 rounded-full bg-[#FA2D48] hover:bg-[#ff3b53] text-white text-xs font-bold transition-all shadow-[0_0_20px_rgba(250,45,72,0.5)] active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                  className="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <CheckCircle2 className="h-4 w-4 stroke-[2.5]" />
                   <span>Approve</span>
@@ -1947,8 +1947,8 @@ export default function CashierDashboard() {
                     <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
                       <div className="flex items-center gap-2">
                         <span className="relative flex h-2.5 w-2.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FA2D48] opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FA2D48]" />
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500" />
                         </span>
                         <span className="font-['Outfit'] font-extrabold text-sm text-white tracking-wide">
                           QR Scan Requests
@@ -1967,7 +1967,7 @@ export default function CashierDashboard() {
                                 await handleApproveAccess(req.tableNumber);
                               }
                             }}
-                            className="px-2.5 py-1 rounded-full bg-[#FA2D48] hover:bg-[#ff3b53] text-white text-[11px] font-black transition-all shadow-sm shadow-[#FA2D48]/30 active:scale-95 cursor-pointer flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-black transition-all shadow-sm shadow-indigo-600/30 active:scale-95 cursor-pointer flex items-center gap-1"
                             title="Approve all waiting requests"
                           >
                             <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
@@ -2014,7 +2014,7 @@ export default function CashierDashboard() {
                             <button
                               type="button"
                               onClick={() => handleApproveAccess(req.tableNumber)}
-                              className="px-3.5 py-1.5 rounded-full bg-[#FA2D48] hover:bg-[#ff3b53] text-white text-xs font-bold transition-all shadow-md shadow-[#FA2D48]/40 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                              className="px-3.5 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/40 active:scale-95 flex items-center gap-1.5 cursor-pointer"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" />
                               <span>Approve</span>
@@ -2038,7 +2038,7 @@ export default function CashierDashboard() {
                   onClick={() => setTakeawaySubTab("register")}
                   className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     takeawaySubTab === "register"
-                      ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                       : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
                   }`}
                 >
@@ -2053,7 +2053,7 @@ export default function CashierDashboard() {
                   }}
                   className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
                     takeawaySubTab === "queue"
-                      ? "bg-[#FA2D48] text-white shadow-lg shadow-[#FA2D48]/35"
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                       : "bg-white/[0.06] text-neutral-300 hover:text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl shadow-sm"
                   }`}
                 >
@@ -2082,7 +2082,7 @@ export default function CashierDashboard() {
                 onClick={() => setFloorFilter("ALL")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   floorFilter === "ALL"
-                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -2096,7 +2096,7 @@ export default function CashierDashboard() {
                 onClick={() => setFloorFilter("BILLING")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   floorFilter === "BILLING"
-                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                    ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -2157,7 +2157,7 @@ export default function CashierDashboard() {
                 value={tableSearch}
                 onChange={(e) => setTableSearch(e.target.value)}
                 placeholder="Search table #..."
-                className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
+                className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-indigo-500 backdrop-blur-xl"
               />
             </div>
           </div>
@@ -2184,7 +2184,7 @@ export default function CashierDashboard() {
                     key={table.id}
                     className={`group relative flex flex-col justify-between rounded-3xl p-5 bg-[#131317] hover:bg-[#18181e] border transition-all duration-200 ${
                       isBilling
-                        ? "border-[#FA2D48]/40"
+                        ? "border-rose-500/40"
                         : isOccupied
                         ? "border-sky-500/30"
                         : isCleaning
@@ -2223,7 +2223,7 @@ export default function CashierDashboard() {
                           }}
                           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold border transition-all cursor-pointer shadow-sm hover:brightness-110 active:scale-95 ${
                             isBilling
-                              ? "bg-[#FA2D48]/15 text-[#FA2D48] border-[#FA2D48]/30 animate-pulse"
+                              ? "bg-rose-500/15 text-rose-400 border-rose-500/30 animate-pulse"
                               : isOccupied
                               ? "bg-sky-500/15 text-sky-400 border-sky-500/25"
                               : isCleaning
@@ -2236,7 +2236,7 @@ export default function CashierDashboard() {
                             <span
                               className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
                                 isBilling
-                                  ? "bg-[#FA2D48] animate-ping"
+                                  ? "bg-rose-500 animate-ping"
                                   : isOccupied
                                   ? "bg-sky-400 animate-ping"
                                   : isCleaning
@@ -2247,7 +2247,7 @@ export default function CashierDashboard() {
                             <span
                               className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
                                 isBilling
-                                  ? "bg-[#FA2D48]"
+                                  ? "bg-rose-500"
                                   : isOccupied
                                   ? "bg-sky-500"
                                   : isCleaning
@@ -2316,11 +2316,11 @@ export default function CashierDashboard() {
                               }}
                               className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                                 isBilling
-                                  ? "bg-[#FA2D48]/20 text-rose-300 font-bold"
+                                  ? "bg-rose-500/20 text-rose-300 font-bold"
                                   : "text-neutral-300 hover:bg-white/[0.08] hover:text-white"
                               }`}
                             >
-                              <span className="h-2 w-2 rounded-full bg-[#FA2D48]" />
+                              <span className="h-2 w-2 rounded-full bg-rose-500" />
                               <span>Bill Due</span>
                             </button>
                             <button
@@ -2353,7 +2353,7 @@ export default function CashierDashboard() {
                             onClick={() => openSettlementModal(table)}
                             className={`w-full p-4 rounded-2xl border transition-all active:scale-98 cursor-pointer text-left shadow-lg group/bill ${
                               isBilling
-                                ? "bg-white/[0.04] hover:bg-white/[0.07] border-[#FA2D48]/40 hover:border-[#FA2D48]/70"
+                                ? "bg-white/[0.04] hover:bg-white/[0.07] border-rose-500/40 hover:border-rose-500/70"
                                 : "bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.08] hover:border-white/[0.15]"
                             }`}
                           >
@@ -2362,7 +2362,7 @@ export default function CashierDashboard() {
                                 <span
                                   className={`text-[10px] font-black uppercase tracking-wider block transition-colors ${
                                     isBilling
-                                      ? "text-[#FA2D48]"
+                                      ? "text-rose-400"
                                       : "text-neutral-400 group-hover/bill:text-neutral-300"
                                   }`}
                                 >
@@ -2374,7 +2374,7 @@ export default function CashierDashboard() {
                               </div>
                               <span
                                 className={`font-['Outfit'] text-2xl sm:text-3xl font-black tracking-tight transition-colors ${
-                                  isBilling ? "text-[#FA2D48]" : "text-white group-hover/bill:text-emerald-400"
+                                  isBilling ? "text-rose-400" : "text-white group-hover/bill:text-emerald-400"
                                 }`}
                               >
                                 ₹{table.activeSession.totalAmount.toFixed(2)}
@@ -2420,7 +2420,7 @@ export default function CashierDashboard() {
                             title="Settle & Checkout Bill"
                             className={`py-2.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md cursor-pointer ${
                               isBilling
-                                ? "bg-[#FA2D48] hover:bg-[#ff3b56] text-white"
+                                ? "bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 text-white shadow-lg shadow-indigo-600/30"
                                 : "bg-white text-black hover:bg-neutral-200"
                             }`}
                           >
@@ -2590,7 +2590,7 @@ export default function CashierDashboard() {
                       value={takeawaySearch}
                       onChange={(e) => setTakeawaySearch(e.target.value)}
                       placeholder="Search dishes for takeaway by name..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-indigo-500 backdrop-blur-xl"
                     />
                   </div>
 
@@ -2600,7 +2600,7 @@ export default function CashierDashboard() {
                       onClick={() => setTakeawayActiveCat("ALL")}
                       className={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                         takeawayActiveCat === "ALL"
-                          ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                          ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                           : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                       }`}
                     >
@@ -2612,7 +2612,7 @@ export default function CashierDashboard() {
                         onClick={() => setTakeawayActiveCat(cat.id)}
                         className={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                           takeawayActiveCat === cat.id
-                            ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                             : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                         }`}
                       >
@@ -2648,7 +2648,7 @@ export default function CashierDashboard() {
                           isSoldOut
                             ? "opacity-60 cursor-not-allowed border-white/[0.05]"
                             : cartEntry
-                            ? "cursor-pointer border-[#FA2D48]/50 ring-1 ring-[#FA2D48]/30 shadow-[#FA2D48]/10"
+                            ? "cursor-pointer border-indigo-500/50 ring-1 ring-indigo-500/30 shadow-indigo-500/10"
                             : "cursor-pointer border-white/[0.08] hover:border-white/[0.25]"
                         }`}
                       >
@@ -2695,15 +2695,15 @@ export default function CashierDashboard() {
 
                           {/* Urgency Low Stock Badge */}
                           {isLowStock && (
-                            <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-xl border border-[#FA2D48]/40 text-white text-[10px] font-bold shadow-xl shadow-[#FA2D48]/20 animate-in fade-in zoom-in-95 duration-200">
-                              <Flame className="h-3 w-3 text-[#FA2D48] fill-[#FA2D48] animate-pulse" />
-                              <span className="text-neutral-200">Only <strong className="text-[#FA2D48] font-black">{remaining}</strong> left</span>
+                            <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-xl border border-rose-500/40 text-white text-[10px] font-bold shadow-xl shadow-rose-500/20 animate-in fade-in zoom-in-95 duration-200">
+                              <Flame className="h-3 w-3 text-rose-400 fill-rose-400 animate-pulse" />
+                              <span className="text-neutral-200">Only <strong className="text-rose-400 font-black">{remaining}</strong> left</span>
                             </div>
                           )}
 
                           {/* In-Tray Quantity Badge */}
                           {cartEntry && (
-                            <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FA2D48] text-white text-[11px] font-black shadow-lg shadow-[#FA2D48]/50 backdrop-blur-md animate-in zoom-in-50 duration-200">
+                            <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-[11px] font-black shadow-lg shadow-indigo-600/50 backdrop-blur-md animate-in zoom-in-50 duration-200">
                               <span>×{cartEntry.quantity}</span>
                             </div>
                           )}
@@ -2711,7 +2711,7 @@ export default function CashierDashboard() {
                           {/* Apple Music Hover Center Play/Add Button */}
                           {!isSoldOut && (
                             <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
-                              <div className="h-10 w-10 rounded-full bg-[#FA2D48] text-white flex items-center justify-center shadow-2xl shadow-[#FA2D48]/50 transform scale-90 group-hover:scale-100 transition-transform">
+                              <div className="h-10 w-10 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/50 transform scale-90 group-hover:scale-100 transition-transform">
                                 <Plus className="h-5 w-5" />
                               </div>
                             </div>
@@ -2720,7 +2720,7 @@ export default function CashierDashboard() {
 
                         {/* Dish Details */}
                         <div className="flex flex-col justify-between flex-1">
-                          <h4 className="font-['Outfit'] text-sm font-extrabold text-white line-clamp-1 group-hover:text-[#FA2D48] transition-colors">
+                          <h4 className="font-['Outfit'] text-sm font-extrabold text-white line-clamp-1 group-hover:text-indigo-400 transition-colors">
                             {dish.name}
                           </h4>
 
@@ -2766,7 +2766,7 @@ export default function CashierDashboard() {
                                   className={`h-6 w-6 rounded-lg text-white flex items-center justify-center transition-colors ${
                                     remaining !== null && cartEntry.quantity >= remaining
                                       ? "bg-neutral-700/60 opacity-50 cursor-not-allowed"
-                                      : "bg-[#FA2D48] hover:bg-[#ff3b56] cursor-pointer"
+                                      : "bg-indigo-600 hover:bg-indigo-500 cursor-pointer"
                                   }`}
                                 >
                                   <Plus className="h-3 w-3" />
@@ -2779,7 +2779,7 @@ export default function CashierDashboard() {
                                   e.stopPropagation();
                                   addToTakeawayCart(dish);
                                 }}
-                                className="h-7 px-3 rounded-xl bg-white/[0.08] group-hover:bg-[#FA2D48] group-hover:text-white text-neutral-300 text-xs font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
+                                className="h-7 px-3 rounded-xl bg-white/[0.08] group-hover:bg-indigo-600 group-hover:text-white text-neutral-300 text-xs font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
                               >
                                 <Plus className="h-3 w-3" />
                                 <span>Add</span>
@@ -2798,7 +2798,7 @@ export default function CashierDashboard() {
                 <div className="space-y-3.5">
                   <div className="flex items-center justify-between pb-3 border-b border-white/10">
                     <div className="flex items-center gap-2">
-                      <ShoppingBag className="h-4 w-4 text-[#FA2D48]" />
+                      <ShoppingBag className="h-4 w-4 text-indigo-400" />
                       <h3 className="font-sans text-sm font-bold text-white uppercase tracking-wider">
                         Takeaway Tray ({takeawayCart.reduce((sum, ci) => sum + ci.quantity, 0)})
                       </h3>
@@ -2806,7 +2806,7 @@ export default function CashierDashboard() {
                     {takeawayCart.length > 0 && (
                       <button
                         onClick={() => setTakeawayCart([])}
-                        className="text-xs text-[#FA2D48] font-bold hover:underline cursor-pointer"
+                        className="text-xs text-indigo-400 font-bold hover:underline cursor-pointer"
                       >
                         Clear Tray
                       </button>
@@ -2824,7 +2824,7 @@ export default function CashierDashboard() {
                         value={takeawayCustomerName}
                         onChange={(e) => setTakeawayCustomerName(e.target.value)}
                         placeholder="e.g. Rahul Sharma"
-                        className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-[#FA2D48]/50"
+                        className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
                       />
                     </div>
                     <div>
@@ -2836,7 +2836,7 @@ export default function CashierDashboard() {
                         value={takeawayCustomerPhone}
                         onChange={(e) => setTakeawayCustomerPhone(e.target.value)}
                         placeholder="e.g. 9876543210"
-                        className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-[#FA2D48]/50"
+                        className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
                       />
                     </div>
                   </div>
@@ -2848,7 +2848,7 @@ export default function CashierDashboard() {
                       value={takeawayNotes}
                       onChange={(e) => setTakeawayNotes(e.target.value)}
                       placeholder="Kitchen instruction (e.g. Pack gravy separately, extra tissues)..."
-                      className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50"
+                      className="w-full px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500"
                     />
                   </div>
 
@@ -2877,8 +2877,8 @@ export default function CashierDashboard() {
                                 <h5 className="text-xs font-bold text-white truncate flex items-center gap-1.5">
                                   <span className="truncate">{ci.item.name}</span>
                                   {liveRemaining !== null && liveRemaining <= 5 && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FA2D48]/15 border border-[#FA2D48]/35 text-[#FA2D48] text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm">
-                                      <Flame className="h-2.5 w-2.5 fill-[#FA2D48]" />
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/35 text-rose-400 text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm">
+                                      <Flame className="h-2.5 w-2.5 fill-rose-400" />
                                       Only {liveRemaining} left
                                     </span>
                                   )}
@@ -2907,7 +2907,7 @@ export default function CashierDashboard() {
                                   className={`h-6 w-6 rounded-lg text-white flex items-center justify-center text-xs active:scale-90 font-bold transition-colors ${
                                     isMaxReached
                                       ? "bg-neutral-700/60 opacity-50 cursor-not-allowed"
-                                      : "bg-[#FA2D48] hover:bg-[#ff3b56] cursor-pointer"
+                                      : "bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-600/30 cursor-pointer"
                                   }`}
                                 >
                                   <Plus className="h-3 w-3" />
@@ -2973,7 +2973,7 @@ export default function CashierDashboard() {
                             onClick={() => setTakeawayDiscountValue(pct)}
                             className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                               takeawayDiscountValue === pct
-                                ? "bg-[#FA2D48] text-white"
+                                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                                 : "bg-white/[0.04] text-neutral-400 hover:text-white border border-white/5"
                             }`}
                           >
@@ -3139,7 +3139,7 @@ export default function CashierDashboard() {
                       <div className="p-4 rounded-3xl bg-[#1c1c1f]/90 border border-white/[0.08] backdrop-blur-2xl space-y-3.5 shadow-2xl">
                         <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08]">
                           <span className="text-xs font-bold text-neutral-200 flex items-center gap-2">
-                            <span className="p-1 rounded-lg bg-[#FA2D48]/10 text-[#FA2D48] border border-[#FA2D48]/20">
+                            <span className="p-1 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                               <ArrowRightLeft className="h-3.5 w-3.5" />
                             </span>
                             <span>Split Allocation</span>
@@ -3190,7 +3190,7 @@ export default function CashierDashboard() {
                                     }))
                                   }
                                   placeholder="0.00"
-                                  className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
+                                  className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#121214] border border-white/[0.08] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 text-sm font-mono font-bold text-white focus:outline-none transition-all placeholder-neutral-600"
                                 />
                               </div>
                               <button
@@ -3207,7 +3207,7 @@ export default function CashierDashboard() {
                                     };
                                   });
                                 }}
-                                className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                                className="shrink-0 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-indigo-600 text-neutral-300 hover:text-white border border-white/[0.08] hover:border-transparent text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                               >
                                 Fill Rem.
                               </button>
@@ -3243,11 +3243,11 @@ export default function CashierDashboard() {
                   <button
                     disabled={
                       takeawayCart.length === 0 ||
-                      isSubmittingTakeaway ||
+                       isSubmittingTakeaway ||
                       (takeawayPaymentMode === "SPLIT" && Math.abs(takeawaySplitRemaining) > 1.0)
                     }
                     onClick={handleSettleTakeaway}
-                    className="w-full py-3.5 rounded-2xl bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white font-sans font-bold text-xs tracking-wide transition-all active:scale-98 shadow-xl shadow-[#FA2D48]/30 flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 text-white font-sans font-bold text-xs tracking-wide transition-all active:scale-98 shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {isSubmittingTakeaway ? (
                       <span>Punching & Printing Token...</span>
@@ -3280,7 +3280,7 @@ export default function CashierDashboard() {
                       onClick={() => setTakeawayQueueFilter(filter.id as any)}
                       className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                         takeawayQueueFilter === filter.id
-                          ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+                          ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                           : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 border border-white/[0.08]"
                       }`}
                     >
@@ -3297,7 +3297,7 @@ export default function CashierDashboard() {
                       value={takeawayQueueSearch}
                       onChange={(e) => setTakeawayQueueSearch(e.target.value)}
                       placeholder="Search token #, customer, phone..."
-                      className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-[#FA2D48]/50 backdrop-blur-xl"
+                      className="w-full pl-10 pr-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-indigo-500 backdrop-blur-xl"
                     />
                   </div>
                   <button
@@ -3308,7 +3308,7 @@ export default function CashierDashboard() {
                     className="p-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/10 transition-all cursor-pointer shrink-0 active:scale-95"
                   >
                     <RefreshCw
-                      className={`h-3.5 w-3.5 ${isLoadingTakeawayOrders ? "animate-spin text-[#FA2D48]" : ""}`}
+                      className={`h-3.5 w-3.5 ${isLoadingTakeawayOrders ? "animate-spin text-indigo-400" : ""}`}
                     />
                   </button>
                 </div>
@@ -3408,7 +3408,7 @@ export default function CashierDashboard() {
                             </div>
                             {ord.customerPhone && (
                               <span className="font-mono text-[11px] text-neutral-400 flex items-center gap-1">
-                                <Phone className="h-3 w-3 text-[#FA2D48]" />
+                                <Phone className="h-3 w-3 text-indigo-400" />
                                 {ord.customerPhone}
                               </span>
                             )}
@@ -3495,7 +3495,7 @@ export default function CashierDashboard() {
                           <div className="grid grid-cols-4 gap-1.5">
                             <button
                               onClick={() => handleOpenEditTokenModal(ord)}
-                              className="py-1.5 px-2 rounded-xl bg-white/[0.05] hover:bg-[#FA2D48] text-neutral-200 hover:text-white border border-white/10 hover:border-transparent flex items-center justify-center gap-1 text-[10px] font-bold transition-all cursor-pointer"
+                              className="py-1.5 px-2 rounded-xl bg-white/[0.05] hover:bg-indigo-600 text-neutral-200 hover:text-white border border-white/10 hover:border-transparent flex items-center justify-center gap-1 text-[10px] font-bold transition-all cursor-pointer"
                               title="Edit Customer Info or Cooking Notes"
                             >
                               <Edit3 className="h-3 w-3" />
@@ -3514,7 +3514,7 @@ export default function CashierDashboard() {
                               onClick={() => handlePrintTakeawayKOT(ord)}
                               className="py-1.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-neutral-200 border border-white/10 flex items-center justify-center gap-1 text-[10px] font-bold transition-all cursor-pointer"
                             >
-                              <ChefHat className="h-3 w-3 text-[#FA2D48]" />
+                              <ChefHat className="h-3 w-3 text-indigo-400" />
                               <span>KOT</span>
                             </button>
 
@@ -3589,7 +3589,7 @@ export default function CashierDashboard() {
                           </td>
                           <td className="py-4 px-5 font-bold text-white">
                             {bill.tableNumber === "Takeaway" ? (
-                              <span className="inline-flex items-center gap-1 text-[#FA2D48]">
+                              <span className="inline-flex items-center gap-1 text-indigo-400">
                                 <ShoppingBag className="h-3 w-3" />
                                 <span>Takeaway</span>
                               </span>
@@ -3846,7 +3846,7 @@ export default function CashierDashboard() {
                 }}
                 className="px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 text-xs font-semibold flex items-center gap-1.5 border border-white/10 cursor-pointer"
               >
-                <PlusCircle className="h-3.5 w-3.5 text-[#FA2D48]" />
+                <PlusCircle className="h-3.5 w-3.5 text-indigo-400" />
                 <span>Add Dishes</span>
               </button>
 
@@ -4372,7 +4372,7 @@ export default function CashierDashboard() {
           <div className="w-full max-w-md bg-[#1c1c1f]/95 border border-white/[0.12] rounded-3xl p-6 shadow-2xl space-y-4 backdrop-blur-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <ArrowRightLeft className="h-5 w-5 text-[#FA2D48]" />
+                <ArrowRightLeft className="h-5 w-5 text-indigo-400" />
                 <h3 className="font-sans text-base font-bold text-white">
                   Transfer Table #{transferSourceTable.tableNumber}
                 </h3>
@@ -4431,7 +4431,7 @@ export default function CashierDashboard() {
               <button
                 disabled={!transferDestTableNumber || isTransferring}
                 onClick={handleExecuteTransfer}
-                className="px-5 py-2 rounded-full bg-[#FA2D48] hover:bg-[#ff3b56] disabled:opacity-50 text-white text-xs font-bold transition-all cursor-pointer shadow-lg shadow-[#FA2D48]/30"
+                className="px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold transition-all cursor-pointer shadow-lg shadow-indigo-600/30"
               >
                 {isTransferring ? "Transferring..." : "Confirm Transfer"}
               </button>
@@ -4895,7 +4895,7 @@ export default function CashierDashboard() {
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2.5">
-                <span className="p-2 rounded-2xl bg-[#FA2D48]/10 text-[#FA2D48] border border-[#FA2D48]/20">
+                <span className="p-2 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                   <Edit3 className="h-4 w-4" />
                 </span>
                 <div>
@@ -4927,7 +4927,7 @@ export default function CashierDashboard() {
                   value={editCustomerName}
                   onChange={(e) => setEditCustomerName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
                 />
               </div>
 
@@ -4940,7 +4940,7 @@ export default function CashierDashboard() {
                   value={editCustomerPhone}
                   onChange={(e) => setEditCustomerPhone(e.target.value)}
                   placeholder="e.g. 9876543210"
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
                 />
               </div>
 
@@ -4953,7 +4953,7 @@ export default function CashierDashboard() {
                   value={editOrderNotes}
                   onChange={(e) => setEditOrderNotes(e.target.value)}
                   placeholder="e.g. Extra spicy, pack separately, extra napkins..."
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#FA2D48]/50 focus:ring-1 focus:ring-[#FA2D48]/30 transition-all resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#111113] border border-white/[0.08] text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-none"
                 />
               </div>
 
@@ -4986,7 +4986,7 @@ export default function CashierDashboard() {
                 type="button"
                 disabled={isSavingTokenEdit}
                 onClick={handleSaveTokenEdit}
-                className="px-5 py-2 rounded-xl bg-[#FA2D48] hover:bg-[#ff3b56] text-white text-xs font-bold transition-all shadow-md shadow-[#FA2D48]/30 active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/30 active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
                 {isSavingTokenEdit ? (
                   <span>Saving...</span>
@@ -5045,7 +5045,7 @@ export default function CashierDashboard() {
                         });
                       }
                     }}
-                    className="px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-[#FA2D48] text-neutral-300 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-indigo-600 text-neutral-300 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                     title="Edit Customer Info or Cooking Notes"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
@@ -5209,7 +5209,7 @@ export default function CashierDashboard() {
                   <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 print:text-neutral-400 block">
                     YOUR PICKUP TOKEN
                   </span>
-                  <span className="text-4xl font-black font-mono tracking-widest text-[#FA2D48] print:text-white block my-1 drop-shadow-[0_0_12px_rgba(250,45,72,0.35)] print:drop-shadow-none">
+                  <span className="text-4xl font-black font-mono tracking-widest text-indigo-400 print:text-white block my-1 drop-shadow-[0_0_12px_rgba(99,102,241,0.35)] print:drop-shadow-none">
                     {activeReceipt.orderNumber || "TK-0000"}
                   </span>
                   <span className="text-xs text-neutral-200 print:text-neutral-300 block font-semibold">
@@ -5245,7 +5245,7 @@ export default function CashierDashboard() {
 
                 {activeReceipt.notes && (
                   <div className="text-[10px] text-left p-2 bg-white/[0.04] border border-white/10 rounded-xl text-neutral-300 print:bg-neutral-100 print:border-neutral-200 print:text-black">
-                    <span className="font-bold block text-[#FA2D48] print:text-neutral-600">NOTE:</span>
+                    <span className="font-bold block text-indigo-400 print:text-neutral-600">NOTE:</span>
                     <span>{activeReceipt.notes}</span>
                   </div>
                 )}
@@ -5271,7 +5271,7 @@ export default function CashierDashboard() {
                 <div className="border-b border-dashed border-white/15 print:border-neutral-400 py-1.5 text-left text-xs space-y-0.5">
                   <div className="flex justify-between font-bold">
                     <span>STATION: TAKEAWAY</span>
-                    <span className="text-sm font-black font-mono text-[#FA2D48] print:text-black">
+                    <span className="text-sm font-black font-mono text-indigo-400 print:text-black">
                       TOKEN: {activeReceipt.orderNumber}
                     </span>
                   </div>
