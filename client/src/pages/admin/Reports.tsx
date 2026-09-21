@@ -360,13 +360,13 @@ const ShiftAnalyticsCharts = ({
       {/* 6 cols: Hourly Revenue Curve / Bar Chart */}
       <div className="lg:col-span-6 min-w-0 relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1f]/95 via-[#18181b]/95 to-[#121214]/95 border border-white/[0.08] shadow-2xl backdrop-blur-2xl p-6 flex flex-col justify-between">
         {/* Subtle Ambient Glow */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-[#FA2D48]/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-indigo-600/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
 
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#FA2D48]/25 to-rose-600/15 text-[#FA2D48] border border-[#FA2D48]/30 shadow-lg shadow-[#FA2D48]/10">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500/25 to-violet-600/15 text-indigo-400 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
                 <TrendingUp className="h-4 w-4 stroke-[2.5]" />
               </div>
               <div>
@@ -394,13 +394,13 @@ const ShiftAnalyticsCharts = ({
                   <span className="text-xs font-['Outfit'] font-extrabold text-white">
                     {peakHour.time}
                   </span>
-                  <span className="px-2 py-0.5 rounded-lg bg-[#FA2D48]/15 border border-[#FA2D48]/30 font-['Outfit'] text-xs font-black text-[#FA2D48] tracking-tight">
+                  <span className="px-2 py-0.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 font-['Outfit'] text-xs font-black text-indigo-400 tracking-tight">
                     ₹{Number(peakHour.revenue).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.04] border border-white/10 text-neutral-400 text-[10px] font-mono backdrop-blur-xl">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#FA2D48] animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
                   <span>Live Auditing</span>
                 </div>
               )}
@@ -410,7 +410,7 @@ const ShiftAnalyticsCharts = ({
           {hourlyRevenueData.length === 0 || hourlyRevenueData.every((d) => d.revenue === 0) ? (
             <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-3">
               <div className="relative">
-                <div className="h-12 w-12 rounded-2xl bg-[#FA2D48]/10 border border-[#FA2D48]/20 flex items-center justify-center text-[#FA2D48] shadow-lg shadow-[#FA2D48]/10">
+                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-lg shadow-indigo-500/10">
                   <TrendingUp className="h-6 w-6 stroke-[1.8]" />
                 </div>
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 animate-ping" />
@@ -433,12 +433,12 @@ const ShiftAnalyticsCharts = ({
                 >
                   <defs>
                     <linearGradient id="reportsBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FA2D48" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="#FA2D48" stopOpacity={0.25} />
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#6366F1" stopOpacity={0.25} />
                     </linearGradient>
                     <linearGradient id="reportsPeakBarGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FF6B81" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#FA2D48" stopOpacity={0.65} />
+                      <stop offset="0%" stopColor="#818CF8" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#6366F1" stopOpacity={0.65} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -872,8 +872,8 @@ export default function Reports() {
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       {/* Header Bar - Apple Music Editorial Hero (Standard across Admin Pages) */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
-        {/* Apple Music Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
+        {/* Modern Stripe / Linear Ambient Bloom Halos */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-600/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -934,7 +934,7 @@ export default function Reports() {
               type="button"
               onClick={handleExportCSV}
               disabled={isExporting || history.length === 0}
-              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="flex items-center gap-2 rounded-full px-4.5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all active:scale-95 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
               {isExporting ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
@@ -951,7 +951,7 @@ export default function Reports() {
       <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#FA2D48]" />
+            <TrendingUp className="h-4 w-4 text-indigo-400" />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
               Executive Shift Turnover & Performance Metrics
             </span>
@@ -1010,7 +1010,7 @@ export default function Reports() {
       <div className="rounded-3xl border border-white/[0.08] bg-[#1c1c1f]/80 p-5 backdrop-blur-xl shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
           <div className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-[#FA2D48]" />
+            <Receipt className="h-4 w-4 text-indigo-400" />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
               TAX RECONCILIATION & REGISTER AUDIT (5% DINING GST)
             </span>
@@ -1029,13 +1029,13 @@ export default function Reports() {
 
           <div className="py-2 lg:py-0 lg:px-5 space-y-1">
             <span className="text-[11px] text-neutral-400 font-sans block">CGST (2.5%)</span>
-            <span className="text-2xl font-black text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-2xl font-black text-indigo-400 block font-mono">₹{halfTax.toFixed(2)}</span>
             <span className="text-[10px] text-neutral-500 font-sans block">Central Govt remittance</span>
           </div>
 
           <div className="py-2 lg:py-0 lg:px-5 space-y-1">
             <span className="text-[11px] text-neutral-400 font-sans block">SGST (2.5%)</span>
-            <span className="text-2xl font-black text-[#FA2D48] block font-mono">₹{halfTax.toFixed(2)}</span>
+            <span className="text-2xl font-black text-indigo-400 block font-mono">₹{halfTax.toFixed(2)}</span>
             <span className="text-[10px] text-neutral-500 font-sans block">State Govt remittance</span>
           </div>
 
@@ -1071,14 +1071,14 @@ export default function Reports() {
 
           {/* Filter Pills & Search Input Row matching Tables & Menu Inventory */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
-            {/* Apple Music Pill Capsule Row */}
+            {/* Pill Capsule Row */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               <button
                 type="button"
                 onClick={() => setTypeFilter("all")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "all"
-                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30 font-bold"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -1093,7 +1093,7 @@ export default function Reports() {
                 onClick={() => setTypeFilter("table")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "table"
-                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30 font-bold"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -1108,7 +1108,7 @@ export default function Reports() {
                 onClick={() => setTypeFilter("takeaway")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   typeFilter === "takeaway"
-                    ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30 font-bold"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold"
                     : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
                 }`}
               >
@@ -1120,7 +1120,7 @@ export default function Reports() {
               </button>
             </div>
 
-            {/* Search Bar - Apple Music Pill */}
+            {/* Search Bar */}
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-neutral-400" />
               <input
@@ -1128,7 +1128,7 @@ export default function Reports() {
                 placeholder="Search invoice, table, payment, or dish..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-[#FA2D48] transition-all focus:outline-none"
+                className="w-full h-9 pl-9 pr-8 text-xs rounded-full bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.1] text-white placeholder:text-neutral-500 border border-white/[0.1] focus:border-indigo-500 transition-all focus:outline-none"
               />
               {searchQuery && (
                 <button
@@ -1181,7 +1181,7 @@ export default function Reports() {
                       {/* Table / Type */}
                       <td className="px-3 py-4 text-neutral-300">
                         {s.tableNumber === "Takeaway" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-[#FA2D48]/15 px-2 py-0.5 border border-[#FA2D48]/25 text-[#FA2D48] text-[11px] font-sans font-bold">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-indigo-500/15 px-2 py-0.5 border border-indigo-500/25 text-indigo-400 text-[11px] font-sans font-bold">
                             <ShoppingBag className="h-3 w-3" />
                             <span>Takeaway</span>
                           </span>

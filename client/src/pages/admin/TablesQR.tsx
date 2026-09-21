@@ -225,7 +225,7 @@ export default function TablesQR() {
                 color: #ffffff;
               }
               .standee {
-                border: 2px solid #FA2D48;
+                border: 2px solid #6366F1;
                 border-radius: 24px;
                 padding: 40px 32px;
                 max-width: 360px;
@@ -236,7 +236,7 @@ export default function TablesQR() {
               .brand {
                 font-size: 24px;
                 font-weight: 800;
-                color: #FA2D48;
+                color: #6366F1;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
               }
@@ -267,7 +267,7 @@ export default function TablesQR() {
               .seats {
                 font-size: 13px;
                 font-weight: 600;
-                color: #FA2D48;
+                color: #818CF8;
                 margin-bottom: 12px;
               }
               .instructions {
@@ -356,16 +356,16 @@ export default function TablesQR() {
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in duration-300">
       {/* Toast Notification */}
       {successMsg && (
-        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-[#FA2D48]/10 animate-in fade-in slide-in-from-top-3">
-          <CheckCircle2 className="h-4 w-4 text-[#FA2D48]" />
+        <div className="fixed top-18 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.12] backdrop-blur-2xl px-5 py-3 text-xs font-medium text-white shadow-2xl shadow-indigo-500/10 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="h-4 w-4 text-indigo-400" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* Header Bar - Apple Music Editorial Hero */}
+      {/* Header Bar - Modern Stripe / Linear Editorial Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent border border-white/[0.09] p-6 sm:p-7 backdrop-blur-2xl shadow-2xl">
-        {/* Ambient Bloom Halos */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#FA2D48]/25 blur-3xl" />
+        {/* Modern Stripe / Linear Ambient Bloom Halos */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-600/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-600/15 blur-3xl" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -380,7 +380,7 @@ export default function TablesQR() {
               className="flex items-center gap-2 rounded-full px-4.5 py-2.5 text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.14] text-neutral-200 hover:text-white border border-white/[0.12] backdrop-blur-xl shadow-sm transition-all active:scale-95"
               title="Generate Takeaway Standee"
             >
-              <ShoppingBag className="h-4 w-4 text-[#FA2D48]" />
+              <ShoppingBag className="h-4 w-4 text-indigo-400" />
               <span>Takeaway QR</span>
             </button>
 
@@ -403,7 +403,7 @@ export default function TablesQR() {
 
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-[#FA2D48] hover:bg-[#ff3b56] text-white shadow-lg shadow-[#FA2D48]/30 transition-all active:scale-95 hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all active:scale-95 hover:scale-[1.02]"
             >
               <PlusCircle className="h-4 w-4" />
               <span>Add Table</span>
@@ -414,13 +414,13 @@ export default function TablesQR() {
 
 
 
-      {/* Controls Bar: Status Filter Tabs (Apple Music Pill Row) */}
+      {/* Controls Bar: Status Filter Tabs (Pill Row) */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => setStatusFilter("ALL")}
           className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
             statusFilter === "ALL"
-              ? "bg-[#FA2D48] text-white shadow-md shadow-[#FA2D48]/30"
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
               : "bg-white/[0.05] hover:bg-white/[0.1] text-neutral-300 hover:text-white border border-white/[0.08]"
           }`}
         >
@@ -527,7 +527,7 @@ export default function TablesQR() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-extrabold text-white tracking-tight font-sans truncate group-hover:text-[#FA2D48] transition-colors">
+                      <h3 className="text-base font-extrabold text-white tracking-tight font-sans truncate group-hover:text-indigo-400 transition-colors">
                         {tableTitle}
                       </h3>
                       <span className="rounded-full bg-white/[0.06] border border-white/[0.08] px-2 py-0.5 text-[10px] font-semibold text-neutral-300 shrink-0 font-mono">
@@ -610,13 +610,13 @@ export default function TablesQR() {
                   </div>
 
                   <span className="relative z-10 text-[11px] font-mono text-neutral-400 group-hover/qr:text-white mt-2.5 transition-colors flex items-center gap-1.5">
-                    <QrCode className="h-3.5 w-3.5 text-[#FA2D48]" />
+                    <QrCode className="h-3.5 w-3.5 text-indigo-400" />
                     <span>View Standee QR</span>
                   </span>
 
                   {/* Solid Hover Backdrop so no text bleeds through */}
                   <div className="absolute inset-0 bg-[#161619]/95 backdrop-blur-sm opacity-0 group-hover/qr:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2 z-20">
-                    <div className="h-9 w-9 rounded-full bg-[#FA2D48] text-white flex items-center justify-center shadow-lg shadow-[#FA2D48]/40">
+                    <div className="h-9 w-9 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/40">
                       <Printer className="h-4.5 w-4.5" />
                     </div>
                     <span className="text-xs font-bold text-white tracking-wide">
@@ -749,7 +749,7 @@ export default function TablesQR() {
               <div className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-neutral-400">Next Table:</span>
-                  <span className="rounded-full bg-[#FA2D48]/20 px-2.5 py-0.5 text-xs font-mono font-bold text-[#FA2D48] border border-[#FA2D48]/30">
+                  <span className="rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-xs font-mono font-bold text-indigo-400 border border-indigo-500/30">
                     TABLE {nextTableNumber}
                   </span>
                 </div>
@@ -769,7 +769,7 @@ export default function TablesQR() {
                       onClick={() => setCapacity(seats.toString())}
                       className={`py-2 text-xs font-bold rounded-xl border transition-all ${
                         capacity === seats.toString()
-                          ? "bg-[#FA2D48] text-white border-[#FA2D48] shadow-md shadow-[#FA2D48]/30"
+                          ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/30"
                           : "bg-white/[0.05] text-neutral-300 border-white/[0.08] hover:bg-white/[0.1] hover:text-white"
                       }`}
                     >
@@ -786,7 +786,7 @@ export default function TablesQR() {
                   placeholder="Custom capacity (e.g. 4)"
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
-                  className="w-full h-10 px-3.5 text-sm font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-[#FA2D48] focus:outline-none transition-colors"
+                  className="w-full h-10 px-3.5 text-sm font-mono rounded-xl bg-white/[0.06] text-white border border-white/[0.1] focus:border-indigo-500 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -800,7 +800,7 @@ export default function TablesQR() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-[#FA2D48] to-[#FF4565] text-white shadow-lg shadow-[#FA2D48]/30 hover:opacity-95 transition-all"
+                  className="rounded-full px-5 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/30 hover:opacity-95 transition-all"
                 >
                   Create Table {nextTableNumber}
                 </button>
@@ -826,7 +826,7 @@ export default function TablesQR() {
               </button>
             </div>
 
-            {/* Apple Music Acrylic QR Frame */}
+            {/* Acrylic QR Frame */}
             <div className="bg-white p-4 rounded-3xl inline-block mx-auto mb-3 shadow-2xl">
               {selectedQR.imgUrl ? (
                 <img
@@ -862,7 +862,7 @@ export default function TablesQR() {
               </button>
               <button
                 onClick={handlePrintQR}
-                className="flex-1 h-9 rounded-full bg-gradient-to-r from-[#FA2D48] to-[#FF4565] text-xs font-semibold text-white shadow-lg shadow-[#FA2D48]/30 flex items-center justify-center gap-1.5 hover:opacity-95 transition-all"
+                className="flex-1 h-9 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-1.5 hover:opacity-95 transition-all"
               >
                 <Printer className="h-4 w-4" />
                 <span>Print Standee</span>
@@ -877,7 +877,7 @@ export default function TablesQR() {
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
           <div className="relative w-full max-w-sm rounded-3xl border border-white/[0.12] bg-[#1a1a1d]/95 p-6 shadow-2xl text-white backdrop-blur-3xl animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-[#FA2D48] border border-red-500/30">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
